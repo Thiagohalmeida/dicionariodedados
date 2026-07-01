@@ -4,20 +4,24 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { AppLayout } from "@/components/layout";
+import { OnboardingModal } from "@/components/onboarding-modal";
 
 import Dashboard from "./pages/dashboard";
 import DictionariesList from "./pages/dictionaries";
 import NewDictionary from "./pages/new-dictionary";
 import DictionaryDetail from "./pages/dictionary-detail";
 import CriticalFields from "./pages/critical-fields";
+import About from "./pages/about";
 
 const queryClient = new QueryClient();
 
 function Router() {
   return (
     <AppLayout>
+      <OnboardingModal />
       <Switch>
         <Route path="/" component={Dashboard} />
+        <Route path="/about" component={About} />
         <Route path="/dictionaries" component={DictionariesList} />
         <Route path="/dictionaries/new" component={NewDictionary} />
         <Route path="/dictionaries/:id" component={DictionaryDetail} />
