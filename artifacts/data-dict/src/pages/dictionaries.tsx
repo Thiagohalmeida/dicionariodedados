@@ -2,29 +2,38 @@ import React from "react";
 import { useListDictionaries } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Plus, BookOpen, AlertCircle } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+function traduzirStatus(status: string) {
+  const map: Record<string, string> = {
+    pending: "Pendente",
+    in_review: "Em Revisão",
+    validated: "Validado",
+  };
+  return map[status] ?? status;
+}
 
 export default function DictionariesList() {
   const { data, isLoading } = useListDictionaries();
 
   if (isLoading) {
-    return <div className="p-8 text-center text-muted-foreground">Loading dictionaries...</div>;
+    return <div className="p-8 text-center text-muted-foreground">Carregando dicionários...</div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dictionaries</h1>
-          <p className="text-muted-foreground">Manage and validate data dictionaries.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Dicionários de Dados</h1>
+          <p className="text-muted-foreground">Gerencie e valide seus dicionários de dados.</p>
         </div>
         <Button asChild>
           <Link href="/dictionaries/new">
-            <Plus className="mr-2 h-4 w-4" /> Import Dictionary
+            <Plus className="mr-2 h-4 w-4" /> Importar Dicionário
           </Link>
         </Button>
       </div>
@@ -33,12 +42,12 @@ export default function DictionariesList() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Table</TableHead>
-              <TableHead>Process</TableHead>
+              <TableHead>Tabela</TableHead>
+              <TableHead>Processo</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Progress</TableHead>
-              <TableHead>Avg Score</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Progresso</TableHead>
+              <TableHead>Pontuação Média</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -49,7 +58,7 @@ export default function DictionariesList() {
                   <TableCell className="font-medium">{dict.tabela}</TableCell>
                   <TableCell>{dict.processo}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">{dict.status}</Badge>
+                    <Badge variant="outline">{traduzirStatus(dict.status)}</Badge>
                   </TableCell>
                   <TableCell className="w-[200px]">
                     <div className="flex items-center gap-2">
@@ -62,7 +71,7 @@ export default function DictionariesList() {
                   </TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/dictionaries/${dict.id}`}>Validate</Link>
+                      <Link href={`/dictionaries/${dict.id}`}>Validar</Link>
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -71,7 +80,7 @@ export default function DictionariesList() {
             {(!data || data.length === 0) && (
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">
-                  No dictionaries found. Import one to get started.
+                  Nenhum dicionário encontrado. Importe um para começar.
                 </TableCell>
               </TableRow>
             )}

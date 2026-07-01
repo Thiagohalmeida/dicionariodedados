@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { BookOpen, AlertTriangle, LayoutDashboard, Plus, Upload, CheckCircle, Clock, Search } from "lucide-react";
+import { BookOpen, AlertTriangle, LayoutDashboard } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -17,9 +17,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
 
   const navigation = [
-    { title: "Dashboard", href: "/", icon: LayoutDashboard },
-    { title: "Dictionaries", href: "/dictionaries", icon: BookOpen },
-    { title: "Critical Fields", href: "/fields/critical", icon: AlertTriangle },
+    { title: "Painel", href: "/", icon: LayoutDashboard },
+    { title: "Dicionários", href: "/dictionaries", icon: BookOpen },
+    { title: "Campos Críticos", href: "/fields/critical", icon: AlertTriangle },
   ];
 
   return (
