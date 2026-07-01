@@ -3,13 +3,20 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: API specification for Data Dictionary Validator
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: dictionaries
+    description: Dictionary management
+  - name: fields
+    description: Field management and validation
+  - name: dashboard
+    description: Quality dashboard metrics
+
 paths:
   /healthz:
     get:
@@ -24,13 +31,487 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /dictionaries:
+    get:
+      operationId: listDictionaries
+      tags: [dictionaries]
+      summary: List all dictionaries with validation metrics
+      responses:
+        "200":
+          description: List of dictionaries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DictionaryWithMetrics"
+    post:
+      operationId: importDictionary
+      tags: [dictionaries]
+      summary: Import a dictionary from JSON
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DictionaryImport"
+      responses:
+        "201":
+          description: Dictionary imported
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dictionary"
+        "400":
+          description: Invalid input
+
+  /dictionaries/{id}:
+    get:
+      operationId: getDictionary
+      tags: [dictionaries]
+      summary: Get dictionary with fields and validation status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Dictionary detail with fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DictionaryDetail"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteDictionary
+      tags: [dictionaries]
+      summary: Delete a dictionary
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  /dictionaries/{id}/export:
+    get:
+      operationId: exportDictionary
+      tags: [dictionaries]
+      summary: Export validated dictionary as JSON (add ?format=csv for CSV)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Exported file
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExportResult"
+        "404":
+          description: Not found
+
+  /fields/{id}/validate:
+    post:
+      operationId: submitValidation
+      tags: [fields]
+      summary: Submit enriched validation for a field
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ValidationInput"
+      responses:
+        "201":
+          description: Validation recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Validation"
+        "400":
+          description: Invalid input
+        "404":
+          description: Field not found
+
+  /fields/{id}/summary:
+    get:
+      operationId: getFieldSummary
+      tags: [fields]
+      summary: Get aggregated validation summary for a field
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Field validation summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FieldSummary"
+        "404":
+          description: Not found
+
+  /fields/critical:
+    get:
+      operationId: getCriticalFields
+      tags: [fields]
+      summary: List fields with score below 60 (critical)
+      responses:
+        "200":
+          description: List of critical fields
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FieldWithSummary"
+
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Global quality metrics dashboard
+      responses:
+        "200":
+          description: Dashboard metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardMetrics"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    Dictionary:
+      type: object
+      required: [id, processo, categoria, tabela, version, status, createdAt]
+      properties:
+        id:
+          type: integer
+        processo:
+          type: string
+        categoria:
+          type: string
+        tabela:
+          type: string
+        version:
+          type: integer
+        parentId:
+          type: ["integer", "null"]
+        status:
+          type: string
+          enum: [pending, in_review, validated]
+        createdAt:
+          type: string
+
+    DictionaryWithMetrics:
+      type: object
+      required: [id, processo, categoria, tabela, version, status, createdAt, totalFields, approvedFields, rejectedFields, pendingFields, avgScore]
+      properties:
+        id:
+          type: integer
+        processo:
+          type: string
+        categoria:
+          type: string
+        tabela:
+          type: string
+        version:
+          type: integer
+        parentId:
+          type: ["integer", "null"]
+        status:
+          type: string
+          enum: [pending, in_review, validated]
+        createdAt:
+          type: string
+        totalFields:
+          type: integer
+        approvedFields:
+          type: integer
+        rejectedFields:
+          type: integer
+        pendingFields:
+          type: integer
+        avgScore:
+          type: ["number", "null"]
+
+    DictionaryDetail:
+      type: object
+      required: [id, processo, categoria, tabela, version, status, createdAt, fields]
+      properties:
+        id:
+          type: integer
+        processo:
+          type: string
+        categoria:
+          type: string
+        tabela:
+          type: string
+        version:
+          type: integer
+        parentId:
+          type: ["integer", "null"]
+        status:
+          type: string
+          enum: [pending, in_review, validated]
+        createdAt:
+          type: string
+        fields:
+          type: array
+          items:
+            $ref: "#/components/schemas/FieldWithSummary"
+
+    Field:
+      type: object
+      required: [id, dictionaryId, campoOrigem, descricao, origem, periodicidade, campoTecnico, tipoDado, chave]
+      properties:
+        id:
+          type: integer
+        dictionaryId:
+          type: integer
+        campoOrigem:
+          type: string
+        descricao:
+          type: string
+        origem:
+          type: string
+        periodicidade:
+          type: string
+        campoTecnico:
+          type: string
+        tipoDado:
+          type: string
+        chave:
+          type: boolean
+
+    FieldWithSummary:
+      type: object
+      required: [id, dictionaryId, campoOrigem, descricao, origem, periodicidade, campoTecnico, tipoDado, chave, summary]
+      properties:
+        id:
+          type: integer
+        dictionaryId:
+          type: integer
+        campoOrigem:
+          type: string
+        descricao:
+          type: string
+        origem:
+          type: string
+        periodicidade:
+          type: string
+        campoTecnico:
+          type: string
+        tipoDado:
+          type: string
+        chave:
+          type: boolean
+        summary:
+          $ref: "#/components/schemas/FieldSummary"
+
+    FieldSummary:
+      type: object
+      required: [fieldId, totalValidations, approvedCount, rejectedCount, conflictCount, statusFinal, score, classification]
+      properties:
+        fieldId:
+          type: integer
+        totalValidations:
+          type: integer
+        approvedCount:
+          type: integer
+        rejectedCount:
+          type: integer
+        conflictCount:
+          type: integer
+        statusFinal:
+          type: string
+          enum: [pending, approved, rejected, conflict]
+        score:
+          type: ["number", "null"]
+        classification:
+          type: string
+          enum: [pending, reliable, attention, critical]
+        avgUsed:
+          type: ["number", "null"]
+        avgRequired:
+          type: ["number", "null"]
+        avgCorrectName:
+          type: ["number", "null"]
+        avgCorrectOrigin:
+          type: ["number", "null"]
+        avgHasBusinessRule:
+          type: ["number", "null"]
+
+    ValidationInput:
+      type: object
+      required: [validatorName, used, required, correctName, correctOrigin, hasBusinessRule]
+      properties:
+        validatorName:
+          type: string
+          minLength: 1
+        used:
+          type: boolean
+        required:
+          type: boolean
+        correctName:
+          type: boolean
+        correctOrigin:
+          type: boolean
+        hasBusinessRule:
+          type: boolean
+        comment:
+          type: ["string", "null"]
+
+    Validation:
+      type: object
+      required: [id, fieldId, validatorName, used, required, correctName, correctOrigin, hasBusinessRule, score, createdAt]
+      properties:
+        id:
+          type: integer
+        fieldId:
+          type: integer
+        validatorName:
+          type: string
+        used:
+          type: boolean
+        required:
+          type: boolean
+        correctName:
+          type: boolean
+        correctOrigin:
+          type: boolean
+        hasBusinessRule:
+          type: boolean
+        comment:
+          type: ["string", "null"]
+        score:
+          type: number
+        createdAt:
+          type: string
+
+    DictionaryImport:
+      type: object
+      required: [processo, categoria, tabela, campos]
+      properties:
+        processo:
+          type: string
+          minLength: 1
+        categoria:
+          type: string
+          minLength: 1
+        tabela:
+          type: string
+          minLength: 1
+        campos:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/CampoInput"
+
+    CampoInput:
+      type: object
+      required: [campo_origem, descricao, origem, periodicidade, campo_tecnico, tipo_dado, chave]
+      properties:
+        campo_origem:
+          type: string
+        descricao:
+          type: string
+        origem:
+          type: string
+        periodicidade:
+          type: string
+        campo_tecnico:
+          type: string
+        tipo_dado:
+          type: string
+        chave:
+          type: boolean
+
+    ExportResult:
+      type: object
+      required: [format, filename, content]
+      properties:
+        format:
+          type: string
+        filename:
+          type: string
+        content:
+          type: string
+
+    DashboardMetrics:
+      type: object
+      required: [totalDictionaries, totalFields, approvedFields, rejectedFields, pendingFields, conflictFields, globalScore, dictionariesByStatus, fieldsByClassification, recentDictionaries]
+      properties:
+        totalDictionaries:
+          type: integer
+        totalFields:
+          type: integer
+        approvedFields:
+          type: integer
+        rejectedFields:
+          type: integer
+        pendingFields:
+          type: integer
+        conflictFields:
+          type: integer
+        globalScore:
+          type: ["number", "null"]
+        dictionariesByStatus:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatusCount"
+        fieldsByClassification:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClassificationCount"
+        recentDictionaries:
+          type: array
+          items:
+            $ref: "#/components/schemas/DictionaryWithMetrics"
+
+    StatusCount:
+      type: object
+      required: [status, count]
+      properties:
+        status:
+          type: string
+        count:
+          type: integer
+
+    ClassificationCount:
+      type: object
+      required: [classification, count]
+      properties:
+        classification:
+          type: string
+        count:
+          type: integer
