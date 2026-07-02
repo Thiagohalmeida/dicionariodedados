@@ -24,9 +24,12 @@ import type {
   Dictionary,
   DictionaryDetail,
   DictionaryImport,
+  DictionaryUpdate,
   DictionaryWithMetrics,
   ExportResult,
+  Field,
   FieldSummary,
+  FieldUpdate,
   FieldWithSummary,
   HealthStatus,
   Validation,
@@ -432,6 +435,77 @@ export const useDeleteDictionary = <TError = ErrorType<void>,
       return useMutation(getDeleteDictionaryMutationOptions(options));
     }
 
+export const getUpdateDictionaryUrl = (id: number,) => {
+
+
+
+
+  return `/api/dictionaries/${id}`
+}
+
+/**
+ * @summary Update dictionary metadata
+ */
+export const updateDictionary = async (id: number,
+    dictionaryUpdate: DictionaryUpdate, options?: RequestInit): Promise<Dictionary> => {
+
+  return customFetch<Dictionary>(getUpdateDictionaryUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(dictionaryUpdate)
+  }
+);}
+
+
+
+
+export const getUpdateDictionaryMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateDictionary>>, TError,{id: number;data: BodyType<DictionaryUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateDictionary>>, TError,{id: number;data: BodyType<DictionaryUpdate>}, TContext> => {
+
+const mutationKey = ['updateDictionary'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateDictionary>>, {id: number;data: BodyType<DictionaryUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateDictionary(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateDictionaryMutationResult = NonNullable<Awaited<ReturnType<typeof updateDictionary>>>
+    export type UpdateDictionaryMutationBody = BodyType<DictionaryUpdate>
+    export type UpdateDictionaryMutationError = ErrorType<void>
+
+    /**
+ * @summary Update dictionary metadata
+ */
+export const useUpdateDictionary = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateDictionary>>, TError,{id: number;data: BodyType<DictionaryUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateDictionary>>,
+        TError,
+        {id: number;data: BodyType<DictionaryUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateDictionaryMutationOptions(options));
+    }
+
 export const getExportDictionaryUrl = (id: number,) => {
 
 
@@ -508,6 +582,77 @@ export function useExportDictionary<TData = Awaited<ReturnType<typeof exportDict
 
 
 
+
+export const getUpdateFieldUrl = (id: number,) => {
+
+
+
+
+  return `/api/fields/${id}`
+}
+
+/**
+ * @summary Update field metadata
+ */
+export const updateField = async (id: number,
+    fieldUpdate: FieldUpdate, options?: RequestInit): Promise<Field> => {
+
+  return customFetch<Field>(getUpdateFieldUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(fieldUpdate)
+  }
+);}
+
+
+
+
+export const getUpdateFieldMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateField>>, TError,{id: number;data: BodyType<FieldUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateField>>, TError,{id: number;data: BodyType<FieldUpdate>}, TContext> => {
+
+const mutationKey = ['updateField'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateField>>, {id: number;data: BodyType<FieldUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateField(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateFieldMutationResult = NonNullable<Awaited<ReturnType<typeof updateField>>>
+    export type UpdateFieldMutationBody = BodyType<FieldUpdate>
+    export type UpdateFieldMutationError = ErrorType<void>
+
+    /**
+ * @summary Update field metadata
+ */
+export const useUpdateField = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateField>>, TError,{id: number;data: BodyType<FieldUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateField>>,
+        TError,
+        {id: number;data: BodyType<FieldUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateFieldMutationOptions(options));
+    }
 
 export const getSubmitValidationUrl = (id: number,) => {
 

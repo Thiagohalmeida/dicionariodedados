@@ -130,6 +130,36 @@ export const DeleteDictionaryResponse = zod.void()
 
 
 /**
+ * @summary Update dictionary metadata
+ */
+export const UpdateDictionaryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+
+
+
+export const UpdateDictionaryBody = zod.object({
+  "processo": zod.string().min(1).optional(),
+  "categoria": zod.string().min(1).optional(),
+  "tabela": zod.string().min(1).optional()
+})
+
+export const UpdateDictionaryResponse = zod.object({
+  "id": zod.number(),
+  "processo": zod.string(),
+  "categoria": zod.string(),
+  "tabela": zod.string(),
+  "version": zod.number(),
+  "parentId": zod.number().nullish(),
+  "status": zod.enum(['pending', 'in_review', 'validated']),
+  "createdAt": zod.string()
+})
+
+
+/**
  * @summary Export validated dictionary as JSON (add ?format=csv for CSV)
  */
 export const ExportDictionaryParams = zod.object({
@@ -140,6 +170,36 @@ export const ExportDictionaryResponse = zod.object({
   "format": zod.string(),
   "filename": zod.string(),
   "content": zod.string()
+})
+
+
+/**
+ * @summary Update field metadata
+ */
+export const UpdateFieldParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateFieldBody = zod.object({
+  "campoOrigem": zod.string().optional(),
+  "descricao": zod.string().optional(),
+  "origem": zod.string().optional(),
+  "periodicidade": zod.string().optional(),
+  "campoTecnico": zod.string().optional(),
+  "tipoDado": zod.string().optional(),
+  "chave": zod.boolean().optional()
+})
+
+export const UpdateFieldResponse = zod.object({
+  "id": zod.number(),
+  "dictionaryId": zod.number(),
+  "campoOrigem": zod.string(),
+  "descricao": zod.string(),
+  "origem": zod.string(),
+  "periodicidade": zod.string(),
+  "campoTecnico": zod.string(),
+  "tipoDado": zod.string(),
+  "chave": zod.boolean()
 })
 
 

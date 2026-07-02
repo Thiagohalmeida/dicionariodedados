@@ -1,12 +1,33 @@
-import React from "react";
-import { useListDictionaries } from "@workspace/api-client-react";
+import React, { useState } from "react";
+import { useListDictionaries, useDeleteDictionary, useUpdateDictionary, getListDictionariesQueryKey } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Plus, Trash2, Pencil } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 
 function traduzirStatus(status: string) {
   const map: Record<string, string> = {
@@ -17,8 +38,66 @@ function traduzirStatus(status: string) {
   return map[status] ?? status;
 }
 
+type DictItem = {
+  id: number;
+  tabela: string;
+  processo: string;
+  categoria: string;
+  status: string;
+  totalFields: number;
+  approvedFields: number;
+  avgScore: number | null;
+};
+
 export default function DictionariesList() {
   const { data, isLoading } = useListDictionaries();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const deleteMutation = useDeleteDictionary();
+  const updateMutation = useUpdateDictionary();
+
+  const [deleteTarget, setDeleteTarget] = useState<DictItem | null>(null);
+  const [editTarget, setEditTarget] = useState<DictItem | null>(null);
+  const [editForm, setEditForm] = useState({ processo: "", categoria: "", tabela: "" });
+
+  function openEdit(dict: DictItem) {
+    setEditForm({ processo: dict.processo, categoria: dict.categoria, tabela: dict.tabela });
+    setEditTarget(dict);
+  }
+
+  function handleDelete() {
+    if (!deleteTarget) return;
+    deleteMutation.mutate({ id: deleteTarget.id }, {
+      onSuccess: () => {
+        toast({ title: "Dicionário excluído", description: `"${deleteTarget.tabela}" foi removido com sucesso.` });
+        queryClient.invalidateQueries({ queryKey: getListDictionariesQueryKey() });
+        setDeleteTarget(null);
+      },
+      onError: () => {
+        toast({ title: "Erro ao excluir", description: "Não foi possível excluir o dicionário.", variant: "destructive" });
+        setDeleteTarget(null);
+      },
+    });
+  }
+
+  function handleUpdate() {
+    if (!editTarget) return;
+    if (!editForm.processo.trim() || !editForm.categoria.trim() || !editForm.tabela.trim()) {
+      toast({ title: "Campos obrigatórios", description: "Preencha todos os campos.", variant: "destructive" });
+      return;
+    }
+    updateMutation.mutate({ id: editTarget.id, data: editForm }, {
+      onSuccess: () => {
+        toast({ title: "Dicionário atualizado", description: "As informações foram salvas com sucesso." });
+        queryClient.invalidateQueries({ queryKey: getListDictionariesQueryKey() });
+        setEditTarget(null);
+      },
+      onError: () => {
+        toast({ title: "Erro ao atualizar", description: "Não foi possível salvar as alterações.", variant: "destructive" });
+      },
+    });
+  }
 
   if (isLoading) {
     return <div className="p-8 text-center text-muted-foreground">Carregando dicionários...</div>;
@@ -70,9 +149,29 @@ export default function DictionariesList() {
                     {dict.avgScore ? dict.avgScore.toFixed(1) : "-"}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/dictionaries/${dict.id}`}>Validar</Link>
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/dictionaries/${dict.id}`}>Validar</Link>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                        title="Editar"
+                        onClick={() => openEdit(dict as DictItem)}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        title="Excluir"
+                        onClick={() => setDeleteTarget(dict as DictItem)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               );
@@ -87,6 +186,73 @@ export default function DictionariesList() {
           </TableBody>
         </Table>
       </Card>
+
+      {/* Dialog de exclusão */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir dicionário?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O dicionário <strong>"{deleteTarget?.tabela}"</strong> e todos os seus campos e validações serão
+              removidos permanentemente. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleDelete}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog de edição */}
+      <Dialog open={!!editTarget} onOpenChange={(open) => { if (!open) setEditTarget(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Dicionário</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-processo">Processo</Label>
+              <Input
+                id="edit-processo"
+                value={editForm.processo}
+                onChange={(e) => setEditForm({ ...editForm, processo: e.target.value })}
+                placeholder="Ex: Compras Hospitalares"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-categoria">Categoria</Label>
+              <Input
+                id="edit-categoria"
+                value={editForm.categoria}
+                onChange={(e) => setEditForm({ ...editForm, categoria: e.target.value })}
+                placeholder="Ex: RFQ / Medicamentos"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-tabela">Nome da Tabela</Label>
+              <Input
+                id="edit-tabela"
+                value={editForm.tabela}
+                onChange={(e) => setEditForm({ ...editForm, tabela: e.target.value })}
+                placeholder="Ex: rfp_item"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditTarget(null)}>Cancelar</Button>
+            <Button onClick={handleUpdate} disabled={updateMutation.isPending}>
+              {updateMutation.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

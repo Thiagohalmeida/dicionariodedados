@@ -8,11 +8,68 @@ import {
   GetFieldSummaryParams,
   GetFieldSummaryResponse,
   GetCriticalFieldsResponse,
+  UpdateFieldParams,
+  UpdateFieldBody,
+  UpdateFieldResponse,
 } from "@workspace/api-zod";
 import { computeFieldSummary, getFieldsWithSummaries } from "../lib/summary";
 import { insertValidation } from "../lib/validation";
 
 const router: IRouter = Router();
+
+router.patch("/fields/:id", async (req, res): Promise<void> => {
+  const params = UpdateFieldParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const parsed = UpdateFieldBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const [field] = await db.select().from(fieldsTable).where(eq(fieldsTable.id, params.data.id));
+  if (!field) {
+    res.status(404).json({ error: "Field not found" });
+    return;
+  }
+
+  const updates: Record<string, unknown> = {};
+  if (parsed.data.campoOrigem !== undefined) updates.campoOrigem = parsed.data.campoOrigem;
+  if (parsed.data.descricao !== undefined) updates.descricao = parsed.data.descricao;
+  if (parsed.data.origem !== undefined) updates.origem = parsed.data.origem;
+  if (parsed.data.periodicidade !== undefined) updates.periodicidade = parsed.data.periodicidade;
+  if (parsed.data.campoTecnico !== undefined) updates.campoTecnico = parsed.data.campoTecnico;
+  if (parsed.data.tipoDado !== undefined) updates.tipoDado = parsed.data.tipoDado;
+  if (parsed.data.chave !== undefined) updates.chave = parsed.data.chave;
+
+  if (Object.keys(updates).length === 0) {
+    res.status(400).json({ error: "No fields to update" });
+    return;
+  }
+
+  const [updated] = await db
+    .update(fieldsTable)
+    .set(updates)
+    .where(eq(fieldsTable.id, params.data.id))
+    .returning();
+
+  res.json(
+    UpdateFieldResponse.parse({
+      id: updated.id,
+      dictionaryId: updated.dictionaryId,
+      campoOrigem: updated.campoOrigem,
+      descricao: updated.descricao,
+      origem: updated.origem,
+      periodicidade: updated.periodicidade,
+      campoTecnico: updated.campoTecnico,
+      tipoDado: updated.tipoDado,
+      chave: updated.chave,
+    })
+  );
+});
 
 router.post("/fields/:id/validate", async (req, res): Promise<void> => {
   const params = SubmitValidationParams.safeParse(req.params);

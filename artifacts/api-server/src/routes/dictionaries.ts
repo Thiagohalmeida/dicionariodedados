@@ -10,6 +10,9 @@ import {
   DeleteDictionaryParams,
   ExportDictionaryParams,
   ExportDictionaryResponse,
+  UpdateDictionaryParams,
+  UpdateDictionaryBody,
+  UpdateDictionaryResponse,
 } from "@workspace/api-zod";
 import { logger } from "../lib/logger";
 import { computeFieldSummary, getFieldsWithSummaries } from "../lib/summary";
@@ -135,6 +138,56 @@ router.get("/dictionaries/:id", async (req, res): Promise<void> => {
       status: dict.status,
       createdAt: dict.createdAt.toISOString(),
       fields: fieldsWithSummaries,
+    })
+  );
+});
+
+router.patch("/dictionaries/:id", async (req, res): Promise<void> => {
+  const params = UpdateDictionaryParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const parsed = UpdateDictionaryBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const updates: Record<string, unknown> = {};
+  if (parsed.data.processo !== undefined) updates.processo = parsed.data.processo;
+  if (parsed.data.categoria !== undefined) updates.categoria = parsed.data.categoria;
+  if (parsed.data.tabela !== undefined) updates.tabela = parsed.data.tabela;
+
+  if (Object.keys(updates).length === 0) {
+    res.status(400).json({ error: "No fields to update" });
+    return;
+  }
+
+  const [dict] = await db
+    .update(dictionariesTable)
+    .set(updates)
+    .where(eq(dictionariesTable.id, params.data.id))
+    .returning();
+
+  if (!dict) {
+    res.status(404).json({ error: "Dictionary not found" });
+    return;
+  }
+
+  req.log.info({ dictionaryId: dict.id }, "Dictionary updated");
+
+  res.json(
+    UpdateDictionaryResponse.parse({
+      id: dict.id,
+      processo: dict.processo,
+      categoria: dict.categoria,
+      tabela: dict.tabela,
+      version: dict.version,
+      parentId: dict.parentId ?? null,
+      status: dict.status,
+      createdAt: dict.createdAt.toISOString(),
     })
   );
 });

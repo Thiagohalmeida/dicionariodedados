@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useGetDictionary, useSubmitValidation, getGetDictionaryQueryKey, useExportDictionary } from "@workspace/api-client-react";
+import { useGetDictionary, useSubmitValidation, useUpdateField, getGetDictionaryQueryKey, useExportDictionary } from "@workspace/api-client-react";
 import { useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -11,7 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Download } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Download, Pencil } from "lucide-react";
 
 function traduzirStatus(status: string) {
   const map: Record<string, string> = {
@@ -40,6 +42,7 @@ export default function DictionaryDetail() {
   const id = parseInt(params.id || "0", 10);
   const { data: dict, isLoading } = useGetDictionary(id, { query: { enabled: !!id, queryKey: getGetDictionaryQueryKey(id) } });
   const [selectedField, setSelectedField] = useState<any>(null);
+  const [editingField, setEditingField] = useState<any>(null);
 
   const { refetch: exportDict, isFetching: isExporting } = useExportDictionary(id, { query: { enabled: false, queryKey: ['export', id] } });
 
@@ -116,8 +119,19 @@ export default function DictionaryDetail() {
                     </Badge>
                   </TableCell>
                   <TableCell>{field.summary?.score ?? "-"}</TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm">Validar</Button>
+                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => setSelectedField(field)}>Validar</Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                        title="Editar campo"
+                        onClick={() => setEditingField(field)}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -133,7 +147,101 @@ export default function DictionaryDetail() {
           dictId={id}
         />
       )}
+
+      {editingField && (
+        <EditFieldDialog
+          field={editingField}
+          dictId={id}
+          onClose={() => setEditingField(null)}
+        />
+      )}
     </div>
+  );
+}
+
+function EditFieldDialog({ field, dictId, onClose }: { field: any; dictId: number; onClose: () => void }) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const updateField = useUpdateField();
+
+  const [form, setForm] = useState({
+    campoOrigem: field.campoOrigem ?? "",
+    descricao: field.descricao ?? "",
+    origem: field.origem ?? "",
+    periodicidade: field.periodicidade ?? "",
+    campoTecnico: field.campoTecnico ?? "",
+    tipoDado: field.tipoDado ?? "",
+    chave: field.chave ?? false,
+  });
+
+  function handleSave() {
+    updateField.mutate({ id: field.id, data: form }, {
+      onSuccess: () => {
+        toast({ title: "Campo atualizado", description: "As informações do campo foram salvas." });
+        queryClient.invalidateQueries({ queryKey: getGetDictionaryQueryKey(dictId) });
+        onClose();
+      },
+      onError: () => {
+        toast({ title: "Erro ao salvar", description: "Não foi possível salvar as alterações.", variant: "destructive" });
+      },
+    });
+  }
+
+  return (
+    <Dialog open={true} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Editar Campo: {field.campoOrigem}</DialogTitle>
+        </DialogHeader>
+        <div className="grid grid-cols-2 gap-4 py-2">
+          <div className="space-y-1.5">
+            <Label>Campo de Origem</Label>
+            <Input value={form.campoOrigem} onChange={(e) => setForm({ ...form, campoOrigem: e.target.value })} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Campo Técnico</Label>
+            <Input value={form.campoTecnico} onChange={(e) => setForm({ ...form, campoTecnico: e.target.value })} className="font-mono" />
+          </div>
+          <div className="col-span-2 space-y-1.5">
+            <Label>Descrição</Label>
+            <Input value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Tipo de Dado</Label>
+            <Input value={form.tipoDado} onChange={(e) => setForm({ ...form, tipoDado: e.target.value })} className="font-mono" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Origem</Label>
+            <Input value={form.origem} onChange={(e) => setForm({ ...form, origem: e.target.value })} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Periodicidade</Label>
+            <Input value={form.periodicidade} onChange={(e) => setForm({ ...form, periodicidade: e.target.value })} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Chave Primária</Label>
+            <Select
+              value={form.chave ? "sim" : "nao"}
+              onValueChange={(v) => setForm({ ...form, chave: v === "sim" })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="sim">Sim</SelectItem>
+                <SelectItem value="nao">Não</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={handleSave} disabled={updateField.isPending}>
+            {updateField.isPending ? "Salvando..." : "Salvar Alterações"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

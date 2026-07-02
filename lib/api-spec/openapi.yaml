@@ -102,6 +102,34 @@ paths:
         "404":
           description: Not found
 
+    patch:
+      operationId: updateDictionary
+      tags: [dictionaries]
+      summary: Update dictionary metadata
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DictionaryUpdate"
+      responses:
+        "200":
+          description: Updated dictionary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dictionary"
+        "400":
+          description: Invalid input
+        "404":
+          description: Not found
+
   /dictionaries/{id}/export:
     get:
       operationId: exportDictionary
@@ -120,6 +148,35 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ExportResult"
+        "404":
+          description: Not found
+
+  /fields/{id}:
+    patch:
+      operationId: updateField
+      tags: [fields]
+      summary: Update field metadata
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FieldUpdate"
+      responses:
+        "200":
+          description: Updated field
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Field"
+        "400":
+          description: Invalid input
         "404":
           description: Not found
 
@@ -417,6 +474,37 @@ components:
           type: number
         createdAt:
           type: string
+
+    DictionaryUpdate:
+      type: object
+      properties:
+        processo:
+          type: string
+          minLength: 1
+        categoria:
+          type: string
+          minLength: 1
+        tabela:
+          type: string
+          minLength: 1
+
+    FieldUpdate:
+      type: object
+      properties:
+        campoOrigem:
+          type: string
+        descricao:
+          type: string
+        origem:
+          type: string
+        periodicidade:
+          type: string
+        campoTecnico:
+          type: string
+        tipoDado:
+          type: string
+        chave:
+          type: boolean
 
     DictionaryImport:
       type: object

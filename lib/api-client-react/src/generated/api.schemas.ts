@@ -173,6 +173,25 @@ export interface Validation {
   createdAt: string;
 }
 
+export interface DictionaryUpdate {
+  /** @minLength 1 */
+  processo?: string;
+  /** @minLength 1 */
+  categoria?: string;
+  /** @minLength 1 */
+  tabela?: string;
+}
+
+export interface FieldUpdate {
+  campoOrigem?: string;
+  descricao?: string;
+  origem?: string;
+  periodicidade?: string;
+  campoTecnico?: string;
+  tipoDado?: string;
+  chave?: boolean;
+}
+
 export interface CampoInput {
   campo_origem: string;
   descricao: string;
