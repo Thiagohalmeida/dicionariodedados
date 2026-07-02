@@ -154,6 +154,7 @@ export function OnboardingModal() {
       const timer = setTimeout(() => setOpen(true), 600);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, []);
 
   function finish() {

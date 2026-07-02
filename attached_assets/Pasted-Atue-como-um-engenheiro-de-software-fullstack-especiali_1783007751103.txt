@@ -1,0 +1,245 @@
+Atue como um engenheiro de software fullstack especializado em Node.js, TypeScript e construção de micro SaaS.
+
+Contexto:
+Já existe um módulo de validação funcional no sistema.
+Estamos criando uma nova funcionalidade de ingestão de Excel para gerar JSON estruturado.
+
+---
+
+# ✅ OBJETIVO
+
+Criar um módulo chamado:
+
+excel-ingestion-engine
+
+Responsável por:
+
+1. Coletar inputs do usuário
+2. Ler Excel
+3. Gerar JSON estruturado
+4. Enviar para módulo de validação existente
+5. Permitir exportação (DDL + Data Contract)
+
+---
+
+# ✅ 1. FLUXO DO USUÁRIO (NOVA FEATURE)
+
+Antes do upload, o sistema deve solicitar:
+
+- processo (string) → ex: rfq, contrato, compra
+- categoria (string) → ex: medicamentos, laboratorio
+- nome_da_tabela (opcional)
+- aba_preferencial (opcional)
+
+---
+
+# ✅ 2. REGRAS DE INPUT
+
+- Se nome_da_tabela não for informado:
+  → gerar automaticamente baseado em lógica:
+    rfq + categoria + entidade
+
+Exemplo:
+rfq_laboratorio_item
+
+---
+
+# ✅ 3. FUNÇÃO PRINCIPAL
+
+parseExcelToDataDictionary(file, contextoUsuario)
+
+---
+
+# ✅ 4. CONTEXTO DE ENTRADA
+
+contextoUsuario:
+
+{
+  processo: string,
+  categoria: string,
+  tabela: string | null,
+  aba_preferencial: string | null
+}
+
+---
+
+# ✅ 5. DETECÇÃO DA ABA
+
+Se aba_preferencial for preenchida:
+→ usar diretamente
+
+Se NÃO for:
+→ detectar automaticamente com regras:
+
+Selecionar aba que:
+
+✅ possui colunas como:
+- material / produto
+- fornecedor
+- preço / valor
+- unidade / estado
+
+✅ possui múltiplas linhas
+
+❌ ignorar abas:
+- resumo
+- dashboards
+- pivots
+- projeções
+- campos com %
+- totais
+
+---
+
+# ✅ 6. PROCESSAMENTO
+
+- Ler apenas a aba correta
+- Extrair headers
+- Converter nomes para snake_case
+- Identificar tipos de dados automaticamente
+
+---
+
+# ✅ 7. FILTRO DE RUÍDO (CRÍTICO)
+
+Remover automaticamente:
+
+- colunas com "%"
+- colunas com "∆", "variação"
+- métricas derivadas
+- projeções
+
+---
+
+# ✅ 8. SEPARAÇÃO DE ENTIDADES
+
+Separar automaticamente em tabelas:
+
+- rfq
+- rfq_item
+- fornecedor
+- cotacao
+
+---
+
+# ✅ 9. GERAÇÃO DO JSON (FORMATO OBRIGATÓRIO)
+
+{
+  "processo": contextoUsuario.processo,
+  "categoria": contextoUsuario.categoria,
+  "tabela": "nome_da_tabela",
+  "campos": [
+    {
+      "campo_origem": "...",
+      "descricao": "...",
+      "origem": "arquivo | aba",
+      "periodicidade": "mensal",
+      "campo_tecnico": "...",
+      "tipo_dado": "string | decimal | int | date",
+      "chave": "pk | fk | null"
+    }
+  ]
+}
+
+---
+
+# ✅ 10. REGRA CRÍTICA
+
+Nunca usar arrays como campos:
+
+❌ ["campo", "descricao"]
+
+✅ sempre objeto JSON
+
+---
+
+# ✅ 11. INTEGRAÇÃO COM SISTEMA EXISTENTE
+
+Após gerar JSON:
+
+- enviar automaticamente para módulo de validação
+- endpoint:
+
+POST /api/dictionaries/from-excel
+
+---
+
+# ✅ 12. EXPORTAÇÃO
+
+Criar endpoints:
+
+GET /api/export/ddl
+GET /api/export/data-contract
+GET /api/export/json
+
+---
+
+## ✅ DDL
+
+CREATE TABLE nome_tabela (
+  campo VARCHAR,
+  valor DECIMAL
+);
+
+---
+
+## ✅ DATA CONTRACT
+
+{
+  "campo": "preco",
+  "tipo": "decimal",
+  "descricao": "...",
+  "obrigatorio": true
+}
+
+---
+
+# ✅ 13. LOGS
+
+Registrar:
+
+- arquivo processado
+- aba utilizada
+- aba ignorada
+- motivo
+
+---
+
+# ✅ 14. ESTRUTURA
+
+/src/modules/excel-ingestion-engine
+/src/modules/export
+/src/modules/validation (já existente)
+
+---
+
+# ✅ 15. TECNOLOGIA
+
+- Node.js
+- TypeScript
+- exceljs ou xlsx
+
+---
+
+# ✅ 16. RESULTADO FINAL
+
+Fluxo:
+
+Usuário informa contexto
+→ upload Excel
+→ sistema identifica aba
+→ gera JSON
+→ envia para validação existente
+→ permite exportação
+
+---
+
+# ✅ IMPORTANTE
+
+O sistema deve funcionar para múltiplos processos:
+- rfq
+- contratos
+- compras
+- qualquer domínio
+
+Sem hardcode de regras por planilha.

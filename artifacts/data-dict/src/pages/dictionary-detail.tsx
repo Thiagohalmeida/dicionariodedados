@@ -13,7 +13,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, Pencil } from "lucide-react";
+import { Download, Pencil, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 function traduzirStatus(status: string) {
   const map: Record<string, string> = {
@@ -44,22 +51,41 @@ export default function DictionaryDetail() {
   const [selectedField, setSelectedField] = useState<any>(null);
   const [editingField, setEditingField] = useState<any>(null);
 
-  const { refetch: exportDict, isFetching: isExporting } = useExportDictionary(id, { query: { enabled: false, queryKey: ['export', id] } });
+  const { isFetching: isExporting } = useExportDictionary(id, { query: { enabled: false, queryKey: ['export', id] } });
+  const [isExportingExtra, setIsExportingExtra] = useState(false);
 
-  const handleExport = async () => {
-    const result = await exportDict();
-    if (result.data) {
-      const blob = new Blob([result.data.content], { type: result.data.format === 'csv' ? 'text/csv' : 'application/json' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = result.data.filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+  const handleExport = async (format?: "csv") => {
+    const url = `${import.meta.env.BASE_URL?.replace(/\/$/, "") ?? ""}/api/dictionaries/${id}/export${format === "csv" ? "?format=csv" : ""}`;
+    const res = await fetch(url);
+    if (!res.ok) return;
+    const data = await res.json();
+    triggerDownload(data.content, data.filename, format === "csv" ? "text/csv" : "application/json");
+  };
+
+  const handleExportExtra = async (type: "ddl" | "data-contract") => {
+    setIsExportingExtra(true);
+    try {
+      const base = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
+      const res = await fetch(`${base}/api/dictionaries/${id}/export/${type}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      triggerDownload(data.content, data.filename, type === "ddl" ? "text/plain" : "application/json");
+    } finally {
+      setIsExportingExtra(false);
     }
   };
+
+  function triggerDownload(content: string, filename: string, mimeType: string) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }
 
   if (isLoading) return <div className="p-8">Carregando...</div>;
   if (!dict) return <div className="p-8">Dicionário não encontrado.</div>;
@@ -73,10 +99,30 @@ export default function DictionaryDetail() {
         </div>
         <div className="flex gap-4 items-center">
           <Badge variant="outline" className="text-lg py-1 px-3">{traduzirStatus(dict.status)}</Badge>
-          <Button variant="outline" onClick={handleExport} disabled={isExporting}>
-            <Download className="h-4 w-4 mr-2" />
-            Exportar
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" disabled={isExporting || isExportingExtra}>
+                <Download className="h-4 w-4 mr-2" />
+                Exportar
+                <ChevronDown className="h-3.5 w-3.5 ml-1 opacity-60" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => handleExport()}>
+                JSON validado
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport("csv")}>
+                CSV
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleExportExtra("ddl")}>
+                DDL (CREATE TABLE)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExportExtra("data-contract")}>
+                Data Contract (JSON)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
