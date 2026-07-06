@@ -2,12 +2,46 @@ import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
 import { db, dictionariesTable, fieldsTable } from "@workspace/db";
 import { GetDashboardResponse } from "@workspace/api-zod";
-import { computeFieldSummary } from "../lib/summary";
+import { computeFieldSummariesBatch } from "../lib/summary";
 
 const router: IRouter = Router();
 
 router.get("/dashboard", async (_req, res): Promise<void> => {
   const dicts = await db.select().from(dictionariesTable).orderBy(dictionariesTable.createdAt);
+
+  if (dicts.length === 0) {
+    res.json(
+      GetDashboardResponse.parse({
+        totalDictionaries: 0,
+        totalFields: 0,
+        approvedFields: 0,
+        rejectedFields: 0,
+        pendingFields: 0,
+        conflictFields: 0,
+        globalScore: null,
+        dictionariesByStatus: [],
+        fieldsByClassification: [],
+        recentDictionaries: [],
+      })
+    );
+    return;
+  }
+
+  const allFields = await db
+    .select()
+    .from(fieldsTable)
+    .where(eq(fieldsTable.dictionaryId, dicts[0].id));
+
+  const fieldsByDict = new Map<number, typeof allFields>();
+  const allFieldIds: number[] = [];
+
+  for (const dict of dicts) {
+    const dictFields = await db.select().from(fieldsTable).where(eq(fieldsTable.dictionaryId, dict.id));
+    fieldsByDict.set(dict.id, dictFields);
+    for (const f of dictFields) allFieldIds.push(f.id);
+  }
+
+  const allSummaries = await computeFieldSummariesBatch(allFieldIds);
 
   let totalFields = 0;
   let approvedFields = 0;
@@ -34,8 +68,7 @@ router.get("/dashboard", async (_req, res): Promise<void> => {
 
   for (const dict of dicts) {
     statusCounts[dict.status] = (statusCounts[dict.status] ?? 0) + 1;
-    const fields = await db.select().from(fieldsTable).where(eq(fieldsTable.dictionaryId, dict.id));
-    totalFields += fields.length;
+    const fields = fieldsByDict.get(dict.id) ?? [];
 
     let dictApproved = 0;
     let dictRejected = 0;
@@ -44,7 +77,7 @@ router.get("/dashboard", async (_req, res): Promise<void> => {
     let dictScoredFields = 0;
 
     for (const field of fields) {
-      const summary = await computeFieldSummary(field.id);
+      const summary = allSummaries.get(field.id)!;
       classificationCounts[summary.classification] = (classificationCounts[summary.classification] ?? 0) + 1;
 
       if (summary.statusFinal === "approved") { approvedFields++; dictApproved++; }

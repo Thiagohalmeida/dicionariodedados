@@ -19,6 +19,18 @@ import {
 } from "lucide-react";
 
 const STORAGE_KEY = "validador-dd-onboarding-done";
+const SHOW_ONBOARDING_EVENT = "validador-dd:show-onboarding";
+
+let openOnboardingFn: (() => void) | null = null;
+
+export function showOnboarding() {
+  localStorage.removeItem(STORAGE_KEY);
+  window.dispatchEvent(new CustomEvent(SHOW_ONBOARDING_EVENT));
+}
+
+export function useResetOnboarding() {
+  return showOnboarding;
+}
 
 const slides = [
   {
@@ -149,12 +161,20 @@ export function OnboardingModal() {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
+    openOnboardingFn = () => setOpen(true);
+
     const done = localStorage.getItem(STORAGE_KEY);
     if (!done) {
       const timer = setTimeout(() => setOpen(true), 600);
       return () => clearTimeout(timer);
     }
     return undefined;
+  }, []);
+
+  useEffect(() => {
+    const handler = () => setOpen(true);
+    window.addEventListener(SHOW_ONBOARDING_EVENT, handler);
+    return () => window.removeEventListener(SHOW_ONBOARDING_EVENT, handler);
   }, []);
 
   function finish() {
@@ -247,11 +267,4 @@ export function OnboardingModal() {
       </DialogContent>
     </Dialog>
   );
-}
-
-export function useResetOnboarding() {
-  return () => {
-    localStorage.removeItem(STORAGE_KEY);
-    window.location.reload();
-  };
 }

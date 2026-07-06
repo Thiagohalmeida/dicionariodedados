@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db, fieldsTable, validationsTable } from "@workspace/db";
 
 export type FieldSummary = {
@@ -24,12 +24,7 @@ function classify(score: number | null, totalValidations: number): "pending" | "
   return "critical";
 }
 
-export async function computeFieldSummary(fieldId: number): Promise<FieldSummary> {
-  const validations = await db
-    .select()
-    .from(validationsTable)
-    .where(eq(validationsTable.fieldId, fieldId));
-
+function computeSummaryFromValidations(fieldId: number, validations: typeof import("@workspace/db").validationsTable.$inferSelect[]): FieldSummary {
   if (validations.length === 0) {
     return {
       fieldId,
@@ -88,27 +83,59 @@ export async function computeFieldSummary(fieldId: number): Promise<FieldSummary
   };
 }
 
+export async function computeFieldSummariesBatch(fieldIds: number[]): Promise<Map<number, FieldSummary>> {
+  if (fieldIds.length === 0) return new Map();
+
+  const validations = await db
+    .select()
+    .from(validationsTable)
+    .where(inArray(validationsTable.fieldId, fieldIds));
+
+  const validationsByField = new Map<number, typeof validations>();
+  for (const v of validations) {
+    const list = validationsByField.get(v.fieldId) ?? [];
+    list.push(v);
+    validationsByField.set(v.fieldId, list);
+  }
+
+  const result = new Map<number, FieldSummary>();
+  for (const fieldId of fieldIds) {
+    const fieldValidations = validationsByField.get(fieldId) ?? [];
+    result.set(fieldId, computeSummaryFromValidations(fieldId, fieldValidations as any));
+  }
+  return result;
+}
+
+export async function computeFieldSummary(fieldId: number): Promise<FieldSummary> {
+  const validations = await db
+    .select()
+    .from(validationsTable)
+    .where(eq(validationsTable.fieldId, fieldId));
+
+  return computeSummaryFromValidations(fieldId, validations as any);
+}
+
 export async function getFieldsWithSummaries(dictionaryId: number) {
   const fields = await db
     .select()
     .from(fieldsTable)
     .where(eq(fieldsTable.dictionaryId, dictionaryId));
 
-  return Promise.all(
-    fields.map(async (f) => {
-      const summary = await computeFieldSummary(f.id);
-      return {
-        id: f.id,
-        dictionaryId: f.dictionaryId,
-        campoOrigem: f.campoOrigem,
-        descricao: f.descricao,
-        origem: f.origem,
-        periodicidade: f.periodicidade,
-        campoTecnico: f.campoTecnico,
-        tipoDado: f.tipoDado,
-        chave: f.chave,
-        summary,
-      };
-    })
-  );
+  if (fields.length === 0) return [];
+
+  const fieldIds = fields.map((f) => f.id);
+  const summaries = await computeFieldSummariesBatch(fieldIds);
+
+  return fields.map((f) => ({
+    id: f.id,
+    dictionaryId: f.dictionaryId,
+    campoOrigem: f.campoOrigem,
+    descricao: f.descricao,
+    origem: f.origem,
+    periodicidade: f.periodicidade,
+    campoTecnico: f.campoTecnico,
+    tipoDado: f.tipoDado,
+    chave: f.chave,
+    summary: summaries.get(f.id)!,
+  }));
 }

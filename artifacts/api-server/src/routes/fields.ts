@@ -12,7 +12,7 @@ import {
   UpdateFieldBody,
   UpdateFieldResponse,
 } from "@workspace/api-zod";
-import { computeFieldSummary, getFieldsWithSummaries } from "../lib/summary";
+import { computeFieldSummary, computeFieldSummariesBatch, getFieldsWithSummaries } from "../lib/summary";
 import { insertValidation } from "../lib/validation";
 
 const router: IRouter = Router();
@@ -20,18 +20,21 @@ const router: IRouter = Router();
 router.patch("/fields/:id", async (req, res): Promise<void> => {
   const params = UpdateFieldParams.safeParse(req.params);
   if (!params.success) {
+    req.log.error({ err: params.error }, "Invalid params");
     res.status(400).json({ error: params.error.message });
     return;
   }
 
   const parsed = UpdateFieldBody.safeParse(req.body);
   if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Invalid body");
     res.status(400).json({ error: parsed.error.message });
     return;
   }
 
   const [field] = await db.select().from(fieldsTable).where(eq(fieldsTable.id, params.data.id));
   if (!field) {
+    req.log.error({ fieldId: params.data.id }, "Field not found");
     res.status(404).json({ error: "Field not found" });
     return;
   }
@@ -46,6 +49,7 @@ router.patch("/fields/:id", async (req, res): Promise<void> => {
   if (parsed.data.chave !== undefined) updates.chave = parsed.data.chave;
 
   if (Object.keys(updates).length === 0) {
+    req.log.error({ fieldId: params.data.id }, "No fields to update");
     res.status(400).json({ error: "No fields to update" });
     return;
   }
@@ -74,18 +78,21 @@ router.patch("/fields/:id", async (req, res): Promise<void> => {
 router.post("/fields/:id/validate", async (req, res): Promise<void> => {
   const params = SubmitValidationParams.safeParse(req.params);
   if (!params.success) {
+    req.log.error({ err: params.error }, "Invalid params");
     res.status(400).json({ error: params.error.message });
     return;
   }
 
   const parsed = SubmitValidationBody.safeParse(req.body);
   if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Invalid body");
     res.status(400).json({ error: parsed.error.message });
     return;
   }
 
   const [field] = await db.select().from(fieldsTable).where(eq(fieldsTable.id, params.data.id));
   if (!field) {
+    req.log.error({ fieldId: params.data.id }, "Field not found");
     res.status(404).json({ error: "Field not found" });
     return;
   }
@@ -130,12 +137,14 @@ router.post("/fields/:id/validate", async (req, res): Promise<void> => {
 router.get("/fields/:id/summary", async (req, res): Promise<void> => {
   const params = GetFieldSummaryParams.safeParse(req.params);
   if (!params.success) {
+    req.log.error({ err: params.error }, "Invalid params");
     res.status(400).json({ error: params.error.message });
     return;
   }
 
   const [field] = await db.select().from(fieldsTable).where(eq(fieldsTable.id, params.data.id));
   if (!field) {
+    req.log.error({ fieldId: params.data.id }, "Field not found");
     res.status(404).json({ error: "Field not found" });
     return;
   }
@@ -146,26 +155,42 @@ router.get("/fields/:id/summary", async (req, res): Promise<void> => {
 
 router.get("/fields/critical", async (_req, res): Promise<void> => {
   const dicts = await db.select().from(dictionariesTable);
-  const result: unknown[] = [];
 
+  if (dicts.length === 0) {
+    res.json(GetCriticalFieldsResponse.parse([]));
+    return;
+  }
+
+  const allFields: typeof fieldsTable.$inferSelect[] = [];
   for (const dict of dicts) {
-    const fields = await db.select().from(fieldsTable).where(eq(fieldsTable.dictionaryId, dict.id));
-    for (const field of fields) {
-      const summary = await computeFieldSummary(field.id);
-      if (summary.classification === "critical") {
-        result.push({
-          id: field.id,
-          dictionaryId: field.dictionaryId,
-          campoOrigem: field.campoOrigem,
-          descricao: field.descricao,
-          origem: field.origem,
-          periodicidade: field.periodicidade,
-          campoTecnico: field.campoTecnico,
-          tipoDado: field.tipoDado,
-          chave: field.chave,
-          summary,
-        });
-      }
+    const dictFields = await db.select().from(fieldsTable).where(eq(fieldsTable.dictionaryId, dict.id));
+    allFields.push(...dictFields);
+  }
+
+  if (allFields.length === 0) {
+    res.json(GetCriticalFieldsResponse.parse([]));
+    return;
+  }
+
+  const fieldIds = allFields.map((f) => f.id);
+  const summaries = await computeFieldSummariesBatch(fieldIds);
+
+  const result: unknown[] = [];
+  for (const field of allFields) {
+    const summary = summaries.get(field.id)!;
+    if (summary.classification === "critical") {
+      result.push({
+        id: field.id,
+        dictionaryId: field.dictionaryId,
+        campoOrigem: field.campoOrigem,
+        descricao: field.descricao,
+        origem: field.origem,
+        periodicidade: field.periodicidade,
+        campoTecnico: field.campoTecnico,
+        tipoDado: field.tipoDado,
+        chave: field.chave,
+        summary,
+      });
     }
   }
 

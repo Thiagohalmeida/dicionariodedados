@@ -14,13 +14,16 @@ O **Validador DD** permite que equipes multidisciplinares — gestores de TI, es
 
 ## Funcionalidades
 
-- **Importação** — Importa dicionários de dados no formato JSON padronizado (processo, categoria, tabela, campos)
-- **Validação colaborativa** — Revisão campo a campo com 5 critérios de qualidade binários (sim/não)
-- **Score automático** — Cada critério atendido vale 20 pontos (máx. 100); classificação em Confiável / Atenção / Crítico
-- **Detecção de conflitos** — Identifica campos com validações aprovadas e reprovadas simultâneas
-- **Dashboard de governança** — Métricas globais: total de dicionários, campos, taxa de aprovação, pontuação média
-- **Campos Críticos** — Visão cruzada de todos os campos com score abaixo de 60 pontos
-- **Exportação** — Download do dicionário validado em JSON ou CSV
+Funcionalidades
+*Importação via JSON* — Importa dicionários de dados no formato JSON padronizado (processo, categoria, tabela, campos)
+*Importação via Excel* — Upload de planilha .xlsx/.xls/.xlsm com detecção automática da aba mais relevante, filtro de colunas de ruído (%, variação, projeções) e inferência automática de tipo de dado
+*Validação colaborativa* — Revisão campo a campo com 5 critérios de qualidade binários (sim/não)
+*Score automático* — Cada critério atendido vale 20 pontos (máx. 100); classificação em Confiável / Atenção / Crítico
+*Detecção de conflitos* — Identifica campos com validações aprovadas e reprovadas simultâneas
+*Dashboard de governança* — Métricas globais: total de dicionários, campos, taxa de aprovação, pontuação média
+*Campos Críticos* — Visão cruzada de todos os campos com score abaixo de 60 pontos
+*Exportação* — Download do dicionário validado em JSON, CSV, DDL (CREATE TABLE) ou Data Contract (JSON estruturado)
+
 
 ---
 
@@ -38,6 +41,7 @@ O **Validador DD** permite que equipes multidisciplinares — gestores de TI, es
 | Frontend | React + Vite + Tailwind CSS + shadcn/ui |
 | Roteamento (client) | wouter |
 | Estado assíncrono | TanStack Query |
+| Ingestão de Excel | ExcelJS + Multer (upload em memória) |
 
 ---
 

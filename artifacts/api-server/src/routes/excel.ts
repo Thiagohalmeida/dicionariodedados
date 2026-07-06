@@ -12,6 +12,7 @@ router.post(
   (req, res, next) => {
     upload.single("file")(req, res, (err) => {
       if (err) {
+        req.log.error({ err }, "Multer upload error");
         res.status(400).json({ error: "Erro ao processar upload: " + (err instanceof Error ? err.message : String(err)) });
         return;
       }
@@ -20,6 +21,7 @@ router.post(
   },
   async (req, res): Promise<void> => {
   if (!req.file) {
+    req.log.error({}, "No file uploaded");
     res.status(400).json({ error: "Arquivo Excel obrigatório." });
     return;
   }
@@ -27,6 +29,7 @@ router.post(
   const { processo, categoria, tabela, aba_preferencial } = req.body as Record<string, string>;
 
   if (!processo?.trim() || !categoria?.trim()) {
+    req.log.error({ processo, categoria }, "Missing required fields");
     res.status(400).json({ error: "Os campos 'processo' e 'categoria' são obrigatórios." });
     return;
   }
@@ -83,10 +86,16 @@ router.post(
 
 router.get("/dictionaries/:id/export/ddl", async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
-  if (isNaN(id)) { res.status(400).json({ error: "ID inválido" }); return; }
+  if (isNaN(id)) {
+    req.log.error({ id: req.params.id }, "Invalid dictionary ID for DDL export");
+    res.status(400).json({ error: "ID inválido" }); return;
+  }
 
   const [dict] = await db.select().from(dictionariesTable).where(eq(dictionariesTable.id, id));
-  if (!dict) { res.status(404).json({ error: "Dicionário não encontrado" }); return; }
+  if (!dict) {
+    req.log.error({ dictionaryId: id }, "Dictionary not found for DDL export");
+    res.status(404).json({ error: "Dicionário não encontrado" }); return;
+  }
 
   const fields = await db.select().from(fieldsTable).where(eq(fieldsTable.dictionaryId, id));
 
@@ -111,10 +120,16 @@ router.get("/dictionaries/:id/export/ddl", async (req, res): Promise<void> => {
 
 router.get("/dictionaries/:id/export/data-contract", async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
-  if (isNaN(id)) { res.status(400).json({ error: "ID inválido" }); return; }
+  if (isNaN(id)) {
+    req.log.error({ id: req.params.id }, "Invalid dictionary ID for data contract export");
+    res.status(400).json({ error: "ID inválido" }); return;
+  }
 
   const [dict] = await db.select().from(dictionariesTable).where(eq(dictionariesTable.id, id));
-  if (!dict) { res.status(404).json({ error: "Dicionário não encontrado" }); return; }
+  if (!dict) {
+    req.log.error({ dictionaryId: id }, "Dictionary not found for data contract export");
+    res.status(404).json({ error: "Dicionário não encontrado" }); return;
+  }
 
   const fields = await db.select().from(fieldsTable).where(eq(fieldsTable.dictionaryId, id));
 

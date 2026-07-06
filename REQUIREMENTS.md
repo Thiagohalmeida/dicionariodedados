@@ -6,9 +6,9 @@ Documento de requisitos funcionais e não-funcionais do produto.
 
 ## Contexto e Objetivo
 
-Processos de aquisição de sistemas de informação hospitalar (licitações públicas e contratações diretas) exigem que os fornecedores entreguem **dicionários de dados** como parte da proposta técnica. Esses documentos precisam ser avaliados por equipes multidisciplinares — especialistas de TI e equipes de compras — para garantir a qualidade e confiabilidade das informações antes da contratação.
+Estamos na área de compras para produtos de medicamentos, Laboratorios, material hospitalar  e nutrição. A área de compra não tem processos de dados estruturados dados e o momento é de  criação dessa governança de dados. A ferramenta tem o objetivo de entender os arquivos que estão no formato excel, entender todos os campos e criar um *dicionário de dados* como parte da proposta técnica. Após a criação desse dicionario, a ferramenta terá a funcionalidade de exportação de arquivos DDL e contrato de dados.  Informações que serão utilizadas para a criação do banco de dados ou equivalente nesse momento de estruturação. 
 
-O **Validador DD** é uma plataforma web de validação colaborativa que estrutura esse processo, gera evidências de governança e produz métricas de qualidade dos dados.
+O **Validador Dados Suprimentos* é uma plataforma web de validação colaborativa que estrutura esse processo, gera evidências de governança e produz métricas de qualidade dos dados.
 
 ---
 
@@ -26,12 +26,22 @@ O **Validador DD** é uma plataforma web de validação colaborativa que estrutu
 
 ## Requisitos Funcionais
 
-### RF01 — Importação de Dicionário de Dados
+### RF01 — Importação de Dicionário de Dados via JSON
 - O sistema deve permitir a importação de dicionários no formato JSON padronizado.
 - O JSON deve conter: `processo`, `categoria`, `tabela` e array `campos[]`.
 - Cada campo deve ter: `nomeTecnico`, `tipo`, `periodicidade`, `chave` (boolean), `descricao`.
 - O sistema deve exibir um botão "Usar exemplo" para facilitar testes com dado de amostra.
 - Após a importação, o dicionário deve aparecer na listagem com status inicial "Pendente".
+
+### RF01B — Importação de Dicionário de Dados via Excel
+- O sistema deve permitir upload de arquivos `.xlsx`, `.xls` ou `.xlsm` (máx. 20 MB) como fonte alternativa de importação.
+- O usuário deve informar `processo` e `categoria` (obrigatórios); `tabela` e `aba_preferencial` são opcionais.
+- O sistema deve detectar automaticamente a aba mais relevante da planilha com base em uma pontuação (volume de linhas, colunas válidas, posição), respeitando a aba preferencial quando informada.
+- O sistema deve filtrar colunas consideradas ruído (cabeçalhos contendo termos como `%`, `∆`, `variação`, `projeção`, `meta`, `budget`).
+- O sistema deve converter os cabeçalhos das colunas para `snake_case` como nome técnico do campo.
+- O sistema deve inferir automaticamente o tipo de dado de cada coluna (`date`, `decimal`, `int` ou `string`) a partir dos valores amostrados.
+- Ao concluir o processamento, o sistema deve exibir um resumo com: aba utilizada, total de colunas lidas, colunas removidas por ruído e abas ignoradas (com motivo).
+- O dicionário resultante deve ser criado com status inicial "Pendente", assim como na importação via JSON.
 
 ### RF02 — Listagem de Dicionários
 - O sistema deve exibir todos os dicionários importados com: nome da tabela, processo, categoria, quantidade de campos, score médio e status.
@@ -76,9 +86,11 @@ O **Validador DD** é uma plataforma web de validação colaborativa que estrutu
 - A listagem deve exibir: nome do campo, dicionário de origem, score e status.
 
 ### RF09 — Exportação de Dicionário
-- O sistema deve permitir exportar o dicionário validado em dois formatos:
+- O sistema deve permitir exportar o dicionário validado em quatro formatos, disponíveis em um menu único de exportação:
   - **JSON** — estrutura completa com campos e validações
   - **CSV** — tabela plana para uso em planilhas
+  - **DDL** — script SQL `CREATE TABLE` com tipos mapeados e marcação de chave primária, para uso direto em modelagem de banco de dados
+  - **Data Contract** — documento JSON estruturado com processo, categoria, tabela e metadados de cada campo (tipo, obrigatoriedade, origem, periodicidade), destinado a times de engenharia de dados
 
 ### RF10 — Página de Apresentação (Sobre)
 - O sistema deve ter uma página pública explicando:
@@ -144,5 +156,7 @@ O **Validador DD** é uma plataforma web de validação colaborativa que estrutu
 |---|---|
 | Dicionário validado (JSON) | Exportação completa com campos e histórico de validações |
 | Dicionário validado (CSV) | Exportação tabular para uso em planilhas e relatórios |
+| Dicionário validado (DDL) | Script `CREATE TABLE` pronto para uso em modelagem de banco de dados |
+| Dicionário validado (Data Contract) | Contrato de dados em JSON estruturado para times de engenharia |
 | Dashboard de governança | Métricas consolidadas para auditoria e acompanhamento |
 | Relatório de campos críticos | Lista de campos que exigem atenção imediata |

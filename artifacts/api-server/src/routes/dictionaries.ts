@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, sql, count, avg } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db, dictionariesTable, fieldsTable, validationsTable } from "@workspace/db";
 import {
   ImportDictionaryBody,
@@ -15,52 +15,69 @@ import {
   UpdateDictionaryResponse,
 } from "@workspace/api-zod";
 import { logger } from "../lib/logger";
-import { computeFieldSummary, getFieldsWithSummaries } from "../lib/summary";
+import { computeFieldSummariesBatch, getFieldsWithSummaries } from "../lib/summary";
 
 const router: IRouter = Router();
 
 router.get("/dictionaries", async (req, res): Promise<void> => {
   const dicts = await db.select().from(dictionariesTable).orderBy(dictionariesTable.createdAt);
 
-  const result = await Promise.all(
-    dicts.map(async (d) => {
-      const fields = await db.select().from(fieldsTable).where(eq(fieldsTable.dictionaryId, d.id));
-      const fieldIds = fields.map((f) => f.id);
+  if (dicts.length === 0) {
+    res.json(ListDictionariesResponse.parse([]));
+    return;
+  }
 
-      let approvedFields = 0;
-      let rejectedFields = 0;
-      let pendingFields = 0;
-      let totalScore = 0;
-      let scoredFields = 0;
+  const allFields: typeof fieldsTable.$inferSelect[] = [];
+  for (const dict of dicts) {
+    const dictFields = await db.select().from(fieldsTable).where(eq(fieldsTable.dictionaryId, dict.id));
+    allFields.push(...dictFields);
+  }
 
-      for (const fId of fieldIds) {
-        const summary = await computeFieldSummary(fId);
-        if (summary.statusFinal === "approved") approvedFields++;
-        else if (summary.statusFinal === "rejected") rejectedFields++;
-        else pendingFields++;
-        if (summary.score !== null) {
-          totalScore += summary.score;
-          scoredFields++;
-        }
+  const fieldsByDict = new Map<number, typeof allFields>();
+  for (const f of allFields) {
+    const list = fieldsByDict.get(f.dictionaryId) ?? [];
+    list.push(f);
+    fieldsByDict.set(f.dictionaryId, list);
+  }
+
+  const allFieldIds = allFields.map((f) => f.id);
+  const allSummaries = await computeFieldSummariesBatch(allFieldIds);
+
+  const result = dicts.map((d) => {
+    const fields = fieldsByDict.get(d.id) ?? [];
+    let approvedFields = 0;
+    let rejectedFields = 0;
+    let pendingFields = 0;
+    let totalScore = 0;
+    let scoredFields = 0;
+
+    for (const f of fields) {
+      const summary = allSummaries.get(f.id)!;
+      if (summary.statusFinal === "approved") approvedFields++;
+      else if (summary.statusFinal === "rejected") rejectedFields++;
+      else pendingFields++;
+      if (summary.score !== null) {
+        totalScore += summary.score;
+        scoredFields++;
       }
+    }
 
-      return {
-        id: d.id,
-        processo: d.processo,
-        categoria: d.categoria,
-        tabela: d.tabela,
-        version: d.version,
-        parentId: d.parentId ?? null,
-        status: d.status,
-        createdAt: d.createdAt.toISOString(),
-        totalFields: fields.length,
-        approvedFields,
-        rejectedFields,
-        pendingFields,
-        avgScore: scoredFields > 0 ? Math.round((totalScore / scoredFields) * 100) / 100 : null,
-      };
-    })
-  );
+    return {
+      id: d.id,
+      processo: d.processo,
+      categoria: d.categoria,
+      tabela: d.tabela,
+      version: d.version,
+      parentId: d.parentId ?? null,
+      status: d.status,
+      createdAt: d.createdAt.toISOString(),
+      totalFields: fields.length,
+      approvedFields,
+      rejectedFields,
+      pendingFields,
+      avgScore: scoredFields > 0 ? Math.round((totalScore / scoredFields) * 100) / 100 : null,
+    };
+  });
 
   res.json(ListDictionariesResponse.parse(result));
 });
@@ -68,6 +85,7 @@ router.get("/dictionaries", async (req, res): Promise<void> => {
 router.post("/dictionaries", async (req, res): Promise<void> => {
   const parsed = ImportDictionaryBody.safeParse(req.body);
   if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Invalid import body");
     res.status(400).json({ error: parsed.error.message });
     return;
   }
@@ -111,6 +129,7 @@ router.post("/dictionaries", async (req, res): Promise<void> => {
 router.get("/dictionaries/:id", async (req, res): Promise<void> => {
   const params = GetDictionaryParams.safeParse(req.params);
   if (!params.success) {
+    req.log.error({ err: params.error }, "Invalid params");
     res.status(400).json({ error: params.error.message });
     return;
   }
@@ -121,6 +140,7 @@ router.get("/dictionaries/:id", async (req, res): Promise<void> => {
     .where(eq(dictionariesTable.id, params.data.id));
 
   if (!dict) {
+    req.log.error({ dictionaryId: params.data.id }, "Dictionary not found");
     res.status(404).json({ error: "Dictionary not found" });
     return;
   }
@@ -145,12 +165,14 @@ router.get("/dictionaries/:id", async (req, res): Promise<void> => {
 router.patch("/dictionaries/:id", async (req, res): Promise<void> => {
   const params = UpdateDictionaryParams.safeParse(req.params);
   if (!params.success) {
+    req.log.error({ err: params.error }, "Invalid params");
     res.status(400).json({ error: params.error.message });
     return;
   }
 
   const parsed = UpdateDictionaryBody.safeParse(req.body);
   if (!parsed.success) {
+    req.log.error({ err: parsed.error }, "Invalid body");
     res.status(400).json({ error: parsed.error.message });
     return;
   }
@@ -161,6 +183,7 @@ router.patch("/dictionaries/:id", async (req, res): Promise<void> => {
   if (parsed.data.tabela !== undefined) updates.tabela = parsed.data.tabela;
 
   if (Object.keys(updates).length === 0) {
+    req.log.error({ dictionaryId: params.data.id }, "No fields to update");
     res.status(400).json({ error: "No fields to update" });
     return;
   }
@@ -172,6 +195,7 @@ router.patch("/dictionaries/:id", async (req, res): Promise<void> => {
     .returning();
 
   if (!dict) {
+    req.log.error({ dictionaryId: params.data.id }, "Dictionary not found");
     res.status(404).json({ error: "Dictionary not found" });
     return;
   }
@@ -195,6 +219,7 @@ router.patch("/dictionaries/:id", async (req, res): Promise<void> => {
 router.delete("/dictionaries/:id", async (req, res): Promise<void> => {
   const params = DeleteDictionaryParams.safeParse(req.params);
   if (!params.success) {
+    req.log.error({ err: params.error }, "Invalid params");
     res.status(400).json({ error: params.error.message });
     return;
   }
@@ -205,6 +230,7 @@ router.delete("/dictionaries/:id", async (req, res): Promise<void> => {
     .returning();
 
   if (!dict) {
+    req.log.error({ dictionaryId: params.data.id }, "Dictionary not found");
     res.status(404).json({ error: "Dictionary not found" });
     return;
   }
@@ -215,6 +241,7 @@ router.delete("/dictionaries/:id", async (req, res): Promise<void> => {
 router.get("/dictionaries/:id/export", async (req, res): Promise<void> => {
   const params = ExportDictionaryParams.safeParse(req.params);
   if (!params.success) {
+    req.log.error({ err: params.error }, "Invalid params");
     res.status(400).json({ error: params.error.message });
     return;
   }
@@ -225,6 +252,7 @@ router.get("/dictionaries/:id/export", async (req, res): Promise<void> => {
     .where(eq(dictionariesTable.id, params.data.id));
 
   if (!dict) {
+    req.log.error({ dictionaryId: params.data.id }, "Dictionary not found");
     res.status(404).json({ error: "Dictionary not found" });
     return;
   }

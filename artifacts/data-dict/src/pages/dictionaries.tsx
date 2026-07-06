@@ -28,15 +28,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-
-function traduzirStatus(status: string) {
-  const map: Record<string, string> = {
-    pending: "Pendente",
-    in_review: "Em Revisão",
-    validated: "Validado",
-  };
-  return map[status] ?? status;
-}
+import { traduzirStatus } from "@/lib/utils";
 
 type DictItem = {
   id: number;

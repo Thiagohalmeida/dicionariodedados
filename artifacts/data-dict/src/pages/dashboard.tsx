@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, CheckCircle, Database, AlertTriangle } from "lucide-react";
 import { Link } from "wouter";
+import { traduzirStatus } from "@/lib/utils";
 
 export default function Dashboard() {
   const { data, isLoading } = useGetDashboard();
@@ -93,13 +94,4 @@ export default function Dashboard() {
       </div>
     </div>
   );
-}
-
-function traduzirStatus(status: string) {
-  const map: Record<string, string> = {
-    pending: "Pendente",
-    in_review: "Em Revisão",
-    validated: "Validado",
-  };
-  return map[status] ?? status;
 }

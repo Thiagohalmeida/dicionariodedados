@@ -21,45 +21,62 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { traduzirStatus, traduzirClassificacao } from "@/lib/utils";
 
-function traduzirStatus(status: string) {
-  const map: Record<string, string> = {
-    pending: "Pendente",
-    approved: "Aprovado",
-    rejected: "Reprovado",
-    conflict: "Conflito",
-    in_review: "Em Revisão",
-    validated: "Validado",
-  };
-  return map[status] ?? status;
+interface FieldSummary {
+  fieldId: number;
+  totalValidations: number;
+  approvedCount: number;
+  rejectedCount: number;
+  conflictCount: number;
+  statusFinal: "pending" | "approved" | "rejected" | "conflict";
+  score: number | null;
+  classification: "pending" | "reliable" | "attention" | "critical";
+  avgUsed?: number | null;
+  avgRequired?: number | null;
+  avgCorrectName?: number | null;
+  avgCorrectOrigin?: number | null;
+  avgHasBusinessRule?: number | null;
 }
 
-function traduzirClassificacao(cls: string) {
-  const map: Record<string, string> = {
-    pending: "Pendente",
-    reliable: "Confiável",
-    attention: "Atenção",
-    critical: "Crítico",
-  };
-  return map[cls] ?? cls;
+interface Field {
+  id: number;
+  dictionaryId: number;
+  campoOrigem: string;
+  descricao: string;
+  origem: string;
+  periodicidade: string;
+  campoTecnico: string;
+  tipoDado: string;
+  chave: boolean;
+  summary?: FieldSummary;
+}
+
+interface FieldWithSummary extends Field {
+  summary: FieldSummary;
 }
 
 export default function DictionaryDetail() {
   const params = useParams();
   const id = parseInt(params.id || "0", 10);
   const { data: dict, isLoading } = useGetDictionary(id, { query: { enabled: !!id, queryKey: getGetDictionaryQueryKey(id) } });
-  const [selectedField, setSelectedField] = useState<any>(null);
-  const [editingField, setEditingField] = useState<any>(null);
+  const [selectedField, setSelectedField] = useState<FieldWithSummary | null>(null);
+  const [editingField, setEditingField] = useState<FieldWithSummary | null>(null);
+  const { toast } = useToast();
 
   const { isFetching: isExporting } = useExportDictionary(id, { query: { enabled: false, queryKey: ['export', id] } });
   const [isExportingExtra, setIsExportingExtra] = useState(false);
 
   const handleExport = async (format?: "csv") => {
     const url = `${import.meta.env.BASE_URL?.replace(/\/$/, "") ?? ""}/api/dictionaries/${id}/export${format === "csv" ? "?format=csv" : ""}`;
-    const res = await fetch(url);
-    if (!res.ok) return;
-    const data = await res.json();
-    triggerDownload(data.content, data.filename, format === "csv" ? "text/csv" : "application/json");
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      triggerDownload(data.content, data.filename, format === "csv" ? "text/csv" : "application/json");
+    } catch {
+      toast({ title: "Erro ao exportar", description: "Não foi possível baixar o arquivo.", variant: "destructive" });
+    }
   };
 
   const handleExportExtra = async (type: "ddl" | "data-contract") => {
@@ -67,9 +84,11 @@ export default function DictionaryDetail() {
     try {
       const base = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
       const res = await fetch(`${base}/api/dictionaries/${id}/export/${type}`);
-      if (!res.ok) return;
+      if (!res.ok) throw new Error();
       const data = await res.json();
       triggerDownload(data.content, data.filename, type === "ddl" ? "text/plain" : "application/json");
+    } catch {
+      toast({ title: "Erro ao exportar", description: "Não foi possível gerar o arquivo.", variant: "destructive" });
     } finally {
       setIsExportingExtra(false);
     }
@@ -153,7 +172,9 @@ export default function DictionaryDetail() {
                   <TableCell>{field.periodicidade}</TableCell>
                   <TableCell>{field.chave ? "Sim" : "Não"}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">{traduzirStatus(field.summary?.statusFinal || "pending")}</Badge>
+                    <Badge variant={field.summary?.statusFinal === "conflict" ? "destructive" : "outline"}>
+                      {traduzirStatus(field.summary?.statusFinal || "pending")}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <Badge variant={
@@ -205,7 +226,7 @@ export default function DictionaryDetail() {
   );
 }
 
-function EditFieldDialog({ field, dictId, onClose }: { field: any; dictId: number; onClose: () => void }) {
+function EditFieldDialog({ field, dictId, onClose }: { field: FieldWithSummary; dictId: number; onClose: () => void }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const updateField = useUpdateField();
@@ -291,7 +312,7 @@ function EditFieldDialog({ field, dictId, onClose }: { field: any; dictId: numbe
   );
 }
 
-function ValidationPanel({ field, onClose, dictId }: { field: any, onClose: () => void, dictId: number }) {
+function ValidationPanel({ field, onClose, dictId }: { field: FieldWithSummary, onClose: () => void, dictId: number }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const submitValidation = useSubmitValidation();
@@ -307,17 +328,21 @@ function ValidationPanel({ field, onClose, dictId }: { field: any, onClose: () =
   });
 
   const handleSubmit = () => {
-    if (!form.validatorName) {
+    const name = form.validatorName.trim();
+    if (!name) {
       toast({ title: "Campo obrigatório", description: "Informe seu nome antes de enviar a validação.", variant: "destructive" });
       return;
     }
 
-    submitValidation.mutate({ id: field.id, data: form }, {
+    submitValidation.mutate({ id: field.id, data: { ...form, validatorName: name } }, {
       onSuccess: () => {
         toast({ title: "Validação registrada", description: "Sua validação foi salva com sucesso." });
         queryClient.invalidateQueries({ queryKey: getGetDictionaryQueryKey(dictId) });
         onClose();
-      }
+      },
+      onError: () => {
+        toast({ title: "Erro ao registrar", description: "Não foi possível salvar a validação.", variant: "destructive" });
+      },
     });
   };
 
