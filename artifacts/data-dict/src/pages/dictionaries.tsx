@@ -42,12 +42,14 @@ type DictItem = {
 };
 
 export default function DictionariesList() {
-  const { data, isLoading } = useListDictionaries();
+  const { data: pageData, isLoading } = useListDictionaries();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const deleteMutation = useDeleteDictionary();
   const updateMutation = useUpdateDictionary();
+
+  const dictionaries = pageData?.data ?? [];
 
   const [deleteTarget, setDeleteTarget] = useState<DictItem | null>(null);
   const [editTarget, setEditTarget] = useState<DictItem | null>(null);
@@ -122,7 +124,7 @@ export default function DictionariesList() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data?.map((dict) => {
+            {dictionaries.map((dict) => {
               const progress = dict.totalFields > 0 ? (dict.approvedFields / dict.totalFields) * 100 : 0;
               return (
                 <TableRow key={dict.id}>
@@ -168,7 +170,7 @@ export default function DictionariesList() {
                 </TableRow>
               );
             })}
-            {(!data || data.length === 0) && (
+            {dictionaries.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">
                   Nenhum dicionário encontrado. Importe um para começar.

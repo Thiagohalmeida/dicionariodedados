@@ -1,19 +1,21 @@
 import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
-import { db, fieldsTable, dictionariesTable } from "@workspace/db";
+import { db, fieldsTable } from "@workspace/db";
+import { computeFieldSummary, computeFieldSummariesBatch, getFieldsWithSummaries } from "../lib/summary";
+import { insertValidation } from "../lib/validation";
+import { FIELD_CLASSIFICATION } from "../lib/constants";
 import {
   SubmitValidationParams,
   SubmitValidationBody,
   SubmitValidationResponse,
   GetFieldSummaryParams,
   GetFieldSummaryResponse,
+  GetCriticalFieldsQueryParams,
   GetCriticalFieldsResponse,
   UpdateFieldParams,
   UpdateFieldBody,
   UpdateFieldResponse,
 } from "@workspace/api-zod";
-import { computeFieldSummary, computeFieldSummariesBatch, getFieldsWithSummaries } from "../lib/summary";
-import { insertValidation } from "../lib/validation";
 
 const router: IRouter = Router();
 
@@ -153,33 +155,39 @@ router.get("/fields/:id/summary", async (req, res): Promise<void> => {
   res.json(GetFieldSummaryResponse.parse(summary));
 });
 
-router.get("/fields/critical", async (_req, res): Promise<void> => {
-  const dicts = await db.select().from(dictionariesTable);
-
-  if (dicts.length === 0) {
-    res.json(GetCriticalFieldsResponse.parse([]));
+router.get("/fields/critical", async (req, res): Promise<void> => {
+  const parsedQuery = GetCriticalFieldsQueryParams.safeParse(req.query);
+  if (!parsedQuery.success) {
+    req.log.error({ err: parsedQuery.error }, "Invalid query params");
+    res.status(400).json({ error: parsedQuery.error.message });
     return;
   }
 
-  const allFields: typeof fieldsTable.$inferSelect[] = [];
-  for (const dict of dicts) {
-    const dictFields = await db.select().from(fieldsTable).where(eq(fieldsTable.dictionaryId, dict.id));
-    allFields.push(...dictFields);
-  }
+  const { page, limit } = parsedQuery.data;
+
+  const allFields = await db.select().from(fieldsTable);
 
   if (allFields.length === 0) {
-    res.json(GetCriticalFieldsResponse.parse([]));
+    res.json(
+      GetCriticalFieldsResponse.parse({
+        data: [],
+        total: 0,
+        page,
+        limit,
+        totalPages: 1,
+      })
+    );
     return;
   }
 
   const fieldIds = allFields.map((f) => f.id);
   const summaries = await computeFieldSummariesBatch(fieldIds);
 
-  const result: unknown[] = [];
+  const allCritical: unknown[] = [];
   for (const field of allFields) {
     const summary = summaries.get(field.id)!;
-    if (summary.classification === "critical") {
-      result.push({
+    if (summary.classification === FIELD_CLASSIFICATION.CRITICAL) {
+      allCritical.push({
         id: field.id,
         dictionaryId: field.dictionaryId,
         campoOrigem: field.campoOrigem,
@@ -194,7 +202,20 @@ router.get("/fields/critical", async (_req, res): Promise<void> => {
     }
   }
 
-  res.json(GetCriticalFieldsResponse.parse(result));
+  const total = allCritical.length;
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const offset = (page - 1) * limit;
+  const data = allCritical.slice(offset, offset + limit);
+
+  res.json(
+    GetCriticalFieldsResponse.parse({
+      data,
+      total,
+      page,
+      limit,
+      totalPages,
+    })
+  );
 });
 
 export default router;

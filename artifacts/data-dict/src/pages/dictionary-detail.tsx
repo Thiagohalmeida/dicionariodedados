@@ -21,7 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { traduzirStatus, traduzirClassificacao } from "@/lib/utils";
+import { traduzirStatus, traduzirClassificacao, getApiBase } from "@/lib/utils";
 
 interface FieldSummary {
   fieldId: number;
@@ -68,7 +68,7 @@ export default function DictionaryDetail() {
   const [isExportingExtra, setIsExportingExtra] = useState(false);
 
   const handleExport = async (format?: "csv") => {
-    const url = `${import.meta.env.BASE_URL?.replace(/\/$/, "") ?? ""}/api/dictionaries/${id}/export${format === "csv" ? "?format=csv" : ""}`;
+    const url = `${getApiBase()}/api/dictionaries/${id}/export${format === "csv" ? "?format=csv" : ""}`;
     try {
       const res = await fetch(url);
       if (!res.ok) throw new Error();
@@ -82,7 +82,7 @@ export default function DictionaryDetail() {
   const handleExportExtra = async (type: "ddl" | "data-contract") => {
     setIsExportingExtra(true);
     try {
-      const base = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
+      const base = getApiBase();
       const res = await fetch(`${base}/api/dictionaries/${id}/export/${type}`);
       if (!res.ok) throw new Error();
       const data = await res.json();

@@ -165,9 +165,11 @@ pnpm --filter @workspace/db run push
   "tabela": "rfp_item",
   "campos": [
     {
-      "nomeTecnico": "id_item",
-      "tipo": "INTEGER",
+      "campo_origem": "ID_ITEM",
+      "campo_tecnico": "id_item",
+      "tipo_dado": "INTEGER",
       "periodicidade": "Transacional",
+      "origem": "Sistema ERP",
       "chave": true,
       "descricao": "Identificador único do item de compra"
     }

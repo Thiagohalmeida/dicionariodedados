@@ -1,5 +1,13 @@
 import { eq, inArray } from "drizzle-orm";
 import { db, fieldsTable, validationsTable } from "@workspace/db";
+import {
+  FIELD_STATUS,
+  FIELD_CLASSIFICATION,
+  SCORE_THRESHOLDS,
+} from "./constants";
+
+export type FieldStatus = (typeof FIELD_STATUS)[keyof typeof FIELD_STATUS];
+export type FieldClassification = (typeof FIELD_CLASSIFICATION)[keyof typeof FIELD_CLASSIFICATION];
 
 export type FieldSummary = {
   fieldId: number;
@@ -7,9 +15,9 @@ export type FieldSummary = {
   approvedCount: number;
   rejectedCount: number;
   conflictCount: number;
-  statusFinal: "pending" | "approved" | "rejected" | "conflict";
+  statusFinal: FieldStatus;
   score: number | null;
-  classification: "pending" | "reliable" | "attention" | "critical";
+  classification: FieldClassification;
   avgUsed: number | null;
   avgRequired: number | null;
   avgCorrectName: number | null;
@@ -17,11 +25,11 @@ export type FieldSummary = {
   avgHasBusinessRule: number | null;
 };
 
-function classify(score: number | null, totalValidations: number): "pending" | "reliable" | "attention" | "critical" {
-  if (totalValidations === 0 || score === null) return "pending";
-  if (score >= 90) return "reliable";
-  if (score >= 60) return "attention";
-  return "critical";
+function classify(score: number | null, totalValidations: number): FieldClassification {
+  if (totalValidations === 0 || score === null) return FIELD_CLASSIFICATION.PENDING;
+  if (score >= SCORE_THRESHOLDS.RELIABLE) return FIELD_CLASSIFICATION.RELIABLE;
+  if (score >= SCORE_THRESHOLDS.ATTENTION) return FIELD_CLASSIFICATION.ATTENTION;
+  return FIELD_CLASSIFICATION.CRITICAL;
 }
 
 function computeSummaryFromValidations(fieldId: number, validations: typeof import("@workspace/db").validationsTable.$inferSelect[]): FieldSummary {
@@ -32,9 +40,9 @@ function computeSummaryFromValidations(fieldId: number, validations: typeof impo
       approvedCount: 0,
       rejectedCount: 0,
       conflictCount: 0,
-      statusFinal: "pending",
+      statusFinal: FIELD_STATUS.PENDING,
       score: null,
-      classification: "pending",
+      classification: FIELD_CLASSIFICATION.PENDING,
       avgUsed: null,
       avgRequired: null,
       avgCorrectName: null,
@@ -52,16 +60,16 @@ function computeSummaryFromValidations(fieldId: number, validations: typeof impo
   const avgCorrectOrigin = validations.filter((v) => v.correctOrigin).length / validations.length;
   const avgHasBusinessRule = validations.filter((v) => v.hasBusinessRule).length / validations.length;
 
-  const approvedCount = validations.filter((v) => Number(v.score) >= 60).length;
-  const rejectedCount = validations.filter((v) => Number(v.score) < 60).length;
+  const approvedCount = validations.filter((v) => Number(v.score) >= SCORE_THRESHOLDS.APPROVE).length;
+  const rejectedCount = validations.filter((v) => Number(v.score) < SCORE_THRESHOLDS.APPROVE).length;
 
-  let statusFinal: "pending" | "approved" | "rejected" | "conflict";
+  let statusFinal: FieldStatus;
   if (approvedCount > 0 && rejectedCount > 0) {
-    statusFinal = "conflict";
+    statusFinal = FIELD_STATUS.CONFLICT;
   } else if (approvedCount > 0) {
-    statusFinal = "approved";
+    statusFinal = FIELD_STATUS.APPROVED;
   } else {
-    statusFinal = "rejected";
+    statusFinal = FIELD_STATUS.REJECTED;
   }
 
   const roundedScore = Math.round(avgScore * 100) / 100;
@@ -71,7 +79,7 @@ function computeSummaryFromValidations(fieldId: number, validations: typeof impo
     totalValidations: validations.length,
     approvedCount,
     rejectedCount,
-    conflictCount: statusFinal === "conflict" ? 1 : 0,
+    conflictCount: statusFinal === FIELD_STATUS.CONFLICT ? 1 : 0,
     statusFinal,
     score: roundedScore,
     classification: classify(roundedScore, validations.length),

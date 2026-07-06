@@ -25,13 +25,15 @@ import type {
   DictionaryDetail,
   DictionaryImport,
   DictionaryUpdate,
-  DictionaryWithMetrics,
   ExportResult,
   Field,
   FieldSummary,
   FieldUpdate,
-  FieldWithSummary,
+  GetCriticalFields200,
+  GetCriticalFieldsParams,
   HealthStatus,
+  ListDictionaries200,
+  ListDictionariesParams,
   Validation,
   ValidationInput
 } from './api.schemas';
@@ -141,20 +143,27 @@ export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, 
 
 
 
-export const getListDictionariesUrl = () => {
+export const getListDictionariesUrl = (params?: ListDictionariesParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/dictionaries`
+  return stringifiedParams.length > 0 ? `/api/dictionaries?${stringifiedParams}` : `/api/dictionaries`
 }
 
 /**
  * @summary List all dictionaries with validation metrics
  */
-export const listDictionaries = async ( options?: RequestInit): Promise<DictionaryWithMetrics[]> => {
+export const listDictionaries = async (params?: ListDictionariesParams, options?: RequestInit): Promise<ListDictionaries200> => {
 
-  return customFetch<DictionaryWithMetrics[]>(getListDictionariesUrl(),
+  return customFetch<ListDictionaries200>(getListDictionariesUrl(params),
   {
     ...options,
     method: 'GET'
@@ -167,23 +176,23 @@ export const listDictionaries = async ( options?: RequestInit): Promise<Dictiona
 
 
 
-export const getListDictionariesQueryKey = () => {
+export const getListDictionariesQueryKey = (params?: ListDictionariesParams,) => {
     return [
-    `/api/dictionaries`
+    `/api/dictionaries`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListDictionariesQueryOptions = <TData = Awaited<ReturnType<typeof listDictionaries>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listDictionaries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getListDictionariesQueryOptions = <TData = Awaited<ReturnType<typeof listDictionaries>>, TError = ErrorType<unknown>>(params?: ListDictionariesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listDictionaries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListDictionariesQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getListDictionariesQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listDictionaries>>> = ({ signal }) => listDictionaries({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listDictionaries>>> = ({ signal }) => listDictionaries(params, { signal, ...requestOptions });
 
 
 
@@ -201,11 +210,11 @@ export type ListDictionariesQueryError = ErrorType<unknown>
  */
 
 export function useListDictionaries<TData = Awaited<ReturnType<typeof listDictionaries>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listDictionaries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ params?: ListDictionariesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listDictionaries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getListDictionariesQueryOptions(options)
+  const queryOptions = getListDictionariesQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -802,20 +811,27 @@ export function useGetFieldSummary<TData = Awaited<ReturnType<typeof getFieldSum
 
 
 
-export const getGetCriticalFieldsUrl = () => {
+export const getGetCriticalFieldsUrl = (params?: GetCriticalFieldsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/fields/critical`
+  return stringifiedParams.length > 0 ? `/api/fields/critical?${stringifiedParams}` : `/api/fields/critical`
 }
 
 /**
  * @summary List fields with score below 60 (critical)
  */
-export const getCriticalFields = async ( options?: RequestInit): Promise<FieldWithSummary[]> => {
+export const getCriticalFields = async (params?: GetCriticalFieldsParams, options?: RequestInit): Promise<GetCriticalFields200> => {
 
-  return customFetch<FieldWithSummary[]>(getGetCriticalFieldsUrl(),
+  return customFetch<GetCriticalFields200>(getGetCriticalFieldsUrl(params),
   {
     ...options,
     method: 'GET'
@@ -828,23 +844,23 @@ export const getCriticalFields = async ( options?: RequestInit): Promise<FieldWi
 
 
 
-export const getGetCriticalFieldsQueryKey = () => {
+export const getGetCriticalFieldsQueryKey = (params?: GetCriticalFieldsParams,) => {
     return [
-    `/api/fields/critical`
+    `/api/fields/critical`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getGetCriticalFieldsQueryOptions = <TData = Awaited<ReturnType<typeof getCriticalFields>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCriticalFields>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getGetCriticalFieldsQueryOptions = <TData = Awaited<ReturnType<typeof getCriticalFields>>, TError = ErrorType<unknown>>(params?: GetCriticalFieldsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCriticalFields>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetCriticalFieldsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getGetCriticalFieldsQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCriticalFields>>> = ({ signal }) => getCriticalFields({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCriticalFields>>> = ({ signal }) => getCriticalFields(params, { signal, ...requestOptions });
 
 
 
@@ -862,11 +878,11 @@ export type GetCriticalFieldsQueryError = ErrorType<unknown>
  */
 
 export function useGetCriticalFields<TData = Awaited<ReturnType<typeof getCriticalFields>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCriticalFields>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ params?: GetCriticalFieldsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCriticalFields>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getGetCriticalFieldsQueryOptions(options)
+  const queryOptions = getGetCriticalFieldsQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

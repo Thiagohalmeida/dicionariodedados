@@ -3,6 +3,7 @@ import multer from "multer";
 import { eq } from "drizzle-orm";
 import { db, dictionariesTable, fieldsTable } from "@workspace/db";
 import { parseExcelToDataDictionary, type UserContext } from "../modules/excel-ingestion-engine/index";
+import { DICTIONARY_STATUS } from "../lib/constants";
 
 const router: IRouter = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
@@ -56,7 +57,7 @@ router.post(
 
   const [dict] = await db
     .insert(dictionariesTable)
-    .values({ processo: parsed.processo, categoria: parsed.categoria, tabela: parsed.tabela, version: 1, status: "pending" })
+    .values({ processo: parsed.processo, categoria: parsed.categoria, tabela: parsed.tabela, version: 1, status: DICTIONARY_STATUS.PENDING })
     .returning();
 
   await db.insert(fieldsTable).values(

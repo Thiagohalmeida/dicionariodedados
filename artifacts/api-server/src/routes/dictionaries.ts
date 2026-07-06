@@ -5,6 +5,9 @@ import {
   ImportDictionaryBody,
   ImportDictionaryResponse,
   ListDictionariesResponse,
+  ListDictionariesQueryParams,
+  listDictionariesQueryPageDefault,
+  listDictionariesQueryLimitDefault,
   GetDictionaryParams,
   GetDictionaryResponse,
   DeleteDictionaryParams,
@@ -16,34 +19,55 @@ import {
 } from "@workspace/api-zod";
 import { logger } from "../lib/logger";
 import { computeFieldSummariesBatch, getFieldsWithSummaries } from "../lib/summary";
+import { FIELD_STATUS, DICTIONARY_STATUS } from "../lib/constants";
 
 const router: IRouter = Router();
 
 router.get("/dictionaries", async (req, res): Promise<void> => {
-  const dicts = await db.select().from(dictionariesTable).orderBy(dictionariesTable.createdAt);
-
-  if (dicts.length === 0) {
-    res.json(ListDictionariesResponse.parse([]));
+  const parsedQuery = ListDictionariesQueryParams.safeParse(req.query);
+  if (!parsedQuery.success) {
+    req.log.error({ err: parsedQuery.error }, "Invalid query params");
+    res.status(400).json({ error: parsedQuery.error.message });
     return;
   }
 
-  const allFields: typeof fieldsTable.$inferSelect[] = [];
-  for (const dict of dicts) {
-    const dictFields = await db.select().from(fieldsTable).where(eq(fieldsTable.dictionaryId, dict.id));
-    allFields.push(...dictFields);
+  const { page, limit } = parsedQuery.data;
+
+  const allDicts = await db.select().from(dictionariesTable).orderBy(dictionariesTable.createdAt);
+
+  const total = allDicts.length;
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const offset = (page - 1) * limit;
+  const pageDicts = allDicts.slice(offset, offset + limit);
+
+  if (total === 0) {
+    res.json(
+      ListDictionariesResponse.parse({
+        data: [],
+        total,
+        page,
+        limit,
+        totalPages,
+      })
+    );
+    return;
   }
 
-  const fieldsByDict = new Map<number, typeof allFields>();
-  for (const f of allFields) {
+  const pageDictIds = new Set(pageDicts.map((d) => d.id));
+  const allFields = await db.select().from(fieldsTable);
+  const pageFields = allFields.filter((f) => pageDictIds.has(f.dictionaryId));
+
+  const fieldsByDict = new Map<number, typeof pageFields>();
+  for (const f of pageFields) {
     const list = fieldsByDict.get(f.dictionaryId) ?? [];
     list.push(f);
     fieldsByDict.set(f.dictionaryId, list);
   }
 
-  const allFieldIds = allFields.map((f) => f.id);
+  const allFieldIds = pageFields.map((f) => f.id);
   const allSummaries = await computeFieldSummariesBatch(allFieldIds);
 
-  const result = dicts.map((d) => {
+  const data = pageDicts.map((d) => {
     const fields = fieldsByDict.get(d.id) ?? [];
     let approvedFields = 0;
     let rejectedFields = 0;
@@ -53,8 +77,8 @@ router.get("/dictionaries", async (req, res): Promise<void> => {
 
     for (const f of fields) {
       const summary = allSummaries.get(f.id)!;
-      if (summary.statusFinal === "approved") approvedFields++;
-      else if (summary.statusFinal === "rejected") rejectedFields++;
+      if (summary.statusFinal === FIELD_STATUS.APPROVED) approvedFields++;
+      else if (summary.statusFinal === FIELD_STATUS.REJECTED) rejectedFields++;
       else pendingFields++;
       if (summary.score !== null) {
         totalScore += summary.score;
@@ -79,7 +103,15 @@ router.get("/dictionaries", async (req, res): Promise<void> => {
     };
   });
 
-  res.json(ListDictionariesResponse.parse(result));
+  res.json(
+    ListDictionariesResponse.parse({
+      data,
+      total,
+      page,
+      limit,
+      totalPages,
+    })
+  );
 });
 
 router.post("/dictionaries", async (req, res): Promise<void> => {
@@ -94,7 +126,7 @@ router.post("/dictionaries", async (req, res): Promise<void> => {
 
   const [dict] = await db
     .insert(dictionariesTable)
-    .values({ processo, categoria, tabela, version: 1, status: "pending" })
+    .values({ processo, categoria, tabela, version: 1, status: DICTIONARY_STATUS.PENDING })
     .returning();
 
   await db.insert(fieldsTable).values(

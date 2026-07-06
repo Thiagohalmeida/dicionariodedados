@@ -91,32 +91,35 @@
 
 ## 🟢 MENORES (Tech debt / Code smell)
 
-### ⚠️ Strings mágicas (PENDENTE)
+### ✅ Strings mágicas (RESOLVIDO - 06/07/2026)
 
-- [ ] **Status hardcoded em summary.ts:63-70** - "pending", "approved", "rejected", "conflict"
+- [x] **Status hardcoded em summary.ts:63-70** - "pending", "approved", "rejected", "conflict"
   - Arquivo: `artifacts/api-server/src/lib/summary.ts`
-  - Sugestão: Usar constantes ou enum do schema
+  - Correção: Criado `artifacts/api-server/src/lib/constants.ts` com `FIELD_STATUS`, `FIELD_CLASSIFICATION`, `DICTIONARY_STATUS` e `SCORE_THRESHOLDS`; substituído `>= 60` por `SCORE_THRESHOLDS.APPROVE`
+  - Nota: O arquivo `constants.ts` era referenciado por 5 arquivos (`summary.ts`, `dashboard.ts`, `dictionaries.ts`, `excel.ts`, `fields.ts`) mas nunca havia sido criado — typecheck quebrado
 
-- [ ] **Classificação hardcoded em summary.ts:20-24** - "reliable", "attention", "critical"
+- [x] **Classificação hardcoded em summary.ts:20-24** - "reliable", "attention", "critical"
   - Arquivo: `artifacts/api-server/src/lib/summary.ts`
-  - Sugestão: Usar constantes
+  - Correção: Constantes em `constants.ts`
 
-### ⚠️ Refactoring (PENDENTE)
+### ✅ Refactoring (RESOLVIDO - 06/07/2026)
 
-- [ ] **Função grande (~100 linhas) em dashboard.ts:9-106**
+- [x] **Função grande (~100 linhas) em dashboard.ts:9-106**
   - Arquivo: `artifacts/api-server/src/routes/dashboard.ts`
-  - Sugestão: Dividir em helpers menores
+  - Correção: Já estava dividida em helpers `getEmptyDashboardResponse`, `initClassificationCounts`, `initStatusCounts`, `processFieldSummaries`, `processDictionaryMetrics`
 
-### ⚠️ Documentação (PENDENTE)
+### ✅ Documentação (RESOLVIDO)
 
-- [ ] **README: JSON example usa `nomeTecnico`** mas API espera `campo_tecnico`
+- [x] **README: JSON example usa `nomeTecnico`** mas API espera `campo_tecnico`
   - Arquivo: `README.md:160-176`
 
-### ⚠️ Performance (PENDENTE)
+### ✅ Performance (RESOLVIDO - 06/07/2026)
 
-- [ ] **Sem paginação nos endpoints de listagem**
-  - Arquivos: `dictionaries.ts`, `dashboard.ts`
-  - Impacto: Pode causar memory issues com grandes volumes
+- [x] **Paginação nos endpoints de listagem** `/dictionaries` e `/fields/critical`
+  - Arquivos: `artifacts/api-server/src/routes/dictionaries.ts`, `artifacts/api-server/src/routes/fields.ts`
+  - Correção: Validados `ListDictionariesQueryParams` e `GetCriticalFieldsQueryParams` (page/limit, default 1/20, max 100); respostas no shape `{ data, total, page, limit, totalPages }` já exigido pelos schemas Zod gerados do OpenAPI; tipos regenerados via `pnpm --filter @workspace/api-spec run codegen`
+  - Frontend: `pages/dictionaries.tsx` e `pages/critical-fields.tsx` adaptados para `data?.data`
+  - Nota: O contrato OpenAPI já previa paginação, mas o backend retornava array puro → `.parse()` falhava em runtime
 
 ### ✅ ExcelJS type assertion (RESOLVIDO - Won't fix)
 
@@ -132,8 +135,8 @@
 |-----------|-------|-----------|-----------|
 | Críticas | 8 | 8 | 0 |
 | Médias | 6 | 6 | 0 |
-| Menores | 5 | 1 | 4 |
-| **Total** | **19** | **15** | **4** |
+| Menores | 5 | 5 | 0 |
+| **Total** | **19** | **19** | **0** |
 
 ---
 
@@ -146,15 +149,20 @@
 5. ✅ **Types any** - TypeScript com tipos adequados
 6. ✅ **Conflict status** - Badge vermelho para conflitos
 7. ✅ **Code duplication** - Funções compartilhadas em utils
+8. ✅ **Strings mágicas** - Constantes centralizadas em `constants.ts`
+9. ✅ **Refactoring dashboard** - Helpers modulares
+10. ✅ **Paginação** - Endpoints `/dictionaries` e `/fields/critical` com page/limit
+11. ✅ **Documentação README** - JSON em formato snake_case
 
 ---
 
-## 📋 AINDA PENDENTES (Baixa prioridade)
+## 📋 STATUS DO PLANO DE MELHORIAS
 
-1. Extrair strings mágicas para constantes
-2. Dividir função grande do dashboard em helpers
-3. Corrigir README (nomeTecnico vs campo_tecnico)
-4. Adicionar paginação nos endpoints
+Todas as melhorias pendentes mencionadas em `docs/Análise e Melhorias do Projeto Validador de Dicionário de Dados.md` (seção 4) foram aplicadas:
+- 4.1 Strings mágicas ✅
+- 4.2 Refatoração do dashboard ✅ (já estava com helpers)
+- 4.3 Paginação nos endpoints ✅
+- 4.4 Padronização da URL da API no frontend ✅ — helper `getApiBase()` em `lib/utils.ts`, `setBaseUrl()` em `main.tsx`, 3 usos manuais de `import.meta.env.BASE_URL` substituídos
 
 ---
 
@@ -170,3 +178,15 @@
 - Função traduzirStatus/traduzirClassificacao compartilhada
 - Tutorial onboarding reaberto via CustomEvent (sem reload)
 - ExcelJS type assertion: won't fix (workaround documentado)
+
+## ✅ CONCLUÍDOS - 06/07/2026
+
+- Criado `artifacts/api-server/src/lib/constants.ts` (BLOCKER: typecheck quebrado — arquivo era importado por 5 módulos mas não existia)
+- Strings mágicas em `summary.ts` substituídas por `FIELD_STATUS`, `FIELD_CLASSIFICATION`, `SCORE_THRESHOLDS`
+- Dashboard já estava refatorado em helpers (`processFieldSummaries`, `processDictionaryMetrics`, etc.)
+- Paginação em `/dictionaries` e `/fields/critical` alinhada aos schemas Zod (`{ data, total, page, limit, totalPages }`) — antes retornavam array puro, quebrando `.parse()` em runtime
+- Tipos orval regenerados via `pnpm --filter @workspace/api-spec run codegen`
+- Frontend `pages/dictionaries.tsx` e `pages/critical-fields.tsx` adaptados para `data?.data`
+- Helper `getApiBase()` em `lib/utils.ts` usando `VITE_API_URL` com fallback a `import.meta.env.BASE_URL`
+- `setBaseUrl()` chamado em `main.tsx` para cliente orval (quando `VITE_API_URL` definida)
+- 3 usos manuais de `import.meta.env.BASE_URL` em `new-dictionary.tsx` e `dictionary-detail.tsx` substituídos por `getApiBase()`

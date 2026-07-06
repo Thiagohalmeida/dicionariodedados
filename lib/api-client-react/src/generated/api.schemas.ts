@@ -243,3 +243,47 @@ export interface DashboardMetrics {
   recentDictionaries: DictionaryWithMetrics[];
 }
 
+export type ListDictionariesParams = {
+/**
+ * Page number (1-based)
+ * @minimum 1
+ */
+page?: number;
+/**
+ * Number of items per page
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+};
+
+export type ListDictionaries200 = {
+  data: DictionaryWithMetrics[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+};
+
+export type GetCriticalFieldsParams = {
+/**
+ * Page number (1-based)
+ * @minimum 1
+ */
+page?: number;
+/**
+ * Number of items per page
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+};
+
+export type GetCriticalFields200 = {
+  data: FieldWithSummary[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+};
+

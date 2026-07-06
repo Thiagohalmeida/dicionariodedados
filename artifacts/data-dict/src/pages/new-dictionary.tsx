@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import { useImportDictionary } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { getApiBase } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -117,7 +118,7 @@ function ExcelImportTab() {
       if (form.tabela.trim()) fd.append("tabela", form.tabela.trim());
       if (form.aba_preferencial.trim()) fd.append("aba_preferencial", form.aba_preferencial.trim());
 
-      const basePath = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
+      const basePath = getApiBase();
       const res = await fetch(`${basePath}/api/dictionaries/from-excel`, { method: "POST", body: fd });
 
       if (!res.ok) {

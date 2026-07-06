@@ -7,9 +7,11 @@ import { AlertTriangle } from "lucide-react";
 import { Link } from "wouter";
 
 export default function CriticalFields() {
-  const { data, isLoading } = useGetCriticalFields();
+  const { data: pageData, isLoading } = useGetCriticalFields();
 
   if (isLoading) return <div className="p-8 text-center text-muted-foreground">Carregando campos críticos...</div>;
+
+  const fields = pageData?.data ?? [];
 
   return (
     <div className="space-y-6">
@@ -33,7 +35,7 @@ export default function CriticalFields() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data?.map((field) => (
+            {fields.map((field) => (
               <TableRow key={field.id}>
                 <TableCell className="font-medium text-destructive">{field.campoOrigem}</TableCell>
                 <TableCell>
@@ -52,7 +54,7 @@ export default function CriticalFields() {
                 </TableCell>
               </TableRow>
             ))}
-            {(!data || data.length === 0) && (
+            {fields.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center">
                   Nenhum campo crítico encontrado. Ótimo trabalho!

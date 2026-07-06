@@ -20,7 +20,20 @@ export const HealthCheckResponse = zod.object({
 /**
  * @summary List all dictionaries with validation metrics
  */
-export const ListDictionariesResponseItem = zod.object({
+export const listDictionariesQueryPageDefault = 1;
+
+export const listDictionariesQueryLimitDefault = 20;
+export const listDictionariesQueryLimitMax = 100;
+
+
+
+export const ListDictionariesQueryParams = zod.object({
+  "page": zod.coerce.number().min(1).default(listDictionariesQueryPageDefault).describe('Page number (1-based)'),
+  "limit": zod.coerce.number().min(1).max(listDictionariesQueryLimitMax).default(listDictionariesQueryLimitDefault).describe('Number of items per page')
+})
+
+export const ListDictionariesResponse = zod.object({
+  "data": zod.array(zod.object({
   "id": zod.number(),
   "processo": zod.string(),
   "categoria": zod.string(),
@@ -34,8 +47,12 @@ export const ListDictionariesResponseItem = zod.object({
   "rejectedFields": zod.number(),
   "pendingFields": zod.number(),
   "avgScore": zod.number().nullable()
+})),
+  "total": zod.number(),
+  "page": zod.number(),
+  "limit": zod.number(),
+  "totalPages": zod.number()
 })
-export const ListDictionariesResponse = zod.array(ListDictionariesResponseItem)
 
 
 /**
@@ -265,7 +282,20 @@ export const GetFieldSummaryResponse = zod.object({
 /**
  * @summary List fields with score below 60 (critical)
  */
-export const GetCriticalFieldsResponseItem = zod.object({
+export const getCriticalFieldsQueryPageDefault = 1;
+
+export const getCriticalFieldsQueryLimitDefault = 20;
+export const getCriticalFieldsQueryLimitMax = 100;
+
+
+
+export const GetCriticalFieldsQueryParams = zod.object({
+  "page": zod.coerce.number().min(1).default(getCriticalFieldsQueryPageDefault).describe('Page number (1-based)'),
+  "limit": zod.coerce.number().min(1).max(getCriticalFieldsQueryLimitMax).default(getCriticalFieldsQueryLimitDefault).describe('Number of items per page')
+})
+
+export const GetCriticalFieldsResponse = zod.object({
+  "data": zod.array(zod.object({
   "id": zod.number(),
   "dictionaryId": zod.number(),
   "campoOrigem": zod.string(),
@@ -290,8 +320,12 @@ export const GetCriticalFieldsResponseItem = zod.object({
   "avgCorrectOrigin": zod.number().nullish(),
   "avgHasBusinessRule": zod.number().nullish()
 })
+})),
+  "total": zod.number(),
+  "page": zod.number(),
+  "limit": zod.number(),
+  "totalPages": zod.number()
 })
-export const GetCriticalFieldsResponse = zod.array(GetCriticalFieldsResponseItem)
 
 
 /**

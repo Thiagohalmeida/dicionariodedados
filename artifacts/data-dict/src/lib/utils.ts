@@ -5,6 +5,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+export function getApiBase(): string {
+  const explicit = import.meta.env.VITE_API_URL;
+  if (explicit && explicit.trim().length > 0) {
+    return explicit.replace(/\/$/, "");
+  }
+  return (import.meta.env.BASE_URL ?? "/").replace(/\/$/, "");
+}
+
 export function traduzirStatus(status: string): string {
   const map: Record<string, string> = {
     pending: "Pendente",
