@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { FileSpreadsheet, FileJson, Upload, CheckCircle2, Info } from "lucide-react";
+import { FileSpreadsheet, FileJson, Upload, CheckCircle2, Info, Save, Download } from "lucide-react";
+import PreviewValidationSheet from "@/components/preview-validation-sheet";
 
 const EXEMPLO_JSON = `{
   "processo": "RFQ",
@@ -121,6 +122,18 @@ function ExcelImportTab() {
   const [loading, setLoading] = useState(false);
   const [meta, setMeta] = useState<ExcelMeta | null>(null);
   const [previewJson, setPreviewJson] = useState("");
+  const [previewFields, setPreviewFields] = useState<Array<{
+    id: number;
+    campoOrigem: string;
+    campoTecnico: string;
+    descricao: string;
+    tipoDado: string;
+    origem: string;
+    periodicidade: string;
+    chave: boolean;
+    validation?: any;
+  }>>([]);
+  const [showValidationSheet, setShowValidationSheet] = useState(false);
 
   const [form, setForm] = useState({
     processo: "",
@@ -169,8 +182,23 @@ function ExcelImportTab() {
       const meta = (data as { meta?: ExcelMeta }).meta ?? null;
       const previewText = typeof generated === "string" ? generated : JSON.stringify(generated, null, 2);
 
+      // Parse fields for validation sheet
+      const parsed = typeof generated === "string" ? JSON.parse(generated) : generated;
+      const fields = (parsed.campos || []).map((c: any, idx: number) => ({
+        id: idx + 1,
+        campoOrigem: c.campo_origem,
+        campoTecnico: c.campo_tecnico,
+        descricao: c.descricao,
+        tipoDado: c.tipo_dado,
+        origem: c.origem,
+        periodicidade: c.periodicidade,
+        chave: c.chave,
+      }));
+
       setMeta(meta);
       setPreviewJson(previewText);
+      setPreviewFields(fields);
+      setShowValidationSheet(true);
 
       toast({
         title: "Preview gerado",
@@ -209,6 +237,39 @@ function ExcelImportTab() {
       toast({ title: "JSON inválido", description: "O preview contém JSON inválido. Corrija o conteúdo e tente novamente.", variant: "destructive" });
     }
   }
+
+  const handleGenerateValidatedJson = (validatedFields: typeof previewFields) => {
+    // Update previewJson with validated fields
+    const parsed = JSON.parse(previewJson);
+    parsed.campos = validatedFields.map(f => ({
+      campo_origem: f.campoOrigem,
+      campo_tecnico: f.campoTecnico,
+      descricao: f.descricao,
+      tipo_dado: f.tipoDado,
+      origem: f.origem,
+      periodicidade: f.periodicidade,
+      chave: f.chave,
+    }));
+    setPreviewJson(JSON.stringify(parsed, null, 2));
+    toast({ title: "JSON atualizado", description: "Validações aplicadas ao JSON editável." });
+  };
+
+  const handleImportFromSheet = (json: any) => {
+    importMutation.mutate(
+      { data: json },
+      {
+        onSuccess: (dict) => {
+          toast({ title: "Importação concluída", description: "O dicionário foi criado com sucesso." });
+          setShowValidationSheet(false);
+          setLocation(`/dictionaries/${dict.id}`);
+        },
+        onError: (err: unknown) => {
+          const msg = err instanceof Error ? err.message : "Verifique o JSON e tente novamente.";
+          toast({ title: "Erro na importação", description: msg, variant: "destructive" });
+        },
+      }
+    );
+  };
 
   return (
     <div className="space-y-5">
@@ -334,6 +395,14 @@ function ExcelImportTab() {
           {importMutation.isPending ? "Importando..." : "Importar JSON"}
         </Button>
       </div>
+
+      <PreviewValidationSheet
+        open={showValidationSheet}
+        onOpenChange={setShowValidationSheet}
+        fields={previewFields}
+        onGenerateValidatedJson={handleGenerateValidatedJson}
+        onImportDictionary={handleImportFromSheet}
+      />
     </div>
   );
 }

@@ -253,7 +253,44 @@
 - **Sugestão:** Destacar a distinção — ex.: badges "Passo 1/2" na aba Excel, ou reorganizar em duas seções empilhadas (Excel primeiro com destaque "Novo", JSON depois)
 - **Prioridade:** Baixa (decisão de produto, não correção técnica)
 
+### 10. Fluxo completo de validação campo a campo para Excel (Feature)
+- [x] **Arquivos:** `artifacts/data-dict/src/components/preview-validation-sheet.tsx` (novo), `artifacts/data-dict/src/pages/new-dictionary.tsx`
+- **Objetivo:** Após `POST /api/excel/preview` gerar JSON, permitir editar/validar cada campo em UI dedicada (similar a `dictionary-detail.tsx`) **antes** de persistir o dicionário
+- **Fluxo implementado:**
+  1. Upload Excel → `/api/excel/preview` → retorna `{ meta, json_gerado }`
+  2. Nova Sheet "Validação do Preview" mostra grid de campos com status/classificação, permite editar `descricao`, `origem`, `periodicidade`, `chave`, `tipo_dado`
+  3. Usuário valida cada campo (checkboxes iguais ao `ValidationPanel`: usado, obrigatório, nome correto, origem correta, regra de negócio)
+  4. Botão "Gerar JSON Validado" → compila validações + edições no `json_gerado` (atualiza o textarea editável)
+  5. Botão "Importar Dicionário" → `POST /api/dictionaries` com JSON validado → redireciona para `/dictionaries/:id`
+- **Benefício:** Garante qualidade antes de criar o dicionário; reaproveita lógica de validação existente; evita criar dicionários "sujos"
+- **Prioridade:** Média (melhora significativa de UX/qualidade) — **CONCLUÍDO**
+
 ---
+
+## 🟡 Pendente — Prioridade Média (Infraestrutura)
+
+### 11. Integração Supabase como backend real (PostgreSQL + Storage + Auth)
+- [ ] **Arquivos:** `lib/db/src/index.ts`, `lib/db/drizzle.config.ts`, `.env`, novos módulos em `artifacts/api-server/src/modules/supabase/`
+- **Objetivo:** Substituir banco local/ephemeral por Supabase (PostgreSQL gerenciado) para:
+  - Persistir dicionários, campos, validações (já modelados no `@workspace/db`)
+  - **Storage:** Arquivos Excel enviados (bucket `excel-uploads`) + DDL/Data Contract exportados (bucket `exports`)
+  - **Logs/Auditoria:** Tabela `audit_logs` (ação, usuário, entidade, antes/depois, timestamp)
+  - **Auth:** Supabase Auth (email/password, magic link, OAuth) → substitui autenticação futura
+  - **Realtime:** Opcional — notificar validações em tempo real no dashboard
+- **Validação pré-produção via DDL gerado:**
+  - Endpoint `POST /api/dictionaries/:id/validate-ddl` executa `CREATE TABLE` temporária no Supabase (schema `staging_<id>`) → rola back automaticamente
+  - Confirma se tipos, constraints (PK, FK, NOT NULL) e índices são válidos no PostgreSQL real
+  - Retorna relatório de erros/warnings antes de o usuário promover para produção
+- **Passos de implementação:**
+  1. Criar projeto Supabase → obter `DATABASE_URL` (pooler), `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+  2. Atualizar `.env` do `api-server` com variáveis Supabase
+  3. Ajustar `lib/db/src/index.ts` para usar `DATABASE_URL` do Supabase (já compatível com `pg` + Drizzle)
+  4. Criar migrações Drizzle para tabelas atuais + `audit_logs` + `storage_objects` (metadados)
+  5. Implementar `supabaseStorage.ts` (upload/download/delete com signed URLs)
+  6. Middleware de auditoria automático em rotas `POST/PUT/DELETE` (grava em `audit_logs`)
+  7. Endpoint `POST /api/dictionaries/:id/validate-ddl` (executa DDL em transaction + rollback)
+  8. Frontend: página de configuração Supabase (status de conexão, buckets, auth)
+- **Prioridade:** Alta (infraestrutura base para produção e validação real)
 
 ## Resumo de Status
 
