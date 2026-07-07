@@ -5,7 +5,11 @@
  * API specification for Data Dictionary Validator
  * OpenAPI spec version: 0.1.0
  */
+import type { HealthStatusDatabase } from './healthStatusDatabase';
+import type { HealthStatusStatus } from './healthStatusStatus';
 
 export interface HealthStatus {
-  status: string;
+  status: HealthStatusStatus;
+  /** Database connectivity status */
+  database?: HealthStatusDatabase;
 }

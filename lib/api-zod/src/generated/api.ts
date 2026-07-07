@@ -13,7 +13,29 @@ import * as zod from 'zod';
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({
-  "status": zod.string()
+  "status": zod.enum(['ok', 'degraded']),
+  "database": zod.enum(['ok', 'down']).optional().describe('Database connectivity status')
+})
+
+
+/**
+ * @summary Preview a dictionary generated from an Excel upload without persisting it
+ */
+export const PreviewExcelDictionaryBody = zod.object({
+  "file": zod.instanceof(File),
+  "processo": zod.string(),
+  "categoria": zod.string(),
+  "tabela": zod.string().optional(),
+  "aba_preferencial": zod.string().optional()
+})
+
+export const PreviewExcelDictionaryResponse = zod.object({
+  "meta": zod.object({
+
+}).passthrough().optional(),
+  "json_gerado": zod.object({
+
+}).passthrough().optional()
 })
 
 
@@ -28,8 +50,8 @@ export const listDictionariesQueryLimitMax = 100;
 
 
 export const ListDictionariesQueryParams = zod.object({
-  "page": zod.coerce.number().min(1).default(listDictionariesQueryPageDefault).describe('Page number (1-based)'),
-  "limit": zod.coerce.number().min(1).max(listDictionariesQueryLimitMax).default(listDictionariesQueryLimitDefault).describe('Number of items per page')
+  "page": zod.number().min(1).default(listDictionariesQueryPageDefault).describe('Page number (1-based)'),
+  "limit": zod.number().min(1).max(listDictionariesQueryLimitMax).default(listDictionariesQueryLimitDefault).describe('Number of items per page')
 })
 
 export const ListDictionariesResponse = zod.object({
@@ -95,7 +117,7 @@ export const ImportDictionaryResponse = zod.object({
  * @summary Get dictionary with fields and validation status
  */
 export const GetDictionaryParams = zod.object({
-  "id": zod.coerce.number()
+  "id": zod.number()
 })
 
 export const GetDictionaryResponse = zod.object({
@@ -140,7 +162,7 @@ export const GetDictionaryResponse = zod.object({
  * @summary Delete a dictionary
  */
 export const DeleteDictionaryParams = zod.object({
-  "id": zod.coerce.number()
+  "id": zod.number()
 })
 
 export const DeleteDictionaryResponse = zod.void()
@@ -150,7 +172,7 @@ export const DeleteDictionaryResponse = zod.void()
  * @summary Update dictionary metadata
  */
 export const UpdateDictionaryParams = zod.object({
-  "id": zod.coerce.number()
+  "id": zod.number()
 })
 
 
@@ -180,7 +202,7 @@ export const UpdateDictionaryResponse = zod.object({
  * @summary Export validated dictionary as JSON (add ?format=csv for CSV)
  */
 export const ExportDictionaryParams = zod.object({
-  "id": zod.coerce.number()
+  "id": zod.number()
 })
 
 export const ExportDictionaryResponse = zod.object({
@@ -194,7 +216,7 @@ export const ExportDictionaryResponse = zod.object({
  * @summary Update field metadata
  */
 export const UpdateFieldParams = zod.object({
-  "id": zod.coerce.number()
+  "id": zod.number()
 })
 
 export const UpdateFieldBody = zod.object({
@@ -224,7 +246,7 @@ export const UpdateFieldResponse = zod.object({
  * @summary Submit enriched validation for a field
  */
 export const SubmitValidationParams = zod.object({
-  "id": zod.coerce.number()
+  "id": zod.number()
 })
 
 
@@ -259,7 +281,7 @@ export const SubmitValidationResponse = zod.object({
  * @summary Get aggregated validation summary for a field
  */
 export const GetFieldSummaryParams = zod.object({
-  "id": zod.coerce.number()
+  "id": zod.number()
 })
 
 export const GetFieldSummaryResponse = zod.object({
@@ -290,8 +312,8 @@ export const getCriticalFieldsQueryLimitMax = 100;
 
 
 export const GetCriticalFieldsQueryParams = zod.object({
-  "page": zod.coerce.number().min(1).default(getCriticalFieldsQueryPageDefault).describe('Page number (1-based)'),
-  "limit": zod.coerce.number().min(1).max(getCriticalFieldsQueryLimitMax).default(getCriticalFieldsQueryLimitDefault).describe('Number of items per page')
+  "page": zod.number().min(1).default(getCriticalFieldsQueryPageDefault).describe('Page number (1-based)'),
+  "limit": zod.number().min(1).max(getCriticalFieldsQueryLimitMax).default(getCriticalFieldsQueryLimitDefault).describe('Number of items per page')
 })
 
 export const GetCriticalFieldsResponse = zod.object({

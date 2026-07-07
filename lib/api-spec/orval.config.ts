@@ -13,6 +13,12 @@ const titleTransformer: InputTransformerFn = (config) => {
   return config;
 };
 
+// Type override for Node.js compatibility (File/Blob not available)
+const typeOverride = {
+  File: "File",
+  Blob: "Blob",
+};
+
 export default defineConfig({
   "api-client-react": {
     input: {
@@ -66,6 +72,12 @@ export default defineConfig({
         },
         useDates: true,
         useBigInt: true,
+      },
+      // Type overrides for Node.js environment (File/Blob not available)
+      override: {
+        schema: {
+          override: typeOverride,
+        },
       },
     },
   },

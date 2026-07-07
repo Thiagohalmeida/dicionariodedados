@@ -5,8 +5,29 @@
  * API specification for Data Dictionary Validator
  * OpenAPI spec version: 0.1.0
  */
+export type HealthStatusStatus = typeof HealthStatusStatus[keyof typeof HealthStatusStatus];
+
+
+export const HealthStatusStatus = {
+  ok: 'ok',
+  degraded: 'degraded',
+} as const;
+
+/**
+ * Database connectivity status
+ */
+export type HealthStatusDatabase = typeof HealthStatusDatabase[keyof typeof HealthStatusDatabase];
+
+
+export const HealthStatusDatabase = {
+  ok: 'ok',
+  down: 'down',
+} as const;
+
 export interface HealthStatus {
-  status: string;
+  status: HealthStatusStatus;
+  /** Database connectivity status */
+  database?: HealthStatusDatabase;
 }
 
 export type DictionaryStatus = typeof DictionaryStatus[keyof typeof DictionaryStatus];
@@ -242,6 +263,23 @@ export interface DashboardMetrics {
   fieldsByClassification: ClassificationCount[];
   recentDictionaries: DictionaryWithMetrics[];
 }
+
+export type PreviewExcelDictionaryBody = {
+  file: Blob;
+  processo: string;
+  categoria: string;
+  tabela?: string;
+  aba_preferencial?: string;
+};
+
+export type PreviewExcelDictionary200Meta = { [key: string]: unknown };
+
+export type PreviewExcelDictionary200JsonGerado = { [key: string]: unknown };
+
+export type PreviewExcelDictionary200 = {
+  meta?: PreviewExcelDictionary200Meta;
+  json_gerado?: PreviewExcelDictionary200JsonGerado;
+};
 
 export type ListDictionariesParams = {
 /**

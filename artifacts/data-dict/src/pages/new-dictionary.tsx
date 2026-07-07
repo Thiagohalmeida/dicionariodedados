@@ -80,14 +80,46 @@ interface ExcelMeta {
   colunas_removidas: string[];
 }
 
+function extractGeneratedDictionary(payload: unknown): unknown {
+  if (!payload || typeof payload !== "object") return null;
+
+  const record = payload as Record<string, unknown>;
+  const candidates = [
+    record.json_gerado,
+    record.jsonGerado,
+    record.generatedJson,
+    record.dictionary,
+  ];
+
+  for (const candidate of candidates) {
+    if (candidate !== undefined && candidate !== null) return candidate;
+  }
+
+  if (record.payload && typeof record.payload === "object") {
+    const nested = record.payload as Record<string, unknown>;
+    const nestedCandidates = [nested.json_gerado, nested.jsonGerado, nested.generatedJson, nested.dictionary];
+    for (const candidate of nestedCandidates) {
+      if (candidate !== undefined && candidate !== null) return candidate;
+    }
+  }
+
+  if ("processo" in record || "categoria" in record || "campos" in record) {
+    return payload;
+  }
+
+  return null;
+}
+
 function ExcelImportTab() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const importMutation = useImportDictionary();
 
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [meta, setMeta] = useState<ExcelMeta | null>(null);
+  const [previewJson, setPreviewJson] = useState("");
 
   const [form, setForm] = useState({
     processo: "",
@@ -100,9 +132,10 @@ function ExcelImportTab() {
     const f = e.target.files?.[0] ?? null;
     setFile(f);
     setMeta(null);
+    setPreviewJson("");
   }
 
-  async function handleUpload() {
+  async function handlePreview() {
     if (!file) { toast({ title: "Selecione um arquivo Excel", variant: "destructive" }); return; }
     if (!form.processo.trim() || !form.categoria.trim()) {
       toast({ title: "Campos obrigatórios", description: "Informe processo e categoria antes de continuar.", variant: "destructive" });
@@ -119,7 +152,7 @@ function ExcelImportTab() {
       if (form.aba_preferencial.trim()) fd.append("aba_preferencial", form.aba_preferencial.trim());
 
       const basePath = getApiBase();
-      const res = await fetch(`${basePath}/api/dictionaries/from-excel`, { method: "POST", body: fd });
+      const res = await fetch(`${basePath}/api/excel/preview`, { method: "POST", body: fd });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: "Erro desconhecido" }));
@@ -127,19 +160,51 @@ function ExcelImportTab() {
       }
 
       const data = await res.json();
-      setMeta(data.meta);
+      const generated = extractGeneratedDictionary(data);
+      if (!generated) {
+        throw new Error("O endpoint não retornou um JSON de dicionário válido para pré-visualização.");
+      }
+
+      const meta = (data as { meta?: ExcelMeta }).meta ?? null;
+      const previewText = typeof generated === "string" ? generated : JSON.stringify(generated, null, 2);
+
+      setMeta(meta);
+      setPreviewJson(previewText);
 
       toast({
-        title: "Excel processado com sucesso",
-        description: `${data.meta.total_colunas_raw} colunas lidas, ${data.meta.colunas_removidas.length} removidas por ruído.`,
+        title: "Preview gerado",
+        description: `${meta?.total_colunas_raw ?? 0} colunas lidas, ${meta?.colunas_removidas?.length ?? 0} removidas por ruído.`,
       });
-
-      setTimeout(() => setLocation(`/dictionaries/${data.id}`), 1500);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao processar arquivo";
-      toast({ title: "Erro na ingestão", description: msg, variant: "destructive" });
+      toast({ title: "Erro na pré-visualização", description: msg, variant: "destructive" });
     } finally {
       setLoading(false);
+    }
+  }
+
+  function handleImportPreview() {
+    if (!previewJson.trim()) {
+      toast({ title: "Nenhum preview disponível", description: "Gere um preview antes de importar.", variant: "destructive" });
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(previewJson);
+      importMutation.mutate(
+        { data: parsed },
+        {
+          onSuccess: (dict) => {
+            toast({ title: "Importação concluída", description: "O dicionário foi criado com sucesso." });
+            setLocation(`/dictionaries/${dict.id}`);
+          },
+          onError: () => {
+            toast({ title: "Erro na importação", description: "Verifique o JSON gerado e tente novamente.", variant: "destructive" });
+          },
+        }
+      );
+    } catch {
+      toast({ title: "JSON inválido", description: "O preview contém JSON inválido. Corrija o conteúdo e tente novamente.", variant: "destructive" });
     }
   }
 
@@ -218,7 +283,7 @@ function ExcelImportTab() {
       {meta && (
         <div className="rounded-lg border bg-card p-4 space-y-2 text-sm">
           <div className="flex items-center gap-2 font-semibold text-emerald-600">
-            <CheckCircle2 className="h-4 w-4" /> Processamento concluído
+            <CheckCircle2 className="h-4 w-4" /> Preview gerado com sucesso
           </div>
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
             <span className="text-muted-foreground">Aba utilizada</span>
@@ -241,13 +306,30 @@ function ExcelImportTab() {
         </div>
       )}
 
-      <div className="flex justify-end">
-        <Button onClick={handleUpload} disabled={loading || !file} className="gap-2">
+      {previewJson && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label>JSON gerado (editável)</Label>
+            <span className="text-xs text-muted-foreground">Edite antes de importar</span>
+          </div>
+          <Textarea
+            className="font-mono text-sm min-h-[260px]"
+            value={previewJson}
+            onChange={(e) => setPreviewJson(e.target.value)}
+          />
+        </div>
+      )}
+
+      <div className="flex justify-end gap-2">
+        <Button onClick={handlePreview} disabled={loading || !file} className="gap-2">
           {loading ? (
             <>Processando Excel...</>
           ) : (
-            <><FileSpreadsheet className="h-4 w-4" /> Processar e Importar</>
+            <><FileSpreadsheet className="h-4 w-4" /> Processar e Pré-visualizar</>
           )}
+        </Button>
+        <Button onClick={handleImportPreview} disabled={!previewJson.trim() || importMutation.isPending} variant="outline" className="gap-2">
+          {importMutation.isPending ? "Importando..." : "Importar JSON"}
         </Button>
       </div>
     </div>

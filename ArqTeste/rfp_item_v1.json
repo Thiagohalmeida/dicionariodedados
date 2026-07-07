@@ -1,0 +1,159 @@
+{
+  "processo": "RFQ",
+  "categoria": "Medicamentos",
+  "tabela": "rfp_item",
+  "version": 1,
+  "exportedAt": "2026-07-02T12:20:12.645Z",
+  "campos": [
+    {
+      "campo_origem": "Classe Terapêutica",
+      "descricao": "Classificação terapêutica do medicamento",
+      "origem": "Planilha RFQ",
+      "periodicidade": "eventual",
+      "campo_tecnico": "classe_terapeutica",
+      "tipo_dado": "varchar",
+      "chave": false,
+      "validacao": {
+        "status": "approved",
+        "score": 100,
+        "classification": "reliable",
+        "total_validations": 1
+      }
+    },
+    {
+      "campo_origem": "Principio ativo",
+      "descricao": "Substância ativa do medicamento",
+      "origem": "Planilha RFQ",
+      "periodicidade": "eventual",
+      "campo_tecnico": "principio_ativo",
+      "tipo_dado": "varchar",
+      "chave": false,
+      "validacao": {
+        "status": "pending",
+        "score": null,
+        "classification": "pending",
+        "total_validations": 0
+      }
+    },
+    {
+      "campo_origem": "COD Hapvida",
+      "descricao": "Código interno do material",
+      "origem": "SAP",
+      "periodicidade": "eventual",
+      "campo_tecnico": "cod_hapvida",
+      "tipo_dado": "varchar",
+      "chave": true,
+      "validacao": {
+        "status": "pending",
+        "score": null,
+        "classification": "pending",
+        "total_validations": 0
+      }
+    },
+    {
+      "campo_origem": "Descrição do Material",
+      "descricao": "Descrição do item",
+      "origem": "SAP",
+      "periodicidade": "eventual",
+      "campo_tecnico": "descricao_material",
+      "tipo_dado": "varchar",
+      "chave": false,
+      "validacao": {
+        "status": "pending",
+        "score": null,
+        "classification": "pending",
+        "total_validations": 0
+      }
+    },
+    {
+      "campo_origem": "Estado",
+      "descricao": "UF onde o item será entregue",
+      "origem": "Planilha RFQ",
+      "periodicidade": "eventual",
+      "campo_tecnico": "estado",
+      "tipo_dado": "varchar",
+      "chave": false,
+      "validacao": {
+        "status": "pending",
+        "score": null,
+        "classification": "pending",
+        "total_validations": 0
+      }
+    },
+    {
+      "campo_origem": "ICMS",
+      "descricao": "Alíquota de ICMS aplicável",
+      "origem": "Regra fiscal",
+      "periodicidade": "eventual",
+      "campo_tecnico": "icms",
+      "tipo_dado": "decimal",
+      "chave": false,
+      "validacao": {
+        "status": "pending",
+        "score": null,
+        "classification": "pending",
+        "total_validations": 0
+      }
+    },
+    {
+      "campo_origem": "Qtde/ano",
+      "descricao": "Quantidade estimada anual",
+      "origem": "Planejamento",
+      "periodicidade": "anual",
+      "campo_tecnico": "quantidade_ano",
+      "tipo_dado": "int",
+      "chave": false,
+      "validacao": {
+        "status": "pending",
+        "score": null,
+        "classification": "pending",
+        "total_validations": 0
+      }
+    },
+    {
+      "campo_origem": "Valor Unit de venda",
+      "descricao": "Preço unitário ofertado pelo fornecedor",
+      "origem": "Fornecedor",
+      "periodicidade": "por cotação",
+      "campo_tecnico": "preco_venda",
+      "tipo_dado": "decimal",
+      "chave": false,
+      "validacao": {
+        "status": "pending",
+        "score": null,
+        "classification": "pending",
+        "total_validations": 0
+      }
+    },
+    {
+      "campo_origem": "Desconto (%)",
+      "descricao": "Percentual de desconto aplicado",
+      "origem": "Fornecedor",
+      "periodicidade": "por cotação",
+      "campo_tecnico": "desconto",
+      "tipo_dado": "decimal",
+      "chave": false,
+      "validacao": {
+        "status": "pending",
+        "score": null,
+        "classification": "pending",
+        "total_validations": 0
+      }
+    },
+    {
+      "campo_origem": "Registro ANVISA",
+      "descricao": "Número de registro do produto na ANVISA",
+      "origem": "Fornecedor",
+      "periodicidade": "eventual",
+      "campo_tecnico": "registro_anvisa",
+      "tipo_dado": "varchar",
+      "chave": false,
+      "validacao": {
+        "status": "pending",
+        "score": null,
+        "classification": "pending",
+        "total_validations": 0
+      }
+    }
+  ]
+}

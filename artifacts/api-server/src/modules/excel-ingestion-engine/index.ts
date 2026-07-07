@@ -209,6 +209,32 @@ export async function parseExcelToDataDictionary(
 
   const tabela = generateTableName(ctx, sheet.name);
 
+  // Heurísticas adicionais para origem e periodicidade
+  const originHeaderIndex = rawHeaders.findIndex((h) => /(origem|sistema)/i.test(h));
+  let inferredOrigem: string | null = null;
+  if (originHeaderIndex >= 0) {
+    const colIdx = originHeaderIndex + 1;
+    const samples = columnValues[colIdx] ?? [];
+    const firstNonEmpty = samples.find((v) => v !== null && v !== undefined && String(v).trim() !== "");
+    if (firstNonEmpty) inferredOrigem = String(firstNonEmpty).trim();
+  }
+
+  // Detect periodicidade from sheet name or headers (best-effort)
+  function detectPeriodicidade(): string {
+    const name = sheet.name.toLowerCase();
+    if (/diar|dia/.test(name)) return "diario";
+    if (/semanal|semana/.test(name)) return "semanal";
+    if (/mensal|mês|mes/.test(name)) return "mensal";
+    // If many columns are dates, prefer diario
+    const allValues = Object.values(columnValues).flat();
+    const nonNull = allValues.filter((v) => v !== null && v !== undefined && String(v).trim() !== "");
+    const dateLike = nonNull.filter((v) => v instanceof Date || /\d{4}-\d{2}-\d{2}/.test(String(v)) || /\d{2}\/\d{2}\/\d{4}/.test(String(v)) );
+    if (nonNull.length > 0 && dateLike.length / nonNull.length > 0.4) return "diario";
+    return "eventual";
+  }
+
+  const defaultPeriodicidade = detectPeriodicidade();
+
   const campos: DictionaryField[] = validIndices.map((colIdx, i) => {
     const headerRaw = rawHeaders[colIdx - 1];
     const campoTecnico = toSnakeCase(headerRaw) || `campo_${i + 1}`;
@@ -218,9 +244,10 @@ export async function parseExcelToDataDictionary(
 
     return {
       campo_origem: headerRaw,
-      descricao: `Campo "${headerRaw}" extraído da aba "${sheet.name}"`,
-      origem: `${filename} | ${sheet.name}`,
-      periodicidade: "mensal",
+      // leave descricao empty to force specialist to provide meaningful business description
+      descricao: "",
+      origem: inferredOrigem ?? `${filename} | ${sheet.name}`,
+      periodicidade: defaultPeriodicidade,
       campo_tecnico: campoTecnico,
       tipo_dado: tipo,
       chave: isFirstNumericKey,

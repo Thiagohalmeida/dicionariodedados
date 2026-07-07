@@ -115,6 +115,10 @@
 
 ### ✅ Performance (RESOLVIDO - 06/07/2026)
 
+- [x] **Script de desenvolvimento completo** — `dev` inicia API e frontend em paralelo
+  - Arquivo: `package.json`
+  - Correção: `dev` agora executa `dev:api` e `dev:web` juntos
+
 - [x] **Paginação nos endpoints de listagem** `/dictionaries` e `/fields/critical`
   - Arquivos: `artifacts/api-server/src/routes/dictionaries.ts`, `artifacts/api-server/src/routes/fields.ts`
   - Correção: Validados `ListDictionariesQueryParams` e `GetCriticalFieldsQueryParams` (page/limit, default 1/20, max 100); respostas no shape `{ data, total, page, limit, totalPages }` já exigido pelos schemas Zod gerados do OpenAPI; tipos regenerados via `pnpm --filter @workspace/api-spec run codegen`
@@ -122,6 +126,9 @@
   - Nota: O contrato OpenAPI já previa paginação, mas o backend retornava array puro → `.parse()` falhava em runtime
 
 ### ✅ Correções identificadas em inspeção de código (07/07/2026)
+
+- [x] **`totalFields` no dashboard corrigido** — agora conta corretamente os campos processados
+  - Arquivo: `artifacts/api-server/src/routes/dashboard.ts`
 
 - [x] **Score thresholds: `RELIABLE` corrigido para 90** (RF05 exige ≥ 90 para "Confiável"; estava 80)
   - Arquivo: `artifacts/api-server/src/lib/constants.ts`
@@ -165,31 +172,34 @@
 
 ## 🔴 Pendente — Prioridade Alta (Lacunas do FLOW.md)
 
-### L1. Endpoint `POST /api/excel/preview` — Preview sem persistir (CRÍTICO)
-- [ ] **Arquivos:** `artifacts/api-server/src/routes/excel.ts` (novo endpoint), `artifacts/data-dict/src/pages/new-dictionary.tsx` (UI editor JSON)
-- **Situação:** `POST /api/dictionaries/from-excel` persiste direto no banco sem permitir revisão do JSON gerado
-- **Por que importa:** Especialista não pode corrigir inferências do motor (`descricao`, `periodicidade`, `origem`, `chave`) antes de criar o dicionário — fluxo quebrado
+### L1. Endpoint `POST /api/excel/preview` — Preview sem persistir (CRÍTICO) — **CONCLUÍDO**
+- [x] **Arquivos:** `artifacts/api-server/src/routes/excel.ts` (novo endpoint), `artifacts/data-dict/src/pages/new-dictionary.tsx` (UI editor JSON)
+- **Situação:** `POST /api/dictionaries/from-excel` agora permite preview por padrão e só persiste quando `persist=true` é enviado
+- **Por que importa:** Especialista pode revisar as inferências do motor (`descricao`, `periodicidade`, `origem`, `chave`) antes de criar o dicionário
 - **Fluxo correto:** Upload Excel → Preview JSON → [edição opcional] → `POST /api/dictionaries` → Validar → Exportar
-- **Ação:**
-  1. Criar `POST /api/excel/preview` — mesmo motor de `from-excel`, mas **SEM INSERT**, retorna `{ meta, json_gerado }`
-  2. Frontend: em `/dictionaries/new` (aba Excel), após upload exibir JSON em editor (textarea/Monaco) + botão "Importar" chamando `POST /api/dictionaries`
-  3. Atualizar OpenAPI (`lib/api-spec/openapi.yaml`) e regenerar types (`pnpm --filter @workspace/api-spec run codegen`)
+- **Execução:**
+  1. Implementado `POST /api/excel/preview` retornando `{ meta, json_gerado }`
+  2. Frontend da aba Excel agora exibe o JSON em editor e permite importar após edição
+  3. OpenAPI atualizado em `lib/api-spec/openapi.yaml` e os tipos serão regenerados via `pnpm --filter @workspace/api-spec run codegen`
 
-### L2. Motor de inferência: `descricao`, `periodicidade`, `origem` incompletos
-- [ ] **Arquivo:** `artifacts/api-server/src/modules/excel-ingestion-engine/index.ts`
-- **Situação:** Motor preenche `descricao` genérica, `periodicidade = "eventual"`, `origem = "arquivo | aba"`, `chave = false` (exceto 1ª coluna numérica)
-- **Por que importa:** Campos entram no sistema sem metadados de negócio reais; revisão no L1 resolve parcialmente, mas inferência melhor reduz retrabalho
-- **Ação (pós-L1):** Melhorar heurísticas — `periodicidade` por nome da aba/colunas de data; `origem` por cabeçalho "Sistema/Origem"; `descricao` deixar vazia para preenchimento manual obrigatório
+### L2. Motor de inferência: `descricao`, `periodicidade`, `origem` incompletos — **CONCLUÍDO (melhorias heurísticas aplicadas)**
+- [x] **Arquivo:** `artifacts/api-server/src/modules/excel-ingestion-engine/index.ts`
+- **Situação:** Motor agora adota heurísticas conservadoras:
+  - `descricao`: deixada vazia para forçar revisão manual por especialista (anteriormente preenchida com texto genérico)
+  - `periodicidade`: inferida a partir do nome da aba (palavras-chave: dia/diario, semana/semanal, mes/mensal) ou, se não detectado, a proporção de valores de data na planilha (se >40% → `diario`), caso contrário `eventual`
+  - `origem`: tenta extrair valor de uma coluna cujo cabeçalho contenha `origem` ou `sistema`; se não encontrada, usa `${filename} | ${sheet.name}` como fallback
+- **Por que importa:** Essas mudanças reduzem falsos positivos e forçam revisão manual onde o motor tem baixa confiança.
+- **Ação executada:** Heurísticas implementadas no arquivo indicado; L1 (preview) garante usuário pode editar antes de persistir.
 
-### L3. DDL sinalizar campos Crítico/Pendente (Baixa)
-- [ ] **Arquivo:** `artifacts/api-server/src/routes/excel.ts` (endpoint `/export/ddl`)
-- **Situação:** DDL gerado não reflete status de validação
-- **Ação:** Adicionar comentário SQL `-- status: critical` / `-- status: pending` nas colunas com score < 60 ou sem validações
+### L3. DDL sinalizar campos Crítico/Pendente (Baixa) — **CONCLUÍDO**
+- [x] **Arquivo:** `artifacts/api-server/src/routes/excel.ts` (endpoint `/export/ddl`)
+- **Situação:** DDL agora inclui comentário `-- status: <classification>` ao lado das colunas quando summaries estão disponíveis (ex.: `-- status: critical`).
+- **Ação executada:** O endpoint `/dictionaries/:id/export/ddl` busca `getFieldsWithSummaries(id)` e anota cada coluna com `status` quando aplicável. Se summaries não existirem, comportamento padrão permanece.
 
-### L4. Data Contract incluir regras de negócio das validações (Baixa)
-- [ ] **Arquivo:** `artifacts/api-server/src/routes/excel.ts` (endpoint `/export/data-contract`)
-- **Situação:** Data Contract não inclui detalhes das validações (critérios binários por campo)
-- **Ação:** Adicionar por campo: `regras_negocio: { usado: true, obrigatorio: true, nome_correto: true, origem_correta: false, regra_negocio: false }` baseado nas médias das validações
+### L4. Data Contract incluir regras de negócio das validações (Baixa) — **CONCLUÍDO**
+- [x] **Arquivo:** `artifacts/api-server/src/routes/excel.ts` (endpoint `/export/data-contract`)
+- **Situação:** Data Contract agora inclui, para cada campo, um objeto `regras_negocio` com a média das validações (booleans ou null quando ausente): `usado`, `obrigatorio`, `nome_correto`, `origem_correta`, `regra_negocio`.
+- **Ação executada:** O endpoint usa `getFieldsWithSummaries` e calcula cada flag como `avg >= 0.5` quando disponível; caso contrário `null`.
 
 ---
 
@@ -209,9 +219,10 @@
 ## 🟡 Pendente — Prioridade Média
 
 ### 3. Health check não verifica o banco
-- [ ] **Arquivo:** `artifacts/api-server/src/routes/health.ts`
-- **Situação:** `/api/healthz` sempre responde `{ status: "ok" }` mesmo com PostgreSQL fora
-- **Ação:** Fazer `SELECT 1` rápido contra o pool do Drizzle antes de responder; 503 se falhar
+- [x] **Arquivo:** `artifacts/api-server/src/routes/health.ts`
+- **Situação:** `/api/healthz` agora faz `SELECT 1` contra o pool do Drizzle antes de responder
+- **Ação:** Retorna 200 com `{ status: "ok", database: "ok" }` ou 503 com `{ status: "degraded", database: "down" }` se falhar
+- **OpenAPI:** Schema atualizado com `HealthStatus` incluindo campo `database` (ok/down) + enum `status` (ok/degraded); tipos regenerados via `pnpm --filter @workspace/api-spec run codegen`
 
 ### 4. `mockup-sandbox` incluído no workspace pnpm
 - [ ] **Arquivo:** `pnpm-workspace.yaml` (`packages: - artifacts/*`)
@@ -245,19 +256,21 @@
 | Críticas (antigas) | 8 | 0 | 0 |
 | Médias (antigas) | 6 | 0 | 0 |
 | Menores (antigas) | 12 | 0 | 0 |
-| **Novas do FLOW.md (L1-L4)** | 0 | 0 | **4** |
+| **Novas do FLOW.md (L1-L4)** | **4** | 0 | **0** |
 | Pendentes Altas (restantes) | 1 (CORS) | 0 | **1** (`/fields/critical` DB pagination) |
 | Pendentes Médias | 0 | 0 | **3** |
 | Pendentes Baixas | 1 (`/dictionaries` desc) | 0 | **2** |
-| **Total** | **27** | **0** | **10** |
+| **Total** | **32** | **0** | **6** |
 
 ---
 
-## 🏆 PRÓXIMO PASSO LÓGICO
+## 🏆 PRÓXIMOS ITENS PENDENTES
 
-**Iniciar L1** — `POST /api/excel/preview` + UI editor JSON em `/dictionaries/new`.
+Os itens principais do fluxo Excel/preview já estão concluídos. Os pontos ainda pendentes são:
 
-Esta é a lacuna que quebra o fluxo completo (Etapa 1 do FLOW.md) e desbloqueia L2.
+- [ ] Paginação real no backend para `/fields/critical`
+- [ ] Seed de dados de teste
+- [ ] Ajustes de tech debt e deploy futuros
 
 ---
 
@@ -296,3 +309,4 @@ Esta é a lacuna que quebra o fluxo completo (Etapa 1 do FLOW.md) e desbloqueia 
 - **CORS configurável** — lê `ALLOWED_ORIGINS` com fallback permissivo
 - **Error handler global** + **validação extensão `.xlsx`/`.xlsm`** + try/catch parse Excel
 - **Typecheck + Build** passaram 100%
+- **Health check do banco** — `/api/healthz` faz `SELECT 1` no pool Drizzle; retorna 200/503 com status do DB

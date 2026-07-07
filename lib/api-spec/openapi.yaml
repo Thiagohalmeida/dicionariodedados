@@ -32,6 +32,46 @@ paths:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
 
+  /excel/preview:
+    post:
+      operationId: previewExcelDictionary
+      tags: [dictionaries]
+      summary: Preview a dictionary generated from an Excel upload without persisting it
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, processo, categoria]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                processo:
+                  type: string
+                categoria:
+                  type: string
+                tabela:
+                  type: string
+                aba_preferencial:
+                  type: string
+      x-orval-request-body: true
+      responses:
+        "200":
+          description: Excel preview generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                  json_gerado:
+                    type: object
+        "400":
+          description: Invalid input
+
   /dictionaries:
     get:
       operationId: listDictionaries
@@ -326,6 +366,11 @@ components:
       properties:
         status:
           type: string
+          enum: [ok, degraded]
+        database:
+          type: string
+          enum: [ok, down]
+          description: Database connectivity status
 
     Dictionary:
       type: object

@@ -34,6 +34,8 @@ import type {
   HealthStatus,
   ListDictionaries200,
   ListDictionariesParams,
+  PreviewExcelDictionary200,
+  PreviewExcelDictionaryBody,
   Validation,
   ValidationInput
 } from './api.schemas';
@@ -142,6 +144,86 @@ export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, 
 
 
 
+
+export const getPreviewExcelDictionaryUrl = () => {
+
+
+
+
+  return `/api/excel/preview`
+}
+
+/**
+ * @summary Preview a dictionary generated from an Excel upload without persisting it
+ */
+export const previewExcelDictionary = async (previewExcelDictionaryBody: PreviewExcelDictionaryBody, options?: RequestInit): Promise<PreviewExcelDictionary200> => {
+    const formData = new FormData();
+formData.append(`file`, previewExcelDictionaryBody.file);
+formData.append(`processo`, previewExcelDictionaryBody.processo);
+formData.append(`categoria`, previewExcelDictionaryBody.categoria);
+if(previewExcelDictionaryBody.tabela !== undefined) {
+ formData.append(`tabela`, previewExcelDictionaryBody.tabela);
+ }
+if(previewExcelDictionaryBody.aba_preferencial !== undefined) {
+ formData.append(`aba_preferencial`, previewExcelDictionaryBody.aba_preferencial);
+ }
+
+  return customFetch<PreviewExcelDictionary200>(getPreviewExcelDictionaryUrl(),
+  {
+    ...options,
+    method: 'POST'
+    ,
+    body: formData
+  }
+);}
+
+
+
+
+export const getPreviewExcelDictionaryMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof previewExcelDictionary>>, TError,{data: BodyType<PreviewExcelDictionaryBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof previewExcelDictionary>>, TError,{data: BodyType<PreviewExcelDictionaryBody>}, TContext> => {
+
+const mutationKey = ['previewExcelDictionary'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof previewExcelDictionary>>, {data: BodyType<PreviewExcelDictionaryBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  previewExcelDictionary(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PreviewExcelDictionaryMutationResult = NonNullable<Awaited<ReturnType<typeof previewExcelDictionary>>>
+    export type PreviewExcelDictionaryMutationBody = BodyType<PreviewExcelDictionaryBody>
+    export type PreviewExcelDictionaryMutationError = ErrorType<void>
+
+    /**
+ * @summary Preview a dictionary generated from an Excel upload without persisting it
+ */
+export const usePreviewExcelDictionary = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof previewExcelDictionary>>, TError,{data: BodyType<PreviewExcelDictionaryBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof previewExcelDictionary>>,
+        TError,
+        {data: BodyType<PreviewExcelDictionaryBody>},
+        TContext
+      > => {
+      return useMutation(getPreviewExcelDictionaryMutationOptions(options));
+    }
 
 export const getListDictionariesUrl = (params?: ListDictionariesParams,) => {
   const normalizedParams = new URLSearchParams();
