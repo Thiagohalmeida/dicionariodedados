@@ -131,6 +131,7 @@ function ExcelImportTab() {
     origem: string;
     periodicidade: string;
     chave: boolean;
+    included: boolean;
     validation?: any;
   }>>([]);
   const [showValidationSheet, setShowValidationSheet] = useState(false);
@@ -193,6 +194,7 @@ function ExcelImportTab() {
         origem: c.origem,
         periodicidade: c.periodicidade,
         chave: c.chave,
+        included: true,
       }));
 
       setMeta(meta);
@@ -241,15 +243,17 @@ function ExcelImportTab() {
   const handleGenerateValidatedJson = (validatedFields: typeof previewFields) => {
     // Update previewJson with validated fields
     const parsed = JSON.parse(previewJson);
-    parsed.campos = validatedFields.map(f => ({
-      campo_origem: f.campoOrigem,
-      campo_tecnico: f.campoTecnico,
-      descricao: f.descricao,
-      tipo_dado: f.tipoDado,
-      origem: f.origem,
-      periodicidade: f.periodicidade,
-      chave: f.chave,
-    }));
+    parsed.campos = validatedFields
+      .filter(f => f.included)
+      .map(f => ({
+        campo_origem: f.campoOrigem,
+        campo_tecnico: f.campoTecnico,
+        descricao: f.descricao,
+        tipo_dado: f.tipoDado,
+        origem: f.origem,
+        periodicidade: f.periodicidade,
+        chave: f.chave,
+      }));
     setPreviewJson(JSON.stringify(parsed, null, 2));
     toast({ title: "JSON atualizado", description: "Validações aplicadas ao JSON editável." });
   };

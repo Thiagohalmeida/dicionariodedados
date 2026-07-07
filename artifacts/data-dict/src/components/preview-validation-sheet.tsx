@@ -24,6 +24,7 @@ interface PreviewField {
   origem: string;
   periodicidade: string;
   chave: boolean;
+  included: boolean;  // whether to include in final JSON
   validation?: {
     validatorName?: string;
     used?: boolean;
@@ -60,6 +61,7 @@ function EditFieldDialog({
     campoTecnico: field.campoTecnico ?? "",
     tipoDado: field.tipoDado ?? "",
     chave: field.chave ?? false,
+    included: field.included ?? true,
   });
 
   function handleSave() {
@@ -101,6 +103,16 @@ function EditFieldDialog({
           <div className="space-y-1.5">
             <Label>Chave Primária</Label>
             <Select value={form.chave ? "sim" : "nao"} onValueChange={(v) => setForm({ ...form, chave: v === "sim" })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="sim">Sim</SelectItem>
+                <SelectItem value="nao">Não</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Incluir no JSON</Label>
+            <Select value={form.included ? "sim" : "nao"} onValueChange={(v) => setForm({ ...form, included: v === "sim" })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="sim">Sim</SelectItem>
@@ -263,7 +275,7 @@ function translateClassification(classification: string) {
 export default function PreviewValidationSheet({
   open,
   onOpenChange,
-  fields,
+  fields: initialFields,
   onGenerateValidatedJson,
   onImportDictionary,
 }: PreviewValidationSheetProps) {
@@ -272,13 +284,29 @@ export default function PreviewValidationSheet({
   const [validatingField, setValidatingField] = useState<PreviewField | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [fields, setFields] = useState<PreviewField[]>(initialFields);
+
+  // Sync with initialFields when they change
+  React.useEffect(() => {
+    setFields(initialFields.map(f => ({ ...f, included: f.included ?? true })));
+  }, [initialFields]);
 
   const handleEditSave = useCallback((updated: Partial<PreviewField>) => {
+    setFields(prev => prev.map(f => f.id === editingField?.id ? { ...f, ...updated } : f));
     setEditingField(null);
-  }, []);
+  }, [editingField?.id]);
 
   const handleValidationSave = useCallback((validation: PreviewField["validation"]) => {
+    setFields(prev => prev.map(f => f.id === validatingField?.id ? { ...f, validation } : f));
     setValidatingField(null);
+  }, [validatingField?.id]);
+
+  const toggleIncluded = useCallback((id: number, included: boolean) => {
+    setFields(prev => prev.map(f => f.id === id ? { ...f, included } : f));
+  }, []);
+
+  const toggleAllIncluded = useCallback((included: boolean) => {
+    setFields(prev => prev.map(f => ({ ...f, included })));
   }, []);
 
   const generateValidatedJson = async () => {
@@ -300,11 +328,12 @@ export default function PreviewValidationSheet({
   const importDictionary = async () => {
     setIsImporting(true);
     try {
+      const includedFields = fields.filter(f => f.included);
       const jsonGerado = {
-        processo: fields[0]?.validation?.validatorName ? "preview" : "",
+        processo: includedFields[0]?.validation?.validatorName ? "preview" : "",
         categoria: "",
         tabela: "",
-        campos: fields.map(f => ({
+        campos: includedFields.map(f => ({
           campo_origem: f.campoOrigem,
           campo_tecnico: f.campoTecnico,
           descricao: f.descricao,
@@ -323,6 +352,8 @@ export default function PreviewValidationSheet({
   };
 
   const hasValidations = fields.some(f => f.validation);
+  const allIncluded = fields.length > 0 && fields.every(f => f.included);
+  const someIncluded = fields.some(f => f.included);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -347,6 +378,13 @@ export default function PreviewValidationSheet({
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead style={{ width: '40px' }}>
+                      <Checkbox
+                        checked={allIncluded}
+                        onCheckedChange={(checked) => toggleAllIncluded(checked as boolean)}
+                        aria-label="Selecionar todos"
+                      />
+                    </TableHead>
                     <TableHead>Campo de Origem</TableHead>
                     <TableHead>Campo Técnico</TableHead>
                     <TableHead className="max-w-[200px]">Descrição</TableHead>
@@ -361,7 +399,13 @@ export default function PreviewValidationSheet({
                 </TableHeader>
                 <TableBody>
                   {fields.map((field) => (
-                    <TableRow key={field.id} className="cursor-pointer hover:bg-muted/50">
+                    <TableRow key={field.id} className={`cursor-pointer hover:bg-muted/50 ${!field.included ? 'opacity-40 bg-muted/50' : ''}`}>
+                      <TableCell style={{ width: '40px' }}>
+                        <Checkbox
+                          checked={field.included}
+                          onCheckedChange={(checked) => toggleIncluded(field.id, checked as boolean)}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">{field.campoOrigem}</TableCell>
                       <TableCell className="font-mono text-sm">{field.campoTecnico}</TableCell>
                       <TableCell className="max-w-[200px] truncate" title={field.descricao}>{field.descricao}</TableCell>
