@@ -242,7 +242,9 @@ router.get("/dictionaries/:id/export/ddl", async (req, res): Promise<void> => {
   const cols = fields.map((f) => {
     const sqlType = typeMap[f.tipoDado] ?? "VARCHAR(255)";
     const pk = f.chave ? " PRIMARY KEY" : "";
-    const statusComment = f.summary?.classification ? ` -- status: ${f.summary.classification}` : "";
+    const statusComment = f.summary?.classification === "critical" || f.summary?.classification === "pending"
+      ? ` -- status: ${f.summary.classification}`
+      : "";
     return `  ${f.campoTecnico} ${sqlType}${pk}${statusComment}`;
   });
 

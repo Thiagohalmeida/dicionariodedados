@@ -247,6 +247,12 @@
 - [x] `/dictionaries` — já usa `desc(dictionariesTable.createdAt)`
 - [ ] `/dashboard` — confirmar se usa `asc` e trocar para `desc`
 
+### 9. Separar visualmente "Ingestão de Excel" de "Importação por JSON"
+- [ ] **Arquivo:** `artifacts/data-dict/src/pages/new-dictionary.tsx`
+- **Situação:** Duas formas de importar convivem como abas (`Tabs`) no mesmo card; Excel exige 2 passos (preview → importar), JSON é ação única
+- **Sugestão:** Destacar a distinção — ex.: badges "Passo 1/2" na aba Excel, ou reorganizar em duas seções empilhadas (Excel primeiro com destaque "Novo", JSON depois)
+- **Prioridade:** Baixa (decisão de produto, não correção técnica)
+
 ---
 
 ## Resumo de Status
@@ -310,3 +316,5 @@ Os itens principais do fluxo Excel/preview já estão concluídos. Os pontos ain
 - **Error handler global** + **validação extensão `.xlsx`/`.xlsm`** + try/catch parse Excel
 - **Typecheck + Build** passaram 100%
 - **Health check do banco** — `/api/healthz` faz `SELECT 1` no pool Drizzle; retorna 200/503 com status do DB
+- **Erro de importação: mensagens reais** — `onError` das mutations extrai `err.message` do `ApiError` (zod/400/500) em vez de texto fixo
+- **DDL: comentário de status só em Crítico/Pendente** — `classification === "critical" || "pending"` (antes aparecia em todas)

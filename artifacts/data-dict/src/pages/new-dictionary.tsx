@@ -43,8 +43,9 @@ function JsonImportTab() {
           toast({ title: "Importação concluída", description: "Dicionário importado com sucesso." });
           setLocation(`/dictionaries/${dict.id}`);
         },
-        onError: () => {
-          toast({ title: "Erro na importação", description: "Verifique o formato do JSON e tente novamente.", variant: "destructive" });
+        onError: (err: unknown) => {
+          const msg = err instanceof Error ? err.message : "Verifique o formato do JSON e tente novamente.";
+          toast({ title: "Erro na importação", description: msg, variant: "destructive" });
         }
       });
     } catch {
@@ -198,8 +199,9 @@ function ExcelImportTab() {
             toast({ title: "Importação concluída", description: "O dicionário foi criado com sucesso." });
             setLocation(`/dictionaries/${dict.id}`);
           },
-          onError: () => {
-            toast({ title: "Erro na importação", description: "Verifique o JSON gerado e tente novamente.", variant: "destructive" });
+          onError: (err: unknown) => {
+            const msg = err instanceof Error ? err.message : "Verifique o JSON gerado e tente novamente.";
+            toast({ title: "Erro na importação", description: msg, variant: "destructive" });
           },
         }
       );
