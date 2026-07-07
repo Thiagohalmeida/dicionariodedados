@@ -20,6 +20,6 @@ export const DICTIONARY_STATUS = {
 
 export const SCORE_THRESHOLDS = {
   APPROVE: 60,
-  RELIABLE: 80,
+  RELIABLE: 90,
   ATTENTION: 60,
 } as const;

@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { eq, inArray, desc, count } from "drizzle-orm";
 import { db, dictionariesTable, fieldsTable, validationsTable } from "@workspace/db";
 import {
   ImportDictionaryBody,
@@ -32,15 +32,22 @@ router.get("/dictionaries", async (req, res): Promise<void> => {
   }
 
   const { page, limit } = parsedQuery.data;
-
-  const allDicts = await db.select().from(dictionariesTable).orderBy(dictionariesTable.createdAt);
-
-  const total = allDicts.length;
-  const totalPages = Math.max(1, Math.ceil(total / limit));
   const offset = (page - 1) * limit;
-  const pageDicts = allDicts.slice(offset, offset + limit);
 
-  if (total === 0) {
+  const pageDicts = await db
+    .select()
+    .from(dictionariesTable)
+    .orderBy(desc(dictionariesTable.createdAt))
+    .limit(limit)
+    .offset(offset);
+
+  const [{ total }] = await db
+    .select({ total: count() })
+    .from(dictionariesTable);
+
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+
+  if (pageDicts.length === 0) {
     res.json(
       ListDictionariesResponse.parse({
         data: [],
@@ -53,9 +60,11 @@ router.get("/dictionaries", async (req, res): Promise<void> => {
     return;
   }
 
-  const pageDictIds = new Set(pageDicts.map((d) => d.id));
-  const allFields = await db.select().from(fieldsTable);
-  const pageFields = allFields.filter((f) => pageDictIds.has(f.dictionaryId));
+  const pageDictIds = pageDicts.map((d) => d.id);
+  const pageFields = await db
+    .select()
+    .from(fieldsTable)
+    .where(inArray(fieldsTable.dictionaryId, pageDictIds));
 
   const fieldsByDict = new Map<number, typeof pageFields>();
   for (const f of pageFields) {

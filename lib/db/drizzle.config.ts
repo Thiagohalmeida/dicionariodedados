@@ -5,8 +5,8 @@ import { readFileSync, existsSync } from "fs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Load .env (shared with api-server) so DATABASE_URL is available
-// without requiring callers to set process.env manually.
+// Load .env from api-server (canonical location per README/.env.example)
+// so DATABASE_URL is available without requiring callers to set process.env manually.
 function loadDotEnv(filePath: string) {
   if (!existsSync(filePath)) return;
   const content = readFileSync(filePath, "utf-8");
@@ -29,7 +29,7 @@ function loadDotEnv(filePath: string) {
   }
 }
 
-loadDotEnv(path.resolve(__dirname, ".env"));
+loadDotEnv(path.resolve(__dirname, "../../artifacts/api-server/.env"));
 
 if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL, ensure the database is provisioned");

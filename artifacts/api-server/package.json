@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --env-file=.env ./node_modules/.bin/tsx watch src/index.ts",
+    "dev": "tsx watch --env-file=.env src/index.ts",
     "build": "node ./build.mjs",
     "start": "node --env-file=.env --enable-source-maps ./dist/index.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"

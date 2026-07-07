@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { db, dictionariesTable, fieldsTable } from "@workspace/db";
 import { parseExcelToDataDictionary, type UserContext } from "../modules/excel-ingestion-engine/index";
 import { DICTIONARY_STATUS } from "../lib/constants";
+import { getFieldsWithSummaries } from "../lib/summary";
 
 const router: IRouter = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
@@ -20,10 +21,20 @@ router.post(
       next();
     });
   },
-  async (req, res): Promise<void> => {
+async (req, res): Promise<void> => {
   if (!req.file) {
     req.log.error({}, "No file uploaded");
     res.status(400).json({ error: "Arquivo Excel obrigatório." });
+    return;
+  }
+
+  const originalName = req.file.originalname?.toLowerCase() ?? "";
+  const validExtensions = [".xlsx", ".xlsm"];
+  if (!validExtensions.some((ext) => originalName.endsWith(ext))) {
+    req.log.error({ originalname: req.file.originalname }, "Unsupported file extension");
+    res.status(400).json({
+      error: "Formato não suportado. Use .xlsx ou .xlsm (Excel 2007+). Arquivos .xls antigos não são suportados.",
+    });
     return;
   }
 
@@ -42,7 +53,15 @@ router.post(
     aba_preferencial: aba_preferencial?.trim() || null,
   };
 
-  const parsed = await parseExcelToDataDictionary(req.file.buffer, req.file.originalname, ctx);
+  let parsed;
+  try {
+    parsed = await parseExcelToDataDictionary(req.file.buffer, req.file.originalname, ctx);
+  } catch (err) {
+    req.log.error({ err, originalname: req.file.originalname }, "Excel parse failed");
+    const msg = err instanceof Error ? err.message : "Erro ao processar arquivo Excel";
+    res.status(400).json({ error: `Falha ao ler o arquivo Excel: ${msg}` });
+    return;
+  }
 
   req.log.info(
     {
@@ -132,7 +151,7 @@ router.get("/dictionaries/:id/export/data-contract", async (req, res): Promise<v
     res.status(404).json({ error: "Dicionário não encontrado" }); return;
   }
 
-  const fields = await db.select().from(fieldsTable).where(eq(fieldsTable.dictionaryId, id));
+  const fields = await getFieldsWithSummaries(id);
 
   const contract = {
     versao: "1.0",
@@ -145,7 +164,7 @@ router.get("/dictionaries/:id/export/data-contract", async (req, res): Promise<v
       campo_origem: f.campoOrigem,
       tipo: f.tipoDado,
       descricao: f.descricao,
-      obrigatorio: f.chave,
+      obrigatorio: f.summary.avgRequired === null ? null : f.summary.avgRequired >= 0.5,
       chave: f.chave,
       origem: f.origem,
       periodicidade: f.periodicidade,

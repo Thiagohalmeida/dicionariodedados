@@ -165,7 +165,7 @@ router.get("/fields/critical", async (req, res): Promise<void> => {
 
   const { page, limit } = parsedQuery.data;
 
-  const allFields = await db.select().from(fieldsTable);
+  const allFields = await db.select().from(fieldsTable).orderBy(fieldsTable.campoOrigem);
 
   if (allFields.length === 0) {
     res.json(

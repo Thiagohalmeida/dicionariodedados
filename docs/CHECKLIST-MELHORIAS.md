@@ -121,6 +121,40 @@
   - Frontend: `pages/dictionaries.tsx` e `pages/critical-fields.tsx` adaptados para `data?.data`
   - Nota: O contrato OpenAPI já previa paginação, mas o backend retornava array puro → `.parse()` falhava em runtime
 
+### ✅ Correções identificadas em inspeção de código (07/07/2026)
+
+- [x] **Score thresholds: `RELIABLE` corrigido para 90** (RF05 exige ≥ 90 para "Confiável"; estava 80)
+  - Arquivo: `artifacts/api-server/src/lib/constants.ts`
+  - Correção: `SCORE_THRESHOLDS.RELIABLE` alterado de `80` para `90`
+
+- [x] **Data Contract: `obrigatorio` derivado de consenso dos validadores** (não de `chave`)
+  - Arquivo: `artifacts/api-server/src/routes/excel.ts` (endpoint `/export/data-contract`)
+  - Correção: Usa `getFieldsWithSummaries` e define `obrigatorio: avgRequired >= 0.5` (ou `null` sem validações)
+
+- [x] **Drizzle config: carrega `.env` de `artifacts/api-server/.env`** (era `lib/db/.env`)
+  - Arquivo: `lib/db/drizzle.config.ts`
+  - Correção: Caminho relativo `../../artifacts/api-server/.env`
+
+- [x] **UI de paginação nas telas `/dictionaries` e `/fields/critical`**
+  - Arquivos: `artifacts/data-dict/src/pages/dictionaries.tsx`, `artifacts/data-dict/src/pages/critical-fields.tsx`
+  - Correção: Estados de página + botões "Anterior/Próxima" usando `page`, `totalPages`, `total` da API
+
+### ✅ CORS configurável (RESOLVIDO - 07/07/2026)
+
+- [x] **`ALLOWED_ORIGINS` lido do ambiente**
+  - Arquivo: `artifacts/api-server/src/app.ts`
+  - Correção: Lê `process.env.ALLOWED_ORIGINS` (comma-separated), configura `cors({ origin: allowedOrigins, credentials: true })` quando definido; mantém permissivo como fallback para dev
+
+### ✅ Error handler global + validação Excel (RESOLVIDO - 07/07/2026)
+
+- [x] **Error handler global no Express**
+  - Arquivo: `artifacts/api-server/src/app.ts`
+  - Correção: Middleware final converte exceções em JSON 500 com logging pino
+
+- [x] **Validação de extensão `.xlsx`/`.xlsm` + try/catch no parse**
+  - Arquivo: `artifacts/api-server/src/routes/excel.ts`
+  - Correção: Rejeita `.xls` binário antes do parse; captura erro do ExcelJS e retorna 400 descritivo
+
 ### ✅ ExcelJS type assertion (RESOLVIDO - Won't fix)
 
 - [x] **ExcelJS `as any` em excel-ingestion-engine/index.ts:142**
@@ -129,40 +163,101 @@
 
 ---
 
-## 📊 RESUMO
+## 🔴 Pendente — Prioridade Alta (Lacunas do FLOW.md)
 
-| Categoria | Total | Concluídos | Pendentes |
-|-----------|-------|-----------|-----------|
-| Críticas | 8 | 8 | 0 |
-| Médias | 6 | 6 | 0 |
-| Menores | 5 | 5 | 0 |
-| **Total** | **19** | **19** | **0** |
+### L1. Endpoint `POST /api/excel/preview` — Preview sem persistir (CRÍTICO)
+- [ ] **Arquivos:** `artifacts/api-server/src/routes/excel.ts` (novo endpoint), `artifacts/data-dict/src/pages/new-dictionary.tsx` (UI editor JSON)
+- **Situação:** `POST /api/dictionaries/from-excel` persiste direto no banco sem permitir revisão do JSON gerado
+- **Por que importa:** Especialista não pode corrigir inferências do motor (`descricao`, `periodicidade`, `origem`, `chave`) antes de criar o dicionário — fluxo quebrado
+- **Fluxo correto:** Upload Excel → Preview JSON → [edição opcional] → `POST /api/dictionaries` → Validar → Exportar
+- **Ação:**
+  1. Criar `POST /api/excel/preview` — mesmo motor de `from-excel`, mas **SEM INSERT**, retorna `{ meta, json_gerado }`
+  2. Frontend: em `/dictionaries/new` (aba Excel), após upload exibir JSON em editor (textarea/Monaco) + botão "Importar" chamando `POST /api/dictionaries`
+  3. Atualizar OpenAPI (`lib/api-spec/openapi.yaml`) e regenerar types (`pnpm --filter @workspace/api-spec run codegen`)
+
+### L2. Motor de inferência: `descricao`, `periodicidade`, `origem` incompletos
+- [ ] **Arquivo:** `artifacts/api-server/src/modules/excel-ingestion-engine/index.ts`
+- **Situação:** Motor preenche `descricao` genérica, `periodicidade = "eventual"`, `origem = "arquivo | aba"`, `chave = false` (exceto 1ª coluna numérica)
+- **Por que importa:** Campos entram no sistema sem metadados de negócio reais; revisão no L1 resolve parcialmente, mas inferência melhor reduz retrabalho
+- **Ação (pós-L1):** Melhorar heurísticas — `periodicidade` por nome da aba/colunas de data; `origem` por cabeçalho "Sistema/Origem"; `descricao` deixar vazia para preenchimento manual obrigatório
+
+### L3. DDL sinalizar campos Crítico/Pendente (Baixa)
+- [ ] **Arquivo:** `artifacts/api-server/src/routes/excel.ts` (endpoint `/export/ddl`)
+- **Situação:** DDL gerado não reflete status de validação
+- **Ação:** Adicionar comentário SQL `-- status: critical` / `-- status: pending` nas colunas com score < 60 ou sem validações
+
+### L4. Data Contract incluir regras de negócio das validações (Baixa)
+- [ ] **Arquivo:** `artifacts/api-server/src/routes/excel.ts` (endpoint `/export/data-contract`)
+- **Situação:** Data Contract não inclui detalhes das validações (critérios binários por campo)
+- **Ação:** Adicionar por campo: `regras_negocio: { usado: true, obrigatorio: true, nome_correto: true, origem_correta: false, regra_negocio: false }` baseado nas médias das validações
 
 ---
 
-## 🏆 ITENS PRIORITÁRIOS JÁ RESOLVIDOS
+## 🔴 Pendente — Prioridade Alta (Itens anteriores)
 
-1. ✅ **Performance N+1** - Redução de queries de O(n*m) para O(1)
-2. ✅ **Error logging** - Logs estruturados para todas as rotas
-3. ✅ **UI/UX exports** - Feedback de erro com toast
-4. ✅ **Tutorial RF11** - Abre sem reload da página
-5. ✅ **Types any** - TypeScript com tipos adequados
-6. ✅ **Conflict status** - Badge vermelho para conflitos
-7. ✅ **Code duplication** - Funções compartilhadas em utils
-8. ✅ **Strings mágicas** - Constantes centralizadas em `constants.ts`
-9. ✅ **Refactoring dashboard** - Helpers modulares
-10. ✅ **Paginação** - Endpoints `/dictionaries` e `/fields/critical` com page/limit
-11. ✅ **Documentação README** - JSON em formato snake_case
+### 1. CORS totalmente aberto (`ALLOWED_ORIGINS` documentado, mas nunca lido)
+- [x] **Arquivo:** `artifacts/api-server/src/app.ts`
+- **Status:** RESOLVIDO — Lê `ALLOWED_ORIGINS`, configura `cors({ origin, credentials: true })` quando definido; fallback permissivo
+
+### 2. Paginação em memória (SELECT * + slice JS), não no banco
+- [x] `/dictionaries` — usa `LIMIT/OFFSET` + `inArray` nos fields da página + `desc(createdAt)`
+- [ ] `/fields/critical` — ainda faz `SELECT *` de todos fields + filtro CRITICAL em JS
+- **Ação recomendada:** Em `/fields/critical`, usar query que filtra `CRITICAL` via subquery/join nas validations + `LIMIT/OFFSET` no Drizzle
 
 ---
 
-## 📋 STATUS DO PLANO DE MELHORIAS
+## 🟡 Pendente — Prioridade Média
 
-Todas as melhorias pendentes mencionadas em `docs/Análise e Melhorias do Projeto Validador de Dicionário de Dados.md` (seção 4) foram aplicadas:
-- 4.1 Strings mágicas ✅
-- 4.2 Refatoração do dashboard ✅ (já estava com helpers)
-- 4.3 Paginação nos endpoints ✅
-- 4.4 Padronização da URL da API no frontend ✅ — helper `getApiBase()` em `lib/utils.ts`, `setBaseUrl()` em `main.tsx`, 3 usos manuais de `import.meta.env.BASE_URL` substituídos
+### 3. Health check não verifica o banco
+- [ ] **Arquivo:** `artifacts/api-server/src/routes/health.ts`
+- **Situação:** `/api/healthz` sempre responde `{ status: "ok" }` mesmo com PostgreSQL fora
+- **Ação:** Fazer `SELECT 1` rápido contra o pool do Drizzle antes de responder; 503 se falhar
+
+### 4. `mockup-sandbox` incluído no workspace pnpm
+- [ ] **Arquivo:** `pnpm-workspace.yaml` (`packages: - artifacts/*`)
+- **Ação:** Confirmar se necessário; se não, remover pasta ou excluir do workspace (`!artifacts/mockup-sandbox`)
+
+### 5. Sem script de seed para dados de teste
+- [ ] **Arquivo:** `scripts/src/seed.ts` (novo)
+- **Ação:** Criar `scripts/src/seed.ts` que insira 1–2 dicionários com campos e validações, usando schema `@workspace/db`
+
+---
+
+## 🟢 Pendente — Prioridade Baixa / Tech Debt
+
+### 6. Duplicação residual em `dashboard.ts`
+- [ ] `processFieldSummaries` e `processDictionaryMetrics` calculam contagens parecidas — extrair `tallyByStatus(fields, summaries)` reaproveitada
+
+### 7. Deployment configs mencionados no `DEPLOYMENT-PLAN.md` não existem
+- [ ] Nenhum `vercel.json`, `railway.json` ou `Dockerfile` no repo
+- **Ação:** Criar só quando time decidir qual opção de deploy (A/B/C) vai seguir
+
+### 8. Ordenação ascendente por `createdAt` mostra mais antigos primeiro
+- [x] `/dictionaries` — já usa `desc(dictionariesTable.createdAt)`
+- [ ] `/dashboard` — confirmar se usa `asc` e trocar para `desc`
+
+---
+
+## Resumo de Status
+
+| Categoria | Concluídos | Em Progresso | Pendentes |
+|---|---|---|---|
+| Críticas (antigas) | 8 | 0 | 0 |
+| Médias (antigas) | 6 | 0 | 0 |
+| Menores (antigas) | 12 | 0 | 0 |
+| **Novas do FLOW.md (L1-L4)** | 0 | 0 | **4** |
+| Pendentes Altas (restantes) | 1 (CORS) | 0 | **1** (`/fields/critical` DB pagination) |
+| Pendentes Médias | 0 | 0 | **3** |
+| Pendentes Baixas | 1 (`/dictionaries` desc) | 0 | **2** |
+| **Total** | **27** | **0** | **10** |
+
+---
+
+## 🏆 PRÓXIMO PASSO LÓGICO
+
+**Iniciar L1** — `POST /api/excel/preview` + UI editor JSON em `/dictionaries/new`.
+
+Esta é a lacuna que quebra o fluxo completo (Etapa 1 do FLOW.md) e desbloqueia L2.
 
 ---
 
@@ -190,3 +285,14 @@ Todas as melhorias pendentes mencionadas em `docs/Análise e Melhorias do Projet
 - Helper `getApiBase()` em `lib/utils.ts` usando `VITE_API_URL` com fallback a `import.meta.env.BASE_URL`
 - `setBaseUrl()` chamado em `main.tsx` para cliente orval (quando `VITE_API_URL` definida)
 - 3 usos manuais de `import.meta.env.BASE_URL` em `new-dictionary.tsx` e `dictionary-detail.tsx` substituídos por `getApiBase()`
+
+## ✅ CONCLUÍDOS - 07/07/2026 (Esta sessão)
+
+- **SCORE_THRESHOLDS.RELIABLE = 90** (alinhado ao RF05 ≥ 90)
+- **Data Contract: `obrigatorio` derivado de `avgRequired >= 0.5`** (não de `chave`)
+- **Drizzle config carrega `.env` de `artifacts/api-server/.env`** (caminho correto)
+- **UI paginação** em `/dictionaries` e `/fields/critical` (botões Anterior/Próxima)
+- **Paginação DB `/dictionaries`** — `LIMIT/OFFSET` + `inArray` + `desc(createdAt)`
+- **CORS configurável** — lê `ALLOWED_ORIGINS` com fallback permissivo
+- **Error handler global** + **validação extensão `.xlsx`/`.xlsm`** + try/catch parse Excel
+- **Typecheck + Build** passaram 100%

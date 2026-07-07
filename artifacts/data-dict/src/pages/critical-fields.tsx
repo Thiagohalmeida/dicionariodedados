@@ -1,17 +1,24 @@
-import React from "react";
+import React, { useState } from "react";
 import { useGetCriticalFields } from "@workspace/api-client-react";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
 import { Link } from "wouter";
 
 export default function CriticalFields() {
-  const { data: pageData, isLoading } = useGetCriticalFields();
+  const [page, setPage] = useState(1);
+  const LIMIT = 20;
+  const { data: pageData, isLoading } = useGetCriticalFields({ page, limit: LIMIT });
 
   if (isLoading) return <div className="p-8 text-center text-muted-foreground">Carregando campos críticos...</div>;
 
   const fields = pageData?.data ?? [];
+  const total = pageData?.total ?? 0;
+  const totalPages = pageData?.totalPages ?? 1;
+  const canPrev = page > 1;
+  const canNext = page < totalPages;
 
   return (
     <div className="space-y-6">
@@ -64,6 +71,34 @@ export default function CriticalFields() {
           </TableBody>
         </Table>
       </Card>
+
+      {/* Paginação */}
+      <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <span>
+          {total === 0
+            ? "Nenhum campo crítico"
+            : `Exibindo ${(page - 1) * LIMIT + 1}–${Math.min(page * LIMIT, total)} de ${total}`}
+        </span>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!canPrev}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            Anterior
+          </Button>
+          <span className="px-2">Página {page} de {totalPages}</span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!canNext}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          >
+            Próxima
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

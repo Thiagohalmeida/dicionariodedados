@@ -42,7 +42,9 @@ type DictItem = {
 };
 
 export default function DictionariesList() {
-  const { data: pageData, isLoading } = useListDictionaries();
+  const [page, setPage] = useState(1);
+  const LIMIT = 20;
+  const { data: pageData, isLoading } = useListDictionaries({ page, limit: LIMIT });
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -50,6 +52,10 @@ export default function DictionariesList() {
   const updateMutation = useUpdateDictionary();
 
   const dictionaries = pageData?.data ?? [];
+  const total = pageData?.total ?? 0;
+  const totalPages = pageData?.totalPages ?? 1;
+  const canPrev = page > 1;
+  const canNext = page < totalPages;
 
   const [deleteTarget, setDeleteTarget] = useState<DictItem | null>(null);
   const [editTarget, setEditTarget] = useState<DictItem | null>(null);
@@ -180,6 +186,34 @@ export default function DictionariesList() {
           </TableBody>
         </Table>
       </Card>
+
+      {/* Paginação */}
+      <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <span>
+          {total === 0
+            ? "Nenhum dicionário"
+            : `Exibindo ${(page - 1) * LIMIT + 1}–${Math.min(page * LIMIT, total)} de ${total}`}
+        </span>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!canPrev}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            Anterior
+          </Button>
+          <span className="px-2">Página {page} de {totalPages}</span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!canNext}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          >
+            Próxima
+          </Button>
+        </div>
+      </div>
 
       {/* Dialog de exclusão */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
