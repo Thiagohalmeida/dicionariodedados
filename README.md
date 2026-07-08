@@ -107,9 +107,24 @@ cd validador-dd
 
 2. **Instale as dependências**
 
+No Windows, execute:
+
+```powershell
+.\setup.ps1
+```
+
+Se não usar PowerShell, ou em outro sistema, execute:
+
 ```bash
+corepack enable
 pnpm install
 ```
+
+Os hooks do Git são ativados automaticamente durante o setup.
+
+> Alternativa: use o Visual Studio Code com GitHub Codespaces ou Dev Container.
+>
+> Abra a pasta no VS Code e escolha `Remote-Containers: Reopen in Container`.
 
 3. **Configure as variáveis de ambiente**
 
@@ -138,6 +153,58 @@ pnpm --filter @workspace/data-dict run dev
 
 ---
 
+## Uso em outra máquina
+
+A outra máquina está usando a branch `main` como base principal de desenvolvimento.
+
+Se precisar sincronizar esta máquina com o repositório principal:
+
+No Windows:
+
+```powershell
+.\sync.ps1 main
+```
+
+Se não souber a branch no momento, execute:
+
+```powershell
+git branch --show-current
+```
+
+No Linux/macOS:
+
+```bash
+corepack enable
+pnpm install
+git fetch origin
+git pull --rebase origin main
+```
+
+Em qualquer máquina, após o pull, rode:
+
+```bash
+pnpm run typecheck
+pnpm run build
+```
+
+Se você for trabalhar em uma nova função ou correção, crie uma branch `feature/*` a partir de `main`:
+
+```bash
+git checkout -b feature/nome-da-sua-branch main
+```
+
+---
+
+```bash
+# Terminal 1 — API
+pnpm --filter @workspace/api-server run dev
+
+# Terminal 2 — Frontend
+pnpm --filter @workspace/data-dict run dev
+```
+
+---
+
 ## Scripts Úteis
 
 ```bash
@@ -146,6 +213,12 @@ pnpm run typecheck
 
 # Build completo
 pnpm run build
+
+# Formatar arquivos com prettier
+pnpm run format
+
+# Verificar formatação
+pnpm run lint
 
 # Regenerar hooks e schemas a partir do OpenAPI
 pnpm --filter @workspace/api-spec run codegen
