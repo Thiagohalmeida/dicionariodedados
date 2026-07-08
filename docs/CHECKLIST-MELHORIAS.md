@@ -299,6 +299,12 @@
   8. Frontend: página de configuração Supabase (status de conexão, buckets, auth)
 - **Prioridade:** Alta (infraestrutura base para produção e validação real) — **CONCLUÍDO**
 
+### 12. Prevenção de SQL Injection no endpoint `POST /dictionaries/:id/validate-ddl`
+- [x] **Arquivo:** `artifacts/api-server/src/routes/excel.ts`
+- **Problema:** O endpoint montava `CREATE TABLE ${dict.tabela} (${...campoTecnico...})` e executava no Postgres. `tabela` e `campo_tecnico` vêm de import JSON, validados apenas como `zod.string()` — permitia injeção SQL arbitrária (incluindo fuga de rollback via `COMMIT`).
+- **Correção:** Adicionada validação por allowlist (`/^[a-zA-Z_][a-zA-Z0-9_]{0,62}$/`) em `dict.tabela` e em cada `campoTecnico` **antes** de montar a DDL. Se inválido, retorna `400` sem executar no banco.
+- **Prioridade:** Crítica (rota nova exposta diretamente ao Postgres real) — **CONCLUÍDO**
+
 ## Resumo de Status
 
 | Categoria | Concluídos | Em Progresso | Pendentes |
@@ -366,7 +372,7 @@ Os itens principais do fluxo Excel/preview, Supabase, paginação DB e seed já 
 - **Erro de importação: mensagens reais** — `onError` das mutations extrai `err.message` do `ApiError` (zod/400/500) em vez de texto fixo
 - **DDL: comentário de status só em Crítico/Pendente** — `classification === "critical" || "pending"` (antes aparecia em todas)
 
-## ✅ CONCLUÍDOS - 08/07/2026 (Supabase Integration + DB Pagination)
+## ✅ CONCLUÍDOS - 08/07/2026 (Supabase Integration + DB Pagination + CSS/Import Fixes)
 
 - **Supabase client + storage** — módulos `client.ts` e `storage.ts` com upload/download/signed URLs
 - **audit_logs + storage_objects tables** — migração Drizzle gerada e aplicada no Supabase
@@ -377,3 +383,7 @@ Os itens principais do fluxo Excel/preview, Supabase, paginação DB e seed já 
 - **Node.js 20 WebSocket fix** — polyfill `globalThis.WebSocket` com pacote `ws` para realtime
 - **Typecheck + Build 100%** — todas as dependências @supabase/supabase-js, ws, @types/ws instaladas
 - **DB pagination `/fields/critical`** — substituído `SELECT *` + filtro JS por query SQL com join/subquery + `LIMIT/OFFSET`
+- **Seed script** — `scripts/src/seed.ts` cria 3 dicionários, 21 campos, 10 validações; executa via `pnpm --filter @workspace/scripts run seed`
+- **GET `/dictionaries/:id` fix** — correção parsing ID (parseInt manual vs Zod safeParse)
+- **Preview sheet CSS fix** — removido `sm:max-w-sm` do `Sheet` variant `left`/`right` em `components/ui/sheet.tsx`; corrigiu "apertada à direita" (era 384px fixo); bônus: `dictionary-detail.tsx` agora mostra 540px corretos
+- **Import button fix na tela de preview** — `formContext` agora usa `resolvedMeta` do preview (backend) em vez de campos brutos do formulário; fixa caso "tabela vazia" quando usuário não preenche campo opcional
