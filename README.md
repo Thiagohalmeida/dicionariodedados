@@ -107,7 +107,16 @@ cd validador-dd
 
 2. **Instale as dependências**
 
+No Windows, execute:
+
+```powershell
+.\setup.ps1
+```
+
+Se não usar PowerShell, ou em outro sistema, execute:
+
 ```bash
+corepack enable
 pnpm install
 ```
 
