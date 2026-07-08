@@ -211,8 +211,8 @@
 
 ### 2. Paginação em memória (SELECT * + slice JS), não no banco
 - [x] `/dictionaries` — usa `LIMIT/OFFSET` + `inArray` nos fields da página + `desc(createdAt)`
-- [ ] `/fields/critical` — ainda faz `SELECT *` de todos fields + filtro CRITICAL em JS
-- **Ação recomendada:** Em `/fields/critical`, usar query que filtra `CRITICAL` via subquery/join nas validations + `LIMIT/OFFSET` no Drizzle
+- [x] `/fields/critical` — agora usa query DB com `LIMIT/OFFSET` + join/subquery nas validations para filtrar `CRITICAL` (avg score < ATTENTION ou sem validações)
+- **Ação realizada:** Substituído `SELECT *` + filtro JS por query SQL com `inArray(validationsTable.fieldId, ...)` + `LIMIT/OFFSET` no Drizzle
 
 ---
 
@@ -300,18 +300,17 @@
 | Médias (antigas) | 6 | 0 | 0 |
 | Menores (antigas) | 12 | 0 | 0 |
 | **Novas do FLOW.md (L1-L4)** | **4** | 0 | **0** |
-| Pendentes Altas (restantes) | 2 (CORS + Supabase) | 0 | **1** (`/fields/critical` DB pagination) |
-| Pendentes Médias | 1 (Supabase config page) | 0 | **2** |
+| Pendentes Altas (restantes) | 3 (CORS + Supabase + fields/critical) | 0 | **0** |
+| Pendentes Médias | 1 (Supabase config page) | 0 | **1** (seed) |
 | Pendentes Baixas | 1 (`/dictionaries` desc) | 0 | **2** |
-| **Total** | **35** | **0** | **5** |
+| **Total** | **36** | **0** | **3** |
 
 ---
 
 ## 🏆 PRÓXIMOS ITENS PENDENTES
 
-Os itens principais do fluxo Excel/preview e Supabase já estão concluídos. Os pontos ainda pendentes são:
+Os itens principais do fluxo Excel/preview, Supabase e paginação DB já estão concluídos. Os pontos ainda pendentes são:
 
-- [ ] Paginação real no backend para `/fields/critical` (prioridade alta)
 - [ ] Seed de dados de teste (prioridade média)
 - [ ] Ajustes de tech debt e deploy futuros (prioridade baixa)
 
@@ -356,7 +355,7 @@ Os itens principais do fluxo Excel/preview e Supabase já estão concluídos. Os
 - **Erro de importação: mensagens reais** — `onError` das mutations extrai `err.message` do `ApiError` (zod/400/500) em vez de texto fixo
 - **DDL: comentário de status só em Crítico/Pendente** — `classification === "critical" || "pending"` (antes aparecia em todas)
 
-## ✅ CONCLUÍDOS - 08/07/2026 (Supabase Integration)
+## ✅ CONCLUÍDOS - 08/07/2026 (Supabase Integration + DB Pagination)
 
 - **Supabase client + storage** — módulos `client.ts` e `storage.ts` com upload/download/signed URLs
 - **audit_logs + storage_objects tables** — migração Drizzle gerada e aplicada no Supabase
@@ -366,3 +365,4 @@ Os itens principais do fluxo Excel/preview e Supabase já estão concluídos. Os
 - **Frontend SupabaseConfig page** — `/supabase-config` com abas Conexão/Storage/Validação DDL
 - **Node.js 20 WebSocket fix** — polyfill `globalThis.WebSocket` com pacote `ws` para realtime
 - **Typecheck + Build 100%** — todas as dependências @supabase/supabase-js, ws, @types/ws instaladas
+- **DB pagination `/fields/critical`** — substituído `SELECT *` + filtro JS por query SQL com join/subquery + `LIMIT/OFFSET`
