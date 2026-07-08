@@ -120,6 +120,8 @@ corepack enable
 pnpm install
 ```
 
+Os hooks do Git são ativados automaticamente durante o setup.
+
 3. **Configure as variáveis de ambiente**
 
 Crie um arquivo `.env` na raiz (ou exporte as variáveis):
