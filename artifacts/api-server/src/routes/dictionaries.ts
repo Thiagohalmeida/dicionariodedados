@@ -168,20 +168,20 @@ router.post("/dictionaries", async (req, res): Promise<void> => {
 });
 
 router.get("/dictionaries/:id", async (req, res): Promise<void> => {
-  const params = GetDictionaryParams.safeParse(req.params);
-  if (!params.success) {
-    req.log.error({ err: params.error }, "Invalid params");
-    res.status(400).json({ error: params.error.message });
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) {
+    req.log.error({ id: req.params.id }, "Invalid dictionary ID");
+    res.status(400).json({ error: "ID inválido" });
     return;
   }
 
   const [dict] = await db
     .select()
     .from(dictionariesTable)
-    .where(eq(dictionariesTable.id, params.data.id));
+    .where(eq(dictionariesTable.id, id));
 
   if (!dict) {
-    req.log.error({ dictionaryId: params.data.id }, "Dictionary not found");
+    req.log.error({ dictionaryId: id }, "Dictionary not found");
     res.status(404).json({ error: "Dictionary not found" });
     return;
   }
