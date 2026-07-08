@@ -122,6 +122,10 @@ pnpm install
 
 Os hooks do Git são ativados automaticamente durante o setup.
 
+> Alternativa: use o Visual Studio Code com GitHub Codespaces ou Dev Container.
+>
+> Abra a pasta no VS Code e escolha `Remote-Containers: Reopen in Container`.
+
 3. **Configure as variáveis de ambiente**
 
 Crie um arquivo `.env` na raiz (ou exporte as variáveis):
