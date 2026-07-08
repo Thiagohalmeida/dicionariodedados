@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { BookOpen, AlertTriangle, LayoutDashboard, Info, HelpCircle } from "lucide-react";
+import { BookOpen, AlertTriangle, LayoutDashboard, Info, HelpCircle, Settings } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -24,6 +24,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     { title: "Painel", href: "/", icon: LayoutDashboard },
     { title: "Dicionários", href: "/dictionaries", icon: BookOpen },
     { title: "Campos Críticos", href: "/fields/critical", icon: AlertTriangle },
+    { title: "Config. Supabase", href: "/supabase-config", icon: Settings },
     { title: "Sobre", href: "/about", icon: Info },
   ];
 
