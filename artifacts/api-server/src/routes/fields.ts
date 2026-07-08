@@ -1,9 +1,9 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
-import { db, fieldsTable } from "@workspace/db";
+import { eq, inArray, sql, desc } from "drizzle-orm";
+import { db, fieldsTable, validationsTable } from "@workspace/db";
 import { computeFieldSummary, computeFieldSummariesBatch, getFieldsWithSummaries } from "../lib/summary";
 import { insertValidation } from "../lib/validation";
-import { FIELD_CLASSIFICATION } from "../lib/constants";
+import { FIELD_CLASSIFICATION, SCORE_THRESHOLDS } from "../lib/constants";
 import {
   SubmitValidationParams,
   SubmitValidationBody,
@@ -164,10 +164,29 @@ router.get("/fields/critical", async (req, res): Promise<void> => {
   }
 
   const { page, limit } = parsedQuery.data;
+  const offset = (page - 1) * limit;
 
-  const allFields = await db.select().from(fieldsTable).orderBy(fieldsTable.campoOrigem);
+  // Get total count of critical fields
+  const [{ count: totalCount }] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(fieldsTable)
+    .innerJoin(validationsTable, eq(validationsTable.fieldId, fieldsTable.id))
+    .where(
+      sql`
+        (
+          SELECT AVG(score)::numeric
+          FROM ${validationsTable}
+          WHERE ${validationsTable}.field_id = ${fieldsTable}.id
+        ) < ${SCORE_THRESHOLDS.ATTENTION}
+        OR
+        NOT EXISTS (
+          SELECT 1 FROM ${validationsTable} WHERE ${validationsTable}.field_id = ${fieldsTable}.id
+        )
+      `
+    );
 
-  if (allFields.length === 0) {
+  // If no critical fields, return empty
+  if (totalCount === 0) {
     res.json(
       GetCriticalFieldsResponse.parse({
         data: [],
@@ -180,32 +199,50 @@ router.get("/fields/critical", async (req, res): Promise<void> => {
     return;
   }
 
-  const fieldIds = allFields.map((f) => f.id);
+  // Get critical fields with summaries using DB-level pagination
+  const criticalFields = await db
+    .select({
+      id: fieldsTable.id,
+      dictionaryId: fieldsTable.dictionaryId,
+      campoOrigem: fieldsTable.campoOrigem,
+      descricao: fieldsTable.descricao,
+      origem: fieldsTable.origem,
+      periodicidade: fieldsTable.periodicidade,
+      campoTecnico: fieldsTable.campoTecnico,
+      tipoDado: fieldsTable.tipoDado,
+      chave: fieldsTable.chave,
+    })
+    .from(fieldsTable)
+    .innerJoin(validationsTable, eq(validationsTable.fieldId, fieldsTable.id))
+    .where(
+      sql`
+        (
+          SELECT AVG(score)::numeric
+          FROM ${validationsTable}
+          WHERE ${validationsTable}.field_id = ${fieldsTable}.id
+        ) < ${SCORE_THRESHOLDS.ATTENTION}
+        OR
+        NOT EXISTS (
+          SELECT 1 FROM ${validationsTable} WHERE ${validationsTable}.field_id = ${fieldsTable}.id
+        )
+      `
+    )
+    .groupBy(fieldsTable.id)
+    .orderBy(fieldsTable.campoOrigem)
+    .limit(limit)
+    .offset(offset);
+
+  // Fetch summaries for the paginated critical fields
+  const fieldIds = criticalFields.map((f) => f.id);
   const summaries = await computeFieldSummariesBatch(fieldIds);
 
-  const allCritical: unknown[] = [];
-  for (const field of allFields) {
-    const summary = summaries.get(field.id)!;
-    if (summary.classification === FIELD_CLASSIFICATION.CRITICAL) {
-      allCritical.push({
-        id: field.id,
-        dictionaryId: field.dictionaryId,
-        campoOrigem: field.campoOrigem,
-        descricao: field.descricao,
-        origem: field.origem,
-        periodicidade: field.periodicidade,
-        campoTecnico: field.campoTecnico,
-        tipoDado: field.tipoDado,
-        chave: field.chave,
-        summary,
-      });
-    }
-  }
+  const data = criticalFields.map((field) => ({
+    ...field,
+    summary: summaries.get(field.id)!,
+  }));
 
-  const total = allCritical.length;
+  const total = totalCount;
   const totalPages = Math.max(1, Math.ceil(total / limit));
-  const offset = (page - 1) * limit;
-  const data = allCritical.slice(offset, offset + limit);
 
   res.json(
     GetCriticalFieldsResponse.parse({

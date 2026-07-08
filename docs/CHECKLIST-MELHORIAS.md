@@ -270,7 +270,7 @@
 ## 🟡 Pendente — Prioridade Média (Infraestrutura)
 
 ### 11. Integração Supabase como backend real (PostgreSQL + Storage + Auth)
-- [ ] **Arquivos:** `lib/db/src/index.ts`, `lib/db/drizzle.config.ts`, `.env`, novos módulos em `artifacts/api-server/src/modules/supabase/`
+- [x] **Arquivos:** `lib/db/src/index.ts`, `lib/db/drizzle.config.ts`, `.env`, novos módulos em `artifacts/api-server/src/modules/supabase/`
 - **Objetivo:** Substituir banco local/ephemeral por Supabase (PostgreSQL gerenciado) para:
   - Persistir dicionários, campos, validações (já modelados no `@workspace/db`)
   - **Storage:** Arquivos Excel enviados (bucket `excel-uploads`) + DDL/Data Contract exportados (bucket `exports`)
@@ -290,7 +290,7 @@
   6. Middleware de auditoria automático em rotas `POST/PUT/DELETE` (grava em `audit_logs`)
   7. Endpoint `POST /api/dictionaries/:id/validate-ddl` (executa DDL em transaction + rollback)
   8. Frontend: página de configuração Supabase (status de conexão, buckets, auth)
-- **Prioridade:** Alta (infraestrutura base para produção e validação real)
+- **Prioridade:** Alta (infraestrutura base para produção e validação real) — **CONCLUÍDO**
 
 ## Resumo de Status
 
@@ -300,20 +300,20 @@
 | Médias (antigas) | 6 | 0 | 0 |
 | Menores (antigas) | 12 | 0 | 0 |
 | **Novas do FLOW.md (L1-L4)** | **4** | 0 | **0** |
-| Pendentes Altas (restantes) | 1 (CORS) | 0 | **1** (`/fields/critical` DB pagination) |
-| Pendentes Médias | 0 | 0 | **3** |
+| Pendentes Altas (restantes) | 2 (CORS + Supabase) | 0 | **1** (`/fields/critical` DB pagination) |
+| Pendentes Médias | 1 (Supabase config page) | 0 | **2** |
 | Pendentes Baixas | 1 (`/dictionaries` desc) | 0 | **2** |
-| **Total** | **32** | **0** | **6** |
+| **Total** | **35** | **0** | **5** |
 
 ---
 
 ## 🏆 PRÓXIMOS ITENS PENDENTES
 
-Os itens principais do fluxo Excel/preview já estão concluídos. Os pontos ainda pendentes são:
+Os itens principais do fluxo Excel/preview e Supabase já estão concluídos. Os pontos ainda pendentes são:
 
-- [ ] Paginação real no backend para `/fields/critical`
-- [ ] Seed de dados de teste
-- [ ] Ajustes de tech debt e deploy futuros
+- [ ] Paginação real no backend para `/fields/critical` (prioridade alta)
+- [ ] Seed de dados de teste (prioridade média)
+- [ ] Ajustes de tech debt e deploy futuros (prioridade baixa)
 
 ---
 
@@ -355,3 +355,14 @@ Os itens principais do fluxo Excel/preview já estão concluídos. Os pontos ain
 - **Health check do banco** — `/api/healthz` faz `SELECT 1` no pool Drizzle; retorna 200/503 com status do DB
 - **Erro de importação: mensagens reais** — `onError` das mutations extrai `err.message` do `ApiError` (zod/400/500) em vez de texto fixo
 - **DDL: comentário de status só em Crítico/Pendente** — `classification === "critical" || "pending"` (antes aparecia em todas)
+
+## ✅ CONCLUÍDOS - 08/07/2026 (Supabase Integration)
+
+- **Supabase client + storage** — módulos `client.ts` e `storage.ts` com upload/download/signed URLs
+- **audit_logs + storage_objects tables** — migração Drizzle gerada e aplicada no Supabase
+- **Audit middleware** — intercepta POST/PUT/DELETE e grava em `audit_logs` com before/after/metadata
+- **DDL validation endpoint** — `POST /api/dictionaries/:id/validate-ddl` executa em schema temporário + rollback
+- **Backend routes** — GET/POST `/api/supabase/config`, GET `/api/supabase/status`, POST `/api/supabase/buckets`
+- **Frontend SupabaseConfig page** — `/supabase-config` com abas Conexão/Storage/Validação DDL
+- **Node.js 20 WebSocket fix** — polyfill `globalThis.WebSocket` com pacote `ws` para realtime
+- **Typecheck + Build 100%** — todas as dependências @supabase/supabase-js, ws, @types/ws instaladas
