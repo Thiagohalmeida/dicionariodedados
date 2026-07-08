@@ -212,7 +212,8 @@
 ### 2. Paginação em memória (SELECT * + slice JS), não no banco
 - [x] `/dictionaries` — usa `LIMIT/OFFSET` + `inArray` nos fields da página + `desc(createdAt)`
 - [x] `/fields/critical` — agora usa query DB com `LIMIT/OFFSET` + join/subquery nas validations para filtrar `CRITICAL` (avg score < ATTENTION ou sem validações)
-- **Ação realizada:** Substituído `SELECT *` + filtro JS por query SQL com `inArray(validationsTable.fieldId, ...)` + `LIMIT/OFFSET` no Drizzle
+- [x] **GET `/dictionaries/:id`** — corrigido parsing de parâmetro ID (Express passa string, Zod esperava number); agora faz `parseInt(req.params.id, 10)` manual
+- **Ação realizada:** Substituído `SELECT *` + filtro JS por query SQL com `inArray(validationsTable.fieldId, ...)` + `LIMIT/OFFSET` no Drizzle; corrigido parsing de ID na rota GET/:id
 
 ---
 
@@ -225,12 +226,13 @@
 - **OpenAPI:** Schema atualizado com `HealthStatus` incluindo campo `database` (ok/down) + enum `status` (ok/degraded); tipos regenerados via `pnpm --filter @workspace/api-spec run codegen`
 
 ### 4. `mockup-sandbox` incluído no workspace pnpm
-- [ ] **Arquivo:** `pnpm-workspace.yaml` (`packages: - artifacts/*`)
-- **Ação:** Confirmar se necessário; se não, remover pasta ou excluir do workspace (`!artifacts/mockup-sandbox`)
+- [x] **Arquivo:** `pnpm-workspace.yaml` (`packages: - artifacts/*`)
+- **Ação:** Adicionado `!artifacts/mockup-sandbox` para excluir do workspace
 
 ### 5. Sem script de seed para dados de teste
-- [ ] **Arquivo:** `scripts/src/seed.ts` (novo)
-- **Ação:** Criar `scripts/src/seed.ts` que insira 1–2 dicionários com campos e validações, usando schema `@workspace/db`
+- [x] **Arquivo:** `scripts/src/seed.ts` (novo)
+- **Ação:** Criado `scripts/src/seed.ts` que insere 3 dicionários (RFQ Medicamentos, Contrato Laboratório, Compra Direta TI) com 21 campos e 10 validações, usando schema `@workspace/db`
+- **Execução:** `pnpm --filter @workspace/scripts run seed` (usa `--env-file=../artifacts/api-server/.env`)
 
 ---
 
@@ -301,18 +303,22 @@
 | Menores (antigas) | 12 | 0 | 0 |
 | **Novas do FLOW.md (L1-L4)** | **4** | 0 | **0** |
 | Pendentes Altas (restantes) | 3 (CORS + Supabase + fields/critical) | 0 | **0** |
-| Pendentes Médias | 1 (Supabase config page) | 0 | **1** (seed) |
-| Pendentes Baixas | 1 (`/dictionaries` desc) | 0 | **2** |
-| **Total** | **36** | **0** | **3** |
+| Pendentes Médias | 2 (Supabase config page + seed) | 0 | **0** |
+| Pendentes Baixas | 2 (`/dictionaries` desc + mockup-sandbox) | 0 | **1** (`/dashboard` desc) |
+| **Total** | **38** | **0** | **1** |
 
 ---
 
 ## 🏆 PRÓXIMOS ITENS PENDENTES
 
-Os itens principais do fluxo Excel/preview, Supabase e paginação DB já estão concluídos. Os pontos ainda pendentes são:
+Os itens principais do fluxo Excel/preview, Supabase, paginação DB e seed já estão concluídos. Os pontos ainda pendentes são:
 
-- [ ] Seed de dados de teste (prioridade média)
-- [ ] Ajustes de tech debt e deploy futuros (prioridade baixa)
+- [ ] Ordenação `/dashboard` por `createdAt` (trocar para `desc`)
+- [ ] Duplicação residual em `dashboard.ts` (extrair `tallyByStatus`)
+- [ ] Deployment configs (vercel.json, railway.json, Dockerfile)
+- [ ] Separar visualmente Excel vs JSON (badges Passo 1/2)
+
+---
 
 ---
 
