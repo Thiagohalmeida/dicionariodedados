@@ -229,8 +229,9 @@
 - **Ação:** Confirmar se necessário; se não, remover pasta ou excluir do workspace (`!artifacts/mockup-sandbox`)
 
 ### 5. Sem script de seed para dados de teste
-- [ ] **Arquivo:** `scripts/src/seed.ts` (novo)
-- **Ação:** Criar `scripts/src/seed.ts` que insira 1–2 dicionários com campos e validações, usando schema `@workspace/db`
+- [x] **Arquivo:** `scripts/src/seed.ts` (novo)
+- **Ação:** Criado `scripts/src/seed.ts` que insere 3 dicionários (RFQ Medicamentos, Contrato Laboratório, Compra Direta TI) com 21 campos e 10 validações, usando schema `@workspace/db`
+- **Execução:** `pnpm --filter @workspace/scripts run seed` (usa `--env-file=../artifacts/api-server/.env`)
 
 ---
 
@@ -300,20 +301,19 @@
 | Médias (antigas) | 6 | 0 | 0 |
 | Menores (antigas) | 12 | 0 | 0 |
 | **Novas do FLOW.md (L1-L4)** | **4** | 0 | **0** |
-| Pendentes Altas (restantes) | 1 (CORS) | 0 | **1** (`/fields/critical` DB pagination) |
-| Pendentes Médias | 0 | 0 | **3** |
+| Pendentes Altas (restantes) | 1 (CORS) | 0 | **0** |
+| Pendentes Médias | 1 (seed) | 0 | **1** (mockup-sandbox) |
 | Pendentes Baixas | 1 (`/dictionaries` desc) | 0 | **2** |
-| **Total** | **32** | **0** | **6** |
+| **Total** | **37** | **0** | **3** |
 
 ---
 
 ## 🏆 PRÓXIMOS ITENS PENDENTES
 
-Os itens principais do fluxo Excel/preview já estão concluídos. Os pontos ainda pendentes são:
+Os itens principais do fluxo Excel/preview, Supabase e paginação DB já estão concluídos. Os pontos ainda pendentes são:
 
-- [ ] Paginação real no backend para `/fields/critical`
-- [ ] Seed de dados de teste
-- [ ] Ajustes de tech debt e deploy futuros
+- [ ] `mockup-sandbox` no workspace pnpm (prioridade média)
+- [ ] Ajustes de tech debt e deploy futuros (prioridade baixa)
 
 ---
 
@@ -355,3 +355,16 @@ Os itens principais do fluxo Excel/preview já estão concluídos. Os pontos ain
 - **Health check do banco** — `/api/healthz` faz `SELECT 1` no pool Drizzle; retorna 200/503 com status do DB
 - **Erro de importação: mensagens reais** — `onError` das mutations extrai `err.message` do `ApiError` (zod/400/500) em vez de texto fixo
 - **DDL: comentário de status só em Crítico/Pendente** — `classification === "critical" || "pending"` (antes aparecia em todas)
+
+## ✅ CONCLUÍDOS - 08/07/2026 (Supabase Integration + DB Pagination + Seed)
+
+- **Supabase client + storage** — módulos `client.ts` e `storage.ts` com upload/download/signed URLs
+- **audit_logs + storage_objects tables** — migração Drizzle gerada e aplicada no Supabase
+- **Audit middleware** — intercepta POST/PUT/DELETE e grava em `audit_logs` com before/after/metadata
+- **DDL validation endpoint** — `POST /api/dictionaries/:id/validate-ddl` executa em schema temporário + rollback
+- **Backend routes** — GET/POST `/api/supabase/config`, GET `/api/supabase/status`, POST `/api/supabase/buckets`
+- **Frontend SupabaseConfig page** — `/supabase-config` com abas Conexão/Storage/Validação DDL
+- **Node.js 20 WebSocket fix** — polyfill `globalThis.WebSocket` com pacote `ws` para realtime
+- **Typecheck + Build 100%** — todas as dependências @supabase/supabase-js, ws, @types/ws instaladas
+- **DB pagination `/fields/critical`** — substituído `SELECT *` + filtro JS por query SQL com join/subquery + `LIMIT/OFFSET`
+- **Seed script** — `scripts/src/seed.ts` cria 3 dicionários, 21 campos, 10 validações; executa via `pnpm --filter @workspace/scripts run seed`
