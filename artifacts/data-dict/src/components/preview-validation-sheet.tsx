@@ -42,6 +42,12 @@ interface PreviewValidationSheetProps {
   fields: PreviewField[];
   onGenerateValidatedJson: (validatedFields: PreviewField[]) => void;
   onImportDictionary: (json: unknown) => void;
+  // Context from the parent form (processo, categoria, tabela)
+  formContext?: {
+    processo: string;
+    categoria: string;
+    tabela: string;
+  };
 }
 
 function EditFieldDialog({
@@ -278,6 +284,7 @@ export default function PreviewValidationSheet({
   fields: initialFields,
   onGenerateValidatedJson,
   onImportDictionary,
+  formContext,
 }: PreviewValidationSheetProps) {
   const { toast } = useToast();
   const [editingField, setEditingField] = useState<PreviewField | null>(null);
@@ -330,9 +337,9 @@ export default function PreviewValidationSheet({
     try {
       const includedFields = fields.filter(f => f.included);
       const jsonGerado = {
-        processo: includedFields[0]?.validation?.validatorName ? "preview" : "",
-        categoria: "",
-        tabela: "",
+        processo: formContext?.processo || includedFields[0]?.validation?.validatorName || "preview",
+        categoria: formContext?.categoria || "",
+        tabela: formContext?.tabela || "",
         campos: includedFields.map(f => ({
           campo_origem: f.campoOrigem,
           campo_tecnico: f.campoTecnico,
@@ -357,7 +364,7 @@ export default function PreviewValidationSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[90vw] max-w-6xl overflow-x-auto overflow-y-auto">
+      <SheetContent className="w-[98vw] max-w-[98vw] overflow-x-auto overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="flex items-center justify-between">
             <span>Validação do Preview - {fields.length} campos</span>
@@ -369,13 +376,13 @@ export default function PreviewValidationSheet({
           </SheetTitle>
         </SheetHeader>
 
-        <Card className="mt-4">
+        <Card className="mt-4 min-w-[1200px]">
           <CardHeader>
             <CardTitle>Edite e valide cada campo antes de importar</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="min-w-[1200px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead style={{ width: '40px' }}>

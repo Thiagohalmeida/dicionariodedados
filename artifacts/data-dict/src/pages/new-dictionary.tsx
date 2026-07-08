@@ -406,6 +406,11 @@ function ExcelImportTab() {
         fields={previewFields}
         onGenerateValidatedJson={handleGenerateValidatedJson}
         onImportDictionary={handleImportFromSheet}
+        formContext={{
+          processo: form.processo,
+          categoria: form.categoria,
+          tabela: form.tabela,
+        }}
       />
     </div>
   );
