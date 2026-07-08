@@ -158,6 +158,12 @@ pnpm run typecheck
 # Build completo
 pnpm run build
 
+# Formatar arquivos com prettier
+pnpm run format
+
+# Verificar formatação
+pnpm run lint
+
 # Regenerar hooks e schemas a partir do OpenAPI
 pnpm --filter @workspace/api-spec run codegen
 
