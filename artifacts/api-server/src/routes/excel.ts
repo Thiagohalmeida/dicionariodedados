@@ -317,6 +317,19 @@ router.post("/dictionaries/:id/validate-ddl", async (req, res): Promise<void> =>
 
   const fields = await getFieldsWithSummaries(id);
 
+  // Validate identifiers to prevent SQL injection (table name and column names come from import JSON)
+  const identifierRegex = /^[a-zA-Z_][a-zA-Z0-9_]{0,62}$/;
+  if (!identifierRegex.test(dict.tabela)) {
+    res.status(400).json({ error: "Nome de tabela inválido para DDL" });
+    return;
+  }
+  for (const f of fields) {
+    if (!identifierRegex.test(f.campoTecnico)) {
+      res.status(400).json({ error: `Nome de coluna inválido para DDL: ${f.campoTecnico}` });
+      return;
+    }
+  }
+
   const typeMap: Record<string, string> = {
     string: "VARCHAR(255)",
     int: "INTEGER",
