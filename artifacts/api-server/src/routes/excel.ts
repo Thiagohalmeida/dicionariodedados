@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import multer from "multer";
 import { eq } from "drizzle-orm";
-import { db, dictionariesTable, fieldsTable } from "@workspace/db";
+import { db, dictionariesTable, fieldsTable, pool } from "@workspace/db";
 import { parseExcelToDataDictionary, type UserContext } from "../modules/excel-ingestion-engine/index";
 import { DICTIONARY_STATUS } from "../lib/constants";
 import { getFieldsWithSummaries } from "../lib/summary";
@@ -296,6 +296,84 @@ router.get("/dictionaries/:id/export/data-contract", async (req, res): Promise<v
 
   const filename = `${dict.tabela}_data_contract_v${dict.version}.json`;
   res.json({ format: "data-contract", filename, content: JSON.stringify(contract, null, 2) });
+});
+
+// Validate DDL endpoint: executes CREATE TABLE in a transaction and rolls back
+// Returns validation result without persisting
+router.post("/dictionaries/:id/validate-ddl", async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) {
+    req.log.error({ id: req.params.id }, "Invalid dictionary ID for DDL validation");
+    res.status(400).json({ error: "ID inválido" });
+    return;
+  }
+
+  const [dict] = await db.select().from(dictionariesTable).where(eq(dictionariesTable.id, id));
+  if (!dict) {
+    req.log.error({ dictionaryId: id }, "Dictionary not found for DDL validation");
+    res.status(404).json({ error: "Dicionário não encontrado" });
+    return;
+  }
+
+  const fields = await getFieldsWithSummaries(id);
+
+  const typeMap: Record<string, string> = {
+    string: "VARCHAR(255)",
+    int: "INTEGER",
+    decimal: "DECIMAL(18,4)",
+    date: "DATE",
+  };
+
+  const cols = fields.map((f) => {
+    const sqlType = typeMap[f.tipoDado] ?? "VARCHAR(255)";
+    const pk = f.chave ? " PRIMARY KEY" : "";
+    const nullable = f.chave ? "" : " NULL";
+    return `  ${f.campoTecnico} ${sqlType}${pk}${nullable}`;
+  });
+
+  const ddl = `CREATE TABLE ${dict.tabela} (\n${cols.join(",\n")}\n);`;
+
+  // Execute in a transaction and rollback to validate
+  const client = await pool.connect();
+  let validationPassed = false;
+  let errorMessage = "";
+
+  try {
+    await client.query("BEGIN");
+
+    // Create a temporary schema for staging validation
+    const stagingSchema = `staging_${id}_${Date.now()}`;
+    await client.query(`CREATE SCHEMA ${stagingSchema}`);
+    await client.query(`SET search_path TO ${stagingSchema}`);
+
+    // Execute the DDL
+    await client.query(ddl);
+
+    // If we get here, DDL is valid
+    validationPassed = true;
+
+    // Rollback - drop the staging schema
+    await client.query(`DROP SCHEMA ${stagingSchema} CASCADE`);
+    await client.query("ROLLBACK");
+  } catch (err) {
+    errorMessage = err instanceof Error ? err.message : "Erro desconhecido";
+    validationPassed = false;
+    try {
+      await client.query("ROLLBACK");
+    } catch {
+      // Ignore rollback errors
+    }
+  } finally {
+    client.release();
+  }
+
+  res.json({
+    valid: validationPassed,
+    ddl,
+    message: validationPassed
+      ? "DDL válido - tabela pode ser criada no PostgreSQL"
+      : `Erro de validação: ${errorMessage}`,
+  });
 });
 
 export default router;
