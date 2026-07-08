@@ -153,6 +153,52 @@ pnpm --filter @workspace/data-dict run dev
 
 ---
 
+## Uso em outra máquina
+
+Se outro desenvolvedor já estiver trabalhando no projeto e você precisar sincronizar esta máquina com o repositório principal:
+
+No Windows:
+
+```powershell
+.\sync.ps1 feature/nome-da-sua-branch
+```
+
+Se não souber a branch, execute:
+
+```powershell
+git branch --show-current
+```
+
+No Linux/macOS:
+
+```bash
+corepack enable
+pnpm install
+git fetch origin
+git pull --rebase origin <sua-branch>
+```
+
+Em qualquer máquina, após o pull, rode:
+
+```bash
+pnpm run typecheck
+pnpm run build
+```
+
+Use o mesmo branch do desenvolvimento principal ou crie uma nova branch `feature/*` para suas alterações.
+
+---
+
+```bash
+# Terminal 1 — API
+pnpm --filter @workspace/api-server run dev
+
+# Terminal 2 — Frontend
+pnpm --filter @workspace/data-dict run dev
+```
+
+---
+
 ## Scripts Úteis
 
 ```bash
