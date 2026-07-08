@@ -155,15 +155,17 @@ pnpm --filter @workspace/data-dict run dev
 
 ## Uso em outra máquina
 
-Se outro desenvolvedor já estiver trabalhando no projeto e você precisar sincronizar esta máquina com o repositório principal:
+A outra máquina está usando a branch `main` como base principal de desenvolvimento.
+
+Se precisar sincronizar esta máquina com o repositório principal:
 
 No Windows:
 
 ```powershell
-.\sync.ps1 feature/nome-da-sua-branch
+.\sync.ps1 main
 ```
 
-Se não souber a branch, execute:
+Se não souber a branch no momento, execute:
 
 ```powershell
 git branch --show-current
@@ -175,7 +177,7 @@ No Linux/macOS:
 corepack enable
 pnpm install
 git fetch origin
-git pull --rebase origin <sua-branch>
+git pull --rebase origin main
 ```
 
 Em qualquer máquina, após o pull, rode:
@@ -185,7 +187,11 @@ pnpm run typecheck
 pnpm run build
 ```
 
-Use o mesmo branch do desenvolvimento principal ou crie uma nova branch `feature/*` para suas alterações.
+Se você for trabalhar em uma nova função ou correção, crie uma branch `feature/*` a partir de `main`:
+
+```bash
+git checkout -b feature/nome-da-sua-branch main
+```
 
 ---
 
