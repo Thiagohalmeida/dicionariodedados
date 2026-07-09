@@ -43,24 +43,23 @@ function initStatusCounts(): Record<string, number> {
   };
 }
 
-function processFieldSummaries(
+// Shared tally function - counts fields by status final
+function tallyByStatus(
   fields: typeof fieldsTable.$inferSelect[],
   allSummaries: Map<number, FieldSummary>
-) {
-  const classificationCounts = initClassificationCounts();
-  let totalFields = 0;
+): {
+  approvedFields: number;
+  rejectedFields: number;
+  pendingFields: number;
+  conflictFields: number;
+} {
   let approvedFields = 0;
   let rejectedFields = 0;
   let pendingFields = 0;
   let conflictFields = 0;
-  let totalScore = 0;
-  let scoredFields = 0;
 
   for (const field of fields) {
-    totalFields++;
     const summary = allSummaries.get(field.id)!;
-    classificationCounts[summary.classification] = (classificationCounts[summary.classification] ?? 0) + 1;
-
     if (summary.statusFinal === FIELD_STATUS.APPROVED) {
       approvedFields++;
     } else if (summary.statusFinal === FIELD_STATUS.REJECTED) {
@@ -70,6 +69,24 @@ function processFieldSummaries(
     } else {
       pendingFields++;
     }
+  }
+
+  return { approvedFields, rejectedFields, pendingFields, conflictFields };
+}
+
+function processFieldSummaries(
+  fields: typeof fieldsTable.$inferSelect[],
+  allSummaries: Map<number, FieldSummary>
+) {
+  const classificationCounts = initClassificationCounts();
+  let totalFields = 0;
+  let totalScore = 0;
+  let scoredFields = 0;
+
+  for (const field of fields) {
+    totalFields++;
+    const summary = allSummaries.get(field.id)!;
+    classificationCounts[summary.classification] = (classificationCounts[summary.classification] ?? 0) + 1;
 
     if (summary.score !== null) {
       totalScore += summary.score;
@@ -77,12 +94,11 @@ function processFieldSummaries(
     }
   }
 
+  const statusCounts = tallyByStatus(fields, allSummaries);
+
   return {
     totalFields,
-    approvedFields,
-    rejectedFields,
-    pendingFields,
-    conflictFields,
+    ...statusCounts,
     totalScore,
     scoredFields,
     classificationCounts,
@@ -115,21 +131,12 @@ function processDictionaryMetrics(
     statusCounts[dict.status] = (statusCounts[dict.status] ?? 0) + 1;
     const fields = fieldsByDict.get(dict.id) ?? [];
 
-    let dictApproved = 0;
-    let dictRejected = 0;
-    let dictPending = 0;
+    const fieldStatusCounts = tallyByStatus(fields, allSummaries);
     let dictTotalScore = 0;
     let dictScoredFields = 0;
 
     for (const field of fields) {
       const summary = allSummaries.get(field.id)!;
-      if (summary.statusFinal === FIELD_STATUS.APPROVED) {
-        dictApproved++;
-      } else if (summary.statusFinal === FIELD_STATUS.REJECTED) {
-        dictRejected++;
-      } else {
-        dictPending++;
-      }
       if (summary.score !== null) {
         dictTotalScore += summary.score;
         dictScoredFields++;
@@ -146,9 +153,9 @@ function processDictionaryMetrics(
       status: dict.status,
       createdAt: dict.createdAt.toISOString(),
       totalFields: fields.length,
-      approvedFields: dictApproved,
-      rejectedFields: dictRejected,
-      pendingFields: dictPending,
+      approvedFields: fieldStatusCounts.approvedFields,
+      rejectedFields: fieldStatusCounts.rejectedFields,
+      pendingFields: fieldStatusCounts.pendingFields,
       avgScore: dictScoredFields > 0 ? Math.round((dictTotalScore / dictScoredFields) * 100) / 100 : null,
     });
   }
