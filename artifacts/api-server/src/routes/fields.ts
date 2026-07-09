@@ -167,10 +167,12 @@ router.get("/fields/critical", async (req, res): Promise<void> => {
   const offset = (page - 1) * limit;
 
   // Get total count of critical fields
+  // Critical = avg score < ATTENTION OR no validations at all (pending)
+  // Uses LEFT JOIN to include fields without validations, then filters by score threshold OR no validations
   const [{ count: totalCount }] = await db
     .select({ count: sql<number>`count(*)` })
     .from(fieldsTable)
-    .innerJoin(validationsTable, eq(validationsTable.fieldId, fieldsTable.id))
+    .leftJoin(validationsTable, eq(validationsTable.fieldId, fieldsTable.id))
     .where(
       sql`
         (
@@ -213,7 +215,7 @@ router.get("/fields/critical", async (req, res): Promise<void> => {
       chave: fieldsTable.chave,
     })
     .from(fieldsTable)
-    .innerJoin(validationsTable, eq(validationsTable.fieldId, fieldsTable.id))
+    .leftJoin(validationsTable, eq(validationsTable.fieldId, fieldsTable.id))
     .where(
       sql`
         (

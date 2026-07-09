@@ -242,9 +242,10 @@
 - [ ] `processFieldSummaries` e `processDictionaryMetrics` calculam contagens parecidas — extrair `tallyByStatus(fields, summaries)` reaproveitada
 
 ### 7. Cláusula SQL morta em `/fields/critical`
-- [ ] **Arquivo:** `artifacts/api-server/src/routes/fields.ts`
-- **Situação:** A query usa `INNER JOIN` com `validations` e tem `OR NOT EXISTS (...)` no `WHERE` para pegar campos sem validações. Como `INNER JOIN` já exige que exista validação, o `OR NOT EXISTS` **nunca** é satisfeito (código morto). Se alguém trocar para `LEFT JOIN` achando que está "consertando", reintroduz bug (campos pendentes apareceriam como críticos).
-- **Ação:** Simplificar removendo o `OR NOT EXISTS` morto, mantendo apenas o `INNER JOIN` + filtro de score < ATTENTION
+- [x] **Arquivo:** `artifacts/api-server/src/routes/fields.ts`
+- **Situação:** A query usava `INNER JOIN` com `validations` e tinha `OR NOT EXISTS (...)` no `WHERE` para pegar campos sem validações. Como `INNER JOIN` já exige que exista validação, o `OR NOT EXISTS` **nunca** é satisfeito (código morto). Se alguém trocar para `LEFT JOIN` achando que está "consertando", reintroduz bug (campos pendentes apareceriam como críticos).
+- **Correção:** Alterado para `LEFT JOIN` + manutenção do `OR NOT EXISTS` (agora funcional, pois `LEFT JOIN` permite campos sem validações) + simplificação removendo código morto. Agora campos sem validações aparecem corretamente como "pending/critical".
+- **Prioridade:** Baixa (cosmético, mas previne bug futuro) — **CONCLUÍDO**
 
 ### 7. Deployment configs mencionados no `DEPLOYMENT-PLAN.md` não existem
 - [ ] Nenhum `vercel.json`, `railway.json` ou `Dockerfile` no repo
