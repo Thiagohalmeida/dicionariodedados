@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: validador-api
+    runtime: docker
+    dockerfilePath: ./artifacts/api-server/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "5000"
+      - key: LOG_LEVEL
+        value: info
+      - key: ALLOWED_ORIGINS
+        value: https://seu-app.vercel.app
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_BUCKET_EXCEL_UPLOADS
+        value: excel-uploads
+      - key: SUPABASE_BUCKET_EXPORTS
+        value: exports
+    healthCheckPath: /api/healthz
+    autoDeploy: true
+    numInstances: 1
