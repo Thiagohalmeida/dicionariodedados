@@ -253,7 +253,7 @@
 
 ### 8. Ordenação ascendente por `createdAt` mostra mais antigos primeiro
 - [x] `/dictionaries` — já usa `desc(dictionariesTable.createdAt)`
-- [ ] `/dashboard` — confirmar se usa `asc` e trocar para `desc`
+- [x] `/dashboard` — agora usa `desc(dictionariesTable.createdAt)` (mais recentes primeiro)
 
 ### 9. Separar visualmente "Ingestão de Excel" de "Importação por JSON"
 - [ ] **Arquivo:** `artifacts/data-dict/src/pages/new-dictionary.tsx`
