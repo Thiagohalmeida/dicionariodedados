@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { db, dictionariesTable, fieldsTable } from "@workspace/db";
 import { GetDashboardResponse } from "@workspace/api-zod";
 import { computeFieldSummariesBatch, type FieldSummary } from "../lib/summary";
@@ -157,7 +157,7 @@ function processDictionaryMetrics(
 }
 
 router.get("/dashboard", async (_req, res): Promise<void> => {
-  const dicts = await db.select().from(dictionariesTable).orderBy(dictionariesTable.createdAt);
+  const dicts = await db.select().from(dictionariesTable).orderBy(desc(dictionariesTable.createdAt));
 
   if (dicts.length === 0) {
     res.json(getEmptyDashboardResponse());
