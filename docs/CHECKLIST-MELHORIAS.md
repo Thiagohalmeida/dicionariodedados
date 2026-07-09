@@ -239,7 +239,7 @@
 ## 🟢 Pendente — Prioridade Baixa / Tech Debt
 
 ### 6. Duplicação residual em `dashboard.ts`
-- [ ] `processFieldSummaries` e `processDictionaryMetrics` calculam contagens parecidas — extrair `tallyByStatus(fields, summaries)` reaproveitada
+- [x] `processFieldSummaries` e `processDictionaryMetrics` calculam contagens parecidas — extraído `tallyByStatus(fields, summaries)` reaproveitada
 
 ### 7. Cláusula SQL morta em `/fields/critical`
 - [x] **Arquivo:** `artifacts/api-server/src/routes/fields.ts`
@@ -316,8 +316,8 @@
 | **Novas do FLOW.md (L1-L4)** | **4** | 0 | **0** |
 | Pendentes Altas (restantes) | 3 (CORS + Supabase + fields/critical) | 0 | **0** |
 | Pendentes Médias | 2 (Supabase config page + seed) | 0 | **0** |
-| Pendentes Baixas | 2 (`/dictionaries` desc + mockup-sandbox) | 0 | **1** (`/dashboard` desc) |
-| **Total** | **38** | **0** | **1** |
+| Pendentes Baixas | 2 (`/dictionaries` desc + mockup-sandbox) | 0 | **0** |
+| **Total** | **40** | **0** | **0** |
 
 ---
 
@@ -325,8 +325,6 @@
 
 Os itens principais do fluxo Excel/preview, Supabase, paginação DB e seed já estão concluídos. Os pontos ainda pendentes são:
 
-- [ ] Ordenação `/dashboard` por `createdAt` (trocar para `desc`)
-- [ ] Duplicação residual em `dashboard.ts` (extrair `tallyByStatus`)
 - [ ] Deployment configs (vercel.json, railway.json, Dockerfile)
 - [ ] Separar visualmente Excel vs JSON (badges Passo 1/2)
 
@@ -373,7 +371,7 @@ Os itens principais do fluxo Excel/preview, Supabase, paginação DB e seed já 
 - **Erro de importação: mensagens reais** — `onError` das mutations extrai `err.message` do `ApiError` (zod/400/500) em vez de texto fixo
 - **DDL: comentário de status só em Crítico/Pendente** — `classification === "critical" || "pending"` (antes aparecia em todas)
 
-## ✅ CONCLUÍDOS - 08/07/2026 (Supabase Integration + DB Pagination + CSS/Import Fixes + SQL Fixes)
+## ✅ CONCLUÍDOS - 08/07/2026 (Supabase Integration + DB Pagination + CSS/Import Fixes + SQL Fixes + Dashboard Fixes)
 
 - **Supabase client + storage** — módulos `client.ts` e `storage.ts` com upload/download/signed URLs
 - **audit_logs + storage_objects tables** — migração Drizzle gerada e aplicada no Supabase
@@ -389,3 +387,5 @@ Os itens principais do fluxo Excel/preview, Supabase, paginação DB e seed já 
 - **Preview sheet CSS fix** — removido `sm:max-w-sm` do `Sheet` variant `left`/`right` em `components/ui/sheet.tsx`; corrigiu "apertada à direita" (era 384px fixo); bônus: `dictionary-detail.tsx` agora mostra 540px corretos
 - **Import button fix na tela de preview** — `formContext` agora usa `resolvedMeta` do preview (backend) em vez de campos brutos do formulário; fixa caso "tabela vazia" quando usuário não preenche campo opcional
 - **Dead SQL clause fix `/fields/critical`** — alterado `INNER JOIN` para `LEFT JOIN` + mantido `OR NOT EXISTS` (agora funcional); campos sem validações agora aparecem corretamente como critical/pending; evita bug futuro se alguém trocar JOIN
+- **Dashboard ordering fix** — `/dashboard` agora ordena dicionários por `createdAt desc` (mais recentes primeiro)
+- **Dashboard duplication refactor** — extraído helper `tallyByStatus(fields, summaries)` reaproveitado em `processFieldSummaries` e `processDictionaryMetrics`; elimina duplicação de lógica de contagem por status
