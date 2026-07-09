@@ -373,7 +373,7 @@ Os itens principais do fluxo Excel/preview, Supabase, paginação DB e seed já 
 - **Erro de importação: mensagens reais** — `onError` das mutations extrai `err.message` do `ApiError` (zod/400/500) em vez de texto fixo
 - **DDL: comentário de status só em Crítico/Pendente** — `classification === "critical" || "pending"` (antes aparecia em todas)
 
-## ✅ CONCLUÍDOS - 08/07/2026 (Supabase Integration + DB Pagination + CSS/Import Fixes)
+## ✅ CONCLUÍDOS - 08/07/2026 (Supabase Integration + DB Pagination + CSS/Import Fixes + SQL Fixes)
 
 - **Supabase client + storage** — módulos `client.ts` e `storage.ts` com upload/download/signed URLs
 - **audit_logs + storage_objects tables** — migração Drizzle gerada e aplicada no Supabase
@@ -388,3 +388,4 @@ Os itens principais do fluxo Excel/preview, Supabase, paginação DB e seed já 
 - **GET `/dictionaries/:id` fix** — correção parsing ID (parseInt manual vs Zod safeParse)
 - **Preview sheet CSS fix** — removido `sm:max-w-sm` do `Sheet` variant `left`/`right` em `components/ui/sheet.tsx`; corrigiu "apertada à direita" (era 384px fixo); bônus: `dictionary-detail.tsx` agora mostra 540px corretos
 - **Import button fix na tela de preview** — `formContext` agora usa `resolvedMeta` do preview (backend) em vez de campos brutos do formulário; fixa caso "tabela vazia" quando usuário não preenche campo opcional
+- **Dead SQL clause fix `/fields/critical`** — alterado `INNER JOIN` para `LEFT JOIN` + mantido `OR NOT EXISTS` (agora funcional); campos sem validações agora aparecem corretamente como critical/pending; evita bug futuro se alguém trocar JOIN
