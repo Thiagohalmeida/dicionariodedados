@@ -32,7 +32,12 @@ import { FIELD_STATUS, DICTIONARY_STATUS } from "../lib/constants";
 const router: IRouter = Router();
 
 router.get("/dictionaries", async (req, res): Promise<void> => {
-  const parsedQuery = ListDictionariesQueryParams.safeParse(req.query);
+  // Coerce query params from strings to numbers
+  const query = {
+    page: req.query.page ? parseInt(req.query.page as string, 10) : 1,
+    limit: req.query.limit ? parseInt(req.query.limit as string, 10) : 20,
+  };
+  const parsedQuery = ListDictionariesQueryParams.safeParse(query);
   if (!parsedQuery.success) {
     req.log.error({ err: parsedQuery.error }, "Invalid query params");
     res.status(400).json({ error: parsedQuery.error.message });

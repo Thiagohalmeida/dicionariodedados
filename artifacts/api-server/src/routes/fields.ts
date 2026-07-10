@@ -175,7 +175,12 @@ router.get("/fields/:id/summary", async (req, res): Promise<void> => {
 });
 
 router.get("/fields/critical", async (req, res): Promise<void> => {
-  const parsedQuery = GetCriticalFieldsQueryParams.safeParse(req.query);
+  // Coerce query params from strings to numbers
+  const query = {
+    page: req.query.page ? parseInt(req.query.page as string, 10) : 1,
+    limit: req.query.limit ? parseInt(req.query.limit as string, 10) : 20,
+  };
+  const parsedQuery = GetCriticalFieldsQueryParams.safeParse(query);
   if (!parsedQuery.success) {
     req.log.error({ err: parsedQuery.error }, "Invalid query params");
     res.status(400).json({ error: parsedQuery.error.message });
@@ -202,8 +207,11 @@ router.get("/fields/critical", async (req, res): Promise<void> => {
       `,
     );
 
+  // Ensure totalCount is a number (Drizzle may return string)
+  const total = Number(totalCount);
+
   // If no critical fields, return empty
-  if (totalCount === 0) {
+  if (total === 0) {
     res.json(
       GetCriticalFieldsResponse.parse({
         data: [],
@@ -254,7 +262,6 @@ router.get("/fields/critical", async (req, res): Promise<void> => {
     summary: summaries.get(field.id)!,
   }));
 
-  const total = totalCount;
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   res.json(
