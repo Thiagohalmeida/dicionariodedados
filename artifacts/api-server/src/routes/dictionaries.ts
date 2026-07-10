@@ -226,7 +226,13 @@ router.get("/dictionaries/:id", async (req, res): Promise<void> => {
 });
 
 router.patch("/dictionaries/:id", async (req, res): Promise<void> => {
-  const params = UpdateDictionaryParams.safeParse(req.params);
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) {
+    req.log.error({ id: req.params.id }, "Invalid dictionary ID");
+    res.status(400).json({ error: "ID inválido" });
+    return;
+  }
+  const params = UpdateDictionaryParams.safeParse({ id });
   if (!params.success) {
     req.log.error({ err: params.error }, "Invalid params");
     res.status(400).json({ error: params.error.message });
@@ -282,7 +288,13 @@ router.patch("/dictionaries/:id", async (req, res): Promise<void> => {
 });
 
 router.delete("/dictionaries/:id", async (req, res): Promise<void> => {
-  const params = DeleteDictionaryParams.safeParse(req.params);
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) {
+    req.log.error({ id: req.params.id }, "Invalid dictionary ID");
+    res.status(400).json({ error: "ID inválido" });
+    return;
+  }
+  const params = DeleteDictionaryParams.safeParse({ id });
   if (!params.success) {
     req.log.error({ err: params.error }, "Invalid params");
     res.status(400).json({ error: params.error.message });
@@ -304,7 +316,13 @@ router.delete("/dictionaries/:id", async (req, res): Promise<void> => {
 });
 
 router.get("/dictionaries/:id/export", async (req, res): Promise<void> => {
-  const params = ExportDictionaryParams.safeParse(req.params);
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) {
+    req.log.error({ id: req.params.id }, "Invalid dictionary ID");
+    res.status(400).json({ error: "ID inválido" });
+    return;
+  }
+  const params = ExportDictionaryParams.safeParse({ id });
   if (!params.success) {
     req.log.error({ err: params.error }, "Invalid params");
     res.status(400).json({ error: params.error.message });

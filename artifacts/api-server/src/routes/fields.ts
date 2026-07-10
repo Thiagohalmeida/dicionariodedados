@@ -24,7 +24,9 @@ import {
 const router: IRouter = Router();
 
 router.patch("/fields/:id", async (req, res): Promise<void> => {
-  const params = UpdateFieldParams.safeParse(req.params);
+  const params = UpdateFieldParams.safeParse({
+    id: parseInt(req.params.id as string, 10),
+  });
   if (!params.success) {
     req.log.error({ err: params.error }, "Invalid params");
     res.status(400).json({ error: params.error.message });
@@ -90,7 +92,10 @@ router.patch("/fields/:id", async (req, res): Promise<void> => {
 });
 
 router.post("/fields/:id/validate", async (req, res): Promise<void> => {
-  const params = SubmitValidationParams.safeParse(req.params);
+  // Coerce params from strings to numbers
+  const params = SubmitValidationParams.safeParse({
+    id: parseInt(req.params.id as string, 10),
+  });
   if (!params.success) {
     req.log.error({ err: params.error }, "Invalid params");
     res.status(400).json({ error: params.error.message });
@@ -153,7 +158,9 @@ router.post("/fields/:id/validate", async (req, res): Promise<void> => {
 });
 
 router.get("/fields/:id/summary", async (req, res): Promise<void> => {
-  const params = GetFieldSummaryParams.safeParse(req.params);
+  const params = GetFieldSummaryParams.safeParse({
+    id: parseInt(req.params.id as string, 10),
+  });
   if (!params.success) {
     req.log.error({ err: params.error }, "Invalid params");
     res.status(400).json({ error: params.error.message });
