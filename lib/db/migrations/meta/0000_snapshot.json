@@ -149,12 +149,8 @@
           "name": "fields_dictionary_id_dictionaries_id_fk",
           "tableFrom": "fields",
           "tableTo": "dictionaries",
-          "columnsFrom": [
-            "dictionary_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["dictionary_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -243,12 +239,8 @@
           "name": "validations_field_id_fields_id_fk",
           "tableFrom": "validations",
           "tableTo": "fields",
-          "columnsFrom": [
-            "field_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["field_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -407,23 +399,12 @@
     "public.dictionary_status": {
       "name": "dictionary_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "in_review",
-        "validated"
-      ]
+      "values": ["pending", "in_review", "validated"]
     },
     "public.audit_action": {
       "name": "audit_action",
       "schema": "public",
-      "values": [
-        "create",
-        "update",
-        "delete",
-        "validate",
-        "export",
-        "import"
-      ]
+      "values": ["create", "update", "delete", "validate", "export", "import"]
     }
   },
   "schemas": {},

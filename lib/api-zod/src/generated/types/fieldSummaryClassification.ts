@@ -6,12 +6,12 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type FieldSummaryClassification = typeof FieldSummaryClassification[keyof typeof FieldSummaryClassification];
-
+export type FieldSummaryClassification =
+  (typeof FieldSummaryClassification)[keyof typeof FieldSummaryClassification];
 
 export const FieldSummaryClassification = {
-  pending: 'pending',
-  reliable: 'reliable',
-  attention: 'attention',
-  critical: 'critical',
+  pending: "pending",
+  reliable: "reliable",
+  attention: "attention",
+  critical: "critical",
 } as const;

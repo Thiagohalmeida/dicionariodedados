@@ -6,12 +6,12 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type FieldSummaryStatusFinal = typeof FieldSummaryStatusFinal[keyof typeof FieldSummaryStatusFinal];
-
+export type FieldSummaryStatusFinal =
+  (typeof FieldSummaryStatusFinal)[keyof typeof FieldSummaryStatusFinal];
 
 export const FieldSummaryStatusFinal = {
-  pending: 'pending',
-  approved: 'approved',
-  rejected: 'rejected',
-  conflict: 'conflict',
+  pending: "pending",
+  approved: "approved",
+  rejected: "rejected",
+  conflict: "conflict",
 } as const;

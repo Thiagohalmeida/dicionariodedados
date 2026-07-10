@@ -5,23 +5,23 @@
  * API specification for Data Dictionary Validator
  * OpenAPI spec version: 0.1.0
  */
-export type HealthStatusStatus = typeof HealthStatusStatus[keyof typeof HealthStatusStatus];
-
+export type HealthStatusStatus =
+  (typeof HealthStatusStatus)[keyof typeof HealthStatusStatus];
 
 export const HealthStatusStatus = {
-  ok: 'ok',
-  degraded: 'degraded',
+  ok: "ok",
+  degraded: "degraded",
 } as const;
 
 /**
  * Database connectivity status
  */
-export type HealthStatusDatabase = typeof HealthStatusDatabase[keyof typeof HealthStatusDatabase];
-
+export type HealthStatusDatabase =
+  (typeof HealthStatusDatabase)[keyof typeof HealthStatusDatabase];
 
 export const HealthStatusDatabase = {
-  ok: 'ok',
-  down: 'down',
+  ok: "ok",
+  down: "down",
 } as const;
 
 export interface HealthStatus {
@@ -30,13 +30,13 @@ export interface HealthStatus {
   database?: HealthStatusDatabase;
 }
 
-export type DictionaryStatus = typeof DictionaryStatus[keyof typeof DictionaryStatus];
-
+export type DictionaryStatus =
+  (typeof DictionaryStatus)[keyof typeof DictionaryStatus];
 
 export const DictionaryStatus = {
-  pending: 'pending',
-  in_review: 'in_review',
-  validated: 'validated',
+  pending: "pending",
+  in_review: "in_review",
+  validated: "validated",
 } as const;
 
 export interface Dictionary {
@@ -51,13 +51,13 @@ export interface Dictionary {
   createdAt: string;
 }
 
-export type DictionaryWithMetricsStatus = typeof DictionaryWithMetricsStatus[keyof typeof DictionaryWithMetricsStatus];
-
+export type DictionaryWithMetricsStatus =
+  (typeof DictionaryWithMetricsStatus)[keyof typeof DictionaryWithMetricsStatus];
 
 export const DictionaryWithMetricsStatus = {
-  pending: 'pending',
-  in_review: 'in_review',
-  validated: 'validated',
+  pending: "pending",
+  in_review: "in_review",
+  validated: "validated",
 } as const;
 
 export interface DictionaryWithMetrics {
@@ -78,33 +78,33 @@ export interface DictionaryWithMetrics {
   avgScore: number | null;
 }
 
-export type DictionaryDetailStatus = typeof DictionaryDetailStatus[keyof typeof DictionaryDetailStatus];
-
+export type DictionaryDetailStatus =
+  (typeof DictionaryDetailStatus)[keyof typeof DictionaryDetailStatus];
 
 export const DictionaryDetailStatus = {
-  pending: 'pending',
-  in_review: 'in_review',
-  validated: 'validated',
+  pending: "pending",
+  in_review: "in_review",
+  validated: "validated",
 } as const;
 
-export type FieldSummaryStatusFinal = typeof FieldSummaryStatusFinal[keyof typeof FieldSummaryStatusFinal];
-
+export type FieldSummaryStatusFinal =
+  (typeof FieldSummaryStatusFinal)[keyof typeof FieldSummaryStatusFinal];
 
 export const FieldSummaryStatusFinal = {
-  pending: 'pending',
-  approved: 'approved',
-  rejected: 'rejected',
-  conflict: 'conflict',
+  pending: "pending",
+  approved: "approved",
+  rejected: "rejected",
+  conflict: "conflict",
 } as const;
 
-export type FieldSummaryClassification = typeof FieldSummaryClassification[keyof typeof FieldSummaryClassification];
-
+export type FieldSummaryClassification =
+  (typeof FieldSummaryClassification)[keyof typeof FieldSummaryClassification];
 
 export const FieldSummaryClassification = {
-  pending: 'pending',
-  reliable: 'reliable',
-  attention: 'attention',
-  critical: 'critical',
+  pending: "pending",
+  reliable: "reliable",
+  attention: "attention",
+  critical: "critical",
 } as const;
 
 export interface FieldSummary {
@@ -282,17 +282,17 @@ export type PreviewExcelDictionary200 = {
 };
 
 export type ListDictionariesParams = {
-/**
- * Page number (1-based)
- * @minimum 1
- */
-page?: number;
-/**
- * Number of items per page
- * @minimum 1
- * @maximum 100
- */
-limit?: number;
+  /**
+   * Page number (1-based)
+   * @minimum 1
+   */
+  page?: number;
+  /**
+   * Number of items per page
+   * @minimum 1
+   * @maximum 100
+   */
+  limit?: number;
 };
 
 export type ListDictionaries200 = {
@@ -304,17 +304,17 @@ export type ListDictionaries200 = {
 };
 
 export type GetCriticalFieldsParams = {
-/**
- * Page number (1-based)
- * @minimum 1
- */
-page?: number;
-/**
- * Number of items per page
- * @minimum 1
- * @maximum 100
- */
-limit?: number;
+  /**
+   * Page number (1-based)
+   * @minimum 1
+   */
+  page?: number;
+  /**
+   * Number of items per page
+   * @minimum 1
+   * @maximum 100
+   */
+  limit?: number;
 };
 
 export type GetCriticalFields200 = {
@@ -324,4 +324,3 @@ export type GetCriticalFields200 = {
   limit: number;
   totalPages: number;
 };
-

@@ -5,8 +5,8 @@
  * API specification for Data Dictionary Validator
  * OpenAPI spec version: 0.1.0
  */
-import type { PreviewExcelDictionary200JsonGerado } from './previewExcelDictionary200JsonGerado';
-import type { PreviewExcelDictionary200Meta } from './previewExcelDictionary200Meta';
+import type { PreviewExcelDictionary200JsonGerado } from "./previewExcelDictionary200JsonGerado";
+import type { PreviewExcelDictionary200Meta } from "./previewExcelDictionary200Meta";
 
 export type PreviewExcelDictionary200 = {
   meta?: PreviewExcelDictionary200Meta;

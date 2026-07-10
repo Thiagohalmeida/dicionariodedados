@@ -4,13 +4,69 @@
     "categoria": "laboratorio",
     "tabela": "rfq",
     "campos": [
-      ["Código", "Identificador da RFQ", "planilha_equalizacao | todas abas", "mensal", "rfq_id", "string", "PK"],
-      ["Categoria", "Classificação estratégica do item", "planilha_equalizacao | todas abas", "mensal", "categoria", "string", ""],
-      ["Tipo", "Tipo de laboratório (analítico/pré-analítico)", "planilha_equalizacao | todas abas", "mensal", "tipo_laboratorio", "string", ""],
-      ["Status", "Status da negociação", "planilha_equalizacao | todas abas", "diária", "status", "string", ""],
-      ["Data", "Data de referência da negociação", "planilha_equalizacao | todas abas", "mensal", "data_referencia", "date", ""],
-      ["Mês", "Mês da cotação", "planilha_equalizacao | todas abas", "mensal", "mes_referencia", "string", ""],
-      ["Observações", "Observações gerais do processo", "planilha_equalizacao | todas abas", "eventual", "observacoes", "string", ""]
+      [
+        "Código",
+        "Identificador da RFQ",
+        "planilha_equalizacao | todas abas",
+        "mensal",
+        "rfq_id",
+        "string",
+        "PK"
+      ],
+      [
+        "Categoria",
+        "Classificação estratégica do item",
+        "planilha_equalizacao | todas abas",
+        "mensal",
+        "categoria",
+        "string",
+        ""
+      ],
+      [
+        "Tipo",
+        "Tipo de laboratório (analítico/pré-analítico)",
+        "planilha_equalizacao | todas abas",
+        "mensal",
+        "tipo_laboratorio",
+        "string",
+        ""
+      ],
+      [
+        "Status",
+        "Status da negociação",
+        "planilha_equalizacao | todas abas",
+        "diária",
+        "status",
+        "string",
+        ""
+      ],
+      [
+        "Data",
+        "Data de referência da negociação",
+        "planilha_equalizacao | todas abas",
+        "mensal",
+        "data_referencia",
+        "date",
+        ""
+      ],
+      [
+        "Mês",
+        "Mês da cotação",
+        "planilha_equalizacao | todas abas",
+        "mensal",
+        "mes_referencia",
+        "string",
+        ""
+      ],
+      [
+        "Observações",
+        "Observações gerais do processo",
+        "planilha_equalizacao | todas abas",
+        "eventual",
+        "observacoes",
+        "string",
+        ""
+      ]
     ]
   },
   {
@@ -18,15 +74,87 @@
     "categoria": "laboratorio",
     "tabela": "rfq_item",
     "campos": [
-      ["Código Item", "Identificador do item", "planilha_equalizacao | equalizacao", "mensal", "rfq_item_id", "string", "PK"],
-      ["Descrição Produto", "Descrição detalhada do produto", "planilha_equalizacao | equalizacao", "mensal", "descricao_produto", "string", ""],
-      ["Categoria", "Categoria do item", "planilha_equalizacao | equalizacao", "mensal", "categoria_item", "string", ""],
-      ["Subcategoria", "Subcategoria do item", "planilha_equalizacao | equalizacao", "mensal", "subcategoria_item", "string", ""],
-      ["UF", "Estado da unidade", "planilha_equalizacao | equalizacao", "mensal", "uf", "string", ""],
-      ["Código Unidade", "Identificador da unidade", "planilha_equalizacao | equalizacao", "mensal", "unidade_id", "string", "FK"],
-      ["Unidade", "Nome da unidade/hospital", "planilha_equalizacao | equalizacao", "mensal", "nome_unidade", "string", ""],
-      ["Quantidade", "Quantidade demandada", "planilha_equalizacao | equalizacao", "mensal", "quantidade", "decimal", ""],
-      ["Baseline", "Consumo ou valor base", "planilha_equalizacao | resumo", "mensal", "baseline", "decimal", ""]
+      [
+        "Código Item",
+        "Identificador do item",
+        "planilha_equalizacao | equalizacao",
+        "mensal",
+        "rfq_item_id",
+        "string",
+        "PK"
+      ],
+      [
+        "Descrição Produto",
+        "Descrição detalhada do produto",
+        "planilha_equalizacao | equalizacao",
+        "mensal",
+        "descricao_produto",
+        "string",
+        ""
+      ],
+      [
+        "Categoria",
+        "Categoria do item",
+        "planilha_equalizacao | equalizacao",
+        "mensal",
+        "categoria_item",
+        "string",
+        ""
+      ],
+      [
+        "Subcategoria",
+        "Subcategoria do item",
+        "planilha_equalizacao | equalizacao",
+        "mensal",
+        "subcategoria_item",
+        "string",
+        ""
+      ],
+      [
+        "UF",
+        "Estado da unidade",
+        "planilha_equalizacao | equalizacao",
+        "mensal",
+        "uf",
+        "string",
+        ""
+      ],
+      [
+        "Código Unidade",
+        "Identificador da unidade",
+        "planilha_equalizacao | equalizacao",
+        "mensal",
+        "unidade_id",
+        "string",
+        "FK"
+      ],
+      [
+        "Unidade",
+        "Nome da unidade/hospital",
+        "planilha_equalizacao | equalizacao",
+        "mensal",
+        "nome_unidade",
+        "string",
+        ""
+      ],
+      [
+        "Quantidade",
+        "Quantidade demandada",
+        "planilha_equalizacao | equalizacao",
+        "mensal",
+        "quantidade",
+        "decimal",
+        ""
+      ],
+      [
+        "Baseline",
+        "Consumo ou valor base",
+        "planilha_equalizacao | resumo",
+        "mensal",
+        "baseline",
+        "decimal",
+        ""
+      ]
     ]
   },
   {
@@ -34,9 +162,33 @@
     "categoria": "laboratorio",
     "tabela": "fornecedor",
     "campos": [
-      ["Nome Fornecedor", "Nome do fornecedor", "planilha_equalizacao | todas abas", "mensal", "fornecedor_nome", "string", "PK"],
-      ["Fornecedor Contrato vigente", "Fornecedor atual em contrato", "planilha_equalizacao | resumo", "mensal", "fornecedor_contrato_vigente", "string", ""],
-      ["Marca", "Marca do produto", "planilha_equalizacao | equalizacao", "mensal", "marca", "string", ""]
+      [
+        "Nome Fornecedor",
+        "Nome do fornecedor",
+        "planilha_equalizacao | todas abas",
+        "mensal",
+        "fornecedor_nome",
+        "string",
+        "PK"
+      ],
+      [
+        "Fornecedor Contrato vigente",
+        "Fornecedor atual em contrato",
+        "planilha_equalizacao | resumo",
+        "mensal",
+        "fornecedor_contrato_vigente",
+        "string",
+        ""
+      ],
+      [
+        "Marca",
+        "Marca do produto",
+        "planilha_equalizacao | equalizacao",
+        "mensal",
+        "marca",
+        "string",
+        ""
+      ]
     ]
   },
   {
@@ -44,16 +196,96 @@
     "categoria": "laboratorio",
     "tabela": "cotacao",
     "campos": [
-      ["Código Item", "Item relacionado à cotação", "planilha_equalizacao | equalizacao", "mensal", "rfq_item_id", "string", "FK"],
-      ["Fornecedor", "Fornecedor da cotação", "planilha_equalizacao | equalizacao", "mensal", "fornecedor_nome", "string", "FK"],
-      ["Preço Unitário", "Preço unitário cotado", "planilha_equalizacao | equalizacao", "mensal", "preco_unitario", "decimal", ""],
-      ["Valor Total", "Valor total cotado", "planilha_equalizacao | equalizacao", "mensal", "valor_total", "decimal", ""],
-      ["Preço Referência", "Preço de referência", "planilha_equalizacao | equalizacao", "mensal", "preco_referencia", "decimal", ""],
-      ["Preço Alternativo", "Preço alternativo ofertado", "planilha_equalizacao | equalizacao", "mensal", "preco_alternativo", "decimal", ""],
-      ["Diferença Valor", "Diferença entre valores", "planilha_equalizacao | equalizacao", "mensal", "diferenca_valor", "decimal", ""],
-      ["Diferença Percentual", "Diferença percentual", "planilha_equalizacao | equalizacao", "mensal", "diferenca_percentual", "decimal", ""],
-      ["Preço Final", "Preço final negociado", "planilha_equalizacao | equalizacao", "mensal", "preco_final", "decimal", ""],
-      ["Fornecedor Final", "Fornecedor vencedor", "planilha_equalizacao | equalizacao", "mensal", "fornecedor_vencedor", "string", ""]
+      [
+        "Código Item",
+        "Item relacionado à cotação",
+        "planilha_equalizacao | equalizacao",
+        "mensal",
+        "rfq_item_id",
+        "string",
+        "FK"
+      ],
+      [
+        "Fornecedor",
+        "Fornecedor da cotação",
+        "planilha_equalizacao | equalizacao",
+        "mensal",
+        "fornecedor_nome",
+        "string",
+        "FK"
+      ],
+      [
+        "Preço Unitário",
+        "Preço unitário cotado",
+        "planilha_equalizacao | equalizacao",
+        "mensal",
+        "preco_unitario",
+        "decimal",
+        ""
+      ],
+      [
+        "Valor Total",
+        "Valor total cotado",
+        "planilha_equalizacao | equalizacao",
+        "mensal",
+        "valor_total",
+        "decimal",
+        ""
+      ],
+      [
+        "Preço Referência",
+        "Preço de referência",
+        "planilha_equalizacao | equalizacao",
+        "mensal",
+        "preco_referencia",
+        "decimal",
+        ""
+      ],
+      [
+        "Preço Alternativo",
+        "Preço alternativo ofertado",
+        "planilha_equalizacao | equalizacao",
+        "mensal",
+        "preco_alternativo",
+        "decimal",
+        ""
+      ],
+      [
+        "Diferença Valor",
+        "Diferença entre valores",
+        "planilha_equalizacao | equalizacao",
+        "mensal",
+        "diferenca_valor",
+        "decimal",
+        ""
+      ],
+      [
+        "Diferença Percentual",
+        "Diferença percentual",
+        "planilha_equalizacao | equalizacao",
+        "mensal",
+        "diferenca_percentual",
+        "decimal",
+        ""
+      ],
+      [
+        "Preço Final",
+        "Preço final negociado",
+        "planilha_equalizacao | equalizacao",
+        "mensal",
+        "preco_final",
+        "decimal",
+        ""
+      ],
+      [
+        "Fornecedor Final",
+        "Fornecedor vencedor",
+        "planilha_equalizacao | equalizacao",
+        "mensal",
+        "fornecedor_vencedor",
+        "string",
+        ""
+      ]
     ]
   },
   {
@@ -61,13 +293,69 @@
     "categoria": "laboratorio",
     "tabela": "sla",
     "campos": [
-      ["Código Item", "Item relacionado ao SLA", "planilha_equalizacao | equalizacao", "mensal", "rfq_item_id", "string", "FK"],
-      ["Fornecedor", "Fornecedor associado ao SLA", "planilha_equalizacao | equalizacao", "mensal", "fornecedor_nome", "string", "FK"],
-      ["Preço SLA", "Preço relacionado ao SLA", "planilha_equalizacao | equalizacao", "mensal", "preco_sla", "decimal", ""],
-      ["Valor SLA", "Valor total SLA", "planilha_equalizacao | equalizacao", "mensal", "valor_sla", "decimal", ""],
-      ["Diferença SLA", "Diferença em relação ao SLA", "planilha_equalizacao | equalizacao", "mensal", "diferenca_sla", "decimal", ""],
-      ["Percentual SLA", "Percentual SLA", "planilha_equalizacao | equalizacao", "mensal", "percentual_sla", "decimal", ""],
-      ["Status", "Status do SLA", "planilha_equalizacao | equalizacao", "mensal", "status_sla", "string", ""]
+      [
+        "Código Item",
+        "Item relacionado ao SLA",
+        "planilha_equalizacao | equalizacao",
+        "mensal",
+        "rfq_item_id",
+        "string",
+        "FK"
+      ],
+      [
+        "Fornecedor",
+        "Fornecedor associado ao SLA",
+        "planilha_equalizacao | equalizacao",
+        "mensal",
+        "fornecedor_nome",
+        "string",
+        "FK"
+      ],
+      [
+        "Preço SLA",
+        "Preço relacionado ao SLA",
+        "planilha_equalizacao | equalizacao",
+        "mensal",
+        "preco_sla",
+        "decimal",
+        ""
+      ],
+      [
+        "Valor SLA",
+        "Valor total SLA",
+        "planilha_equalizacao | equalizacao",
+        "mensal",
+        "valor_sla",
+        "decimal",
+        ""
+      ],
+      [
+        "Diferença SLA",
+        "Diferença em relação ao SLA",
+        "planilha_equalizacao | equalizacao",
+        "mensal",
+        "diferenca_sla",
+        "decimal",
+        ""
+      ],
+      [
+        "Percentual SLA",
+        "Percentual SLA",
+        "planilha_equalizacao | equalizacao",
+        "mensal",
+        "percentual_sla",
+        "decimal",
+        ""
+      ],
+      [
+        "Status",
+        "Status do SLA",
+        "planilha_equalizacao | equalizacao",
+        "mensal",
+        "status_sla",
+        "string",
+        ""
+      ]
     ]
   }
 ]

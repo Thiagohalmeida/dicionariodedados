@@ -1,7 +1,11 @@
 import { Router, type IRouter } from "express";
 import { eq, inArray, sql, desc } from "drizzle-orm";
 import { db, fieldsTable, validationsTable } from "@workspace/db";
-import { computeFieldSummary, computeFieldSummariesBatch, getFieldsWithSummaries } from "../lib/summary";
+import {
+  computeFieldSummary,
+  computeFieldSummariesBatch,
+  getFieldsWithSummaries,
+} from "../lib/summary";
 import { insertValidation } from "../lib/validation";
 import { FIELD_CLASSIFICATION, SCORE_THRESHOLDS } from "../lib/constants";
 import {
@@ -34,7 +38,10 @@ router.patch("/fields/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  const [field] = await db.select().from(fieldsTable).where(eq(fieldsTable.id, params.data.id));
+  const [field] = await db
+    .select()
+    .from(fieldsTable)
+    .where(eq(fieldsTable.id, params.data.id));
   if (!field) {
     req.log.error({ fieldId: params.data.id }, "Field not found");
     res.status(404).json({ error: "Field not found" });
@@ -42,12 +49,17 @@ router.patch("/fields/:id", async (req, res): Promise<void> => {
   }
 
   const updates: Record<string, unknown> = {};
-  if (parsed.data.campoOrigem !== undefined) updates.campoOrigem = parsed.data.campoOrigem;
-  if (parsed.data.descricao !== undefined) updates.descricao = parsed.data.descricao;
+  if (parsed.data.campoOrigem !== undefined)
+    updates.campoOrigem = parsed.data.campoOrigem;
+  if (parsed.data.descricao !== undefined)
+    updates.descricao = parsed.data.descricao;
   if (parsed.data.origem !== undefined) updates.origem = parsed.data.origem;
-  if (parsed.data.periodicidade !== undefined) updates.periodicidade = parsed.data.periodicidade;
-  if (parsed.data.campoTecnico !== undefined) updates.campoTecnico = parsed.data.campoTecnico;
-  if (parsed.data.tipoDado !== undefined) updates.tipoDado = parsed.data.tipoDado;
+  if (parsed.data.periodicidade !== undefined)
+    updates.periodicidade = parsed.data.periodicidade;
+  if (parsed.data.campoTecnico !== undefined)
+    updates.campoTecnico = parsed.data.campoTecnico;
+  if (parsed.data.tipoDado !== undefined)
+    updates.tipoDado = parsed.data.tipoDado;
   if (parsed.data.chave !== undefined) updates.chave = parsed.data.chave;
 
   if (Object.keys(updates).length === 0) {
@@ -73,7 +85,7 @@ router.patch("/fields/:id", async (req, res): Promise<void> => {
       campoTecnico: updated.campoTecnico,
       tipoDado: updated.tipoDado,
       chave: updated.chave,
-    })
+    }),
   );
 });
 
@@ -92,14 +104,18 @@ router.post("/fields/:id/validate", async (req, res): Promise<void> => {
     return;
   }
 
-  const [field] = await db.select().from(fieldsTable).where(eq(fieldsTable.id, params.data.id));
+  const [field] = await db
+    .select()
+    .from(fieldsTable)
+    .where(eq(fieldsTable.id, params.data.id));
   if (!field) {
     req.log.error({ fieldId: params.data.id }, "Field not found");
     res.status(404).json({ error: "Field not found" });
     return;
   }
 
-  const { used, required, correctName, correctOrigin, hasBusinessRule } = parsed.data;
+  const { used, required, correctName, correctOrigin, hasBusinessRule } =
+    parsed.data;
   const score =
     (used ? 20 : 0) +
     (required ? 20 : 0) +
@@ -132,7 +148,7 @@ router.post("/fields/:id/validate", async (req, res): Promise<void> => {
       score: Number(validation.score),
       comment: validation.comment ?? null,
       createdAt: validation.createdAt.toISOString(),
-    })
+    }),
   );
 });
 
@@ -144,7 +160,10 @@ router.get("/fields/:id/summary", async (req, res): Promise<void> => {
     return;
   }
 
-  const [field] = await db.select().from(fieldsTable).where(eq(fieldsTable.id, params.data.id));
+  const [field] = await db
+    .select()
+    .from(fieldsTable)
+    .where(eq(fieldsTable.id, params.data.id));
   if (!field) {
     req.log.error({ fieldId: params.data.id }, "Field not found");
     res.status(404).json({ error: "Field not found" });
@@ -167,12 +186,12 @@ router.get("/fields/critical", async (req, res): Promise<void> => {
   const offset = (page - 1) * limit;
 
   // Get total count of critical fields
-  // Critical = avg score < ATTENTION OR no validations at all (pending)
-  // Uses LEFT JOIN to include fields without validations, then filters by score threshold OR no validations
+  // Critical = avg score < ATTENTION (only fields WITH validations)
+  // Fields without validations are "pending", not "critical"
   const [{ count: totalCount }] = await db
     .select({ count: sql<number>`count(*)` })
     .from(fieldsTable)
-    .leftJoin(validationsTable, eq(validationsTable.fieldId, fieldsTable.id))
+    .innerJoin(validationsTable, eq(validationsTable.fieldId, fieldsTable.id))
     .where(
       sql`
         (
@@ -180,11 +199,7 @@ router.get("/fields/critical", async (req, res): Promise<void> => {
           FROM ${validationsTable}
           WHERE ${validationsTable}.field_id = ${fieldsTable}.id
         ) < ${SCORE_THRESHOLDS.ATTENTION}
-        OR
-        NOT EXISTS (
-          SELECT 1 FROM ${validationsTable} WHERE ${validationsTable}.field_id = ${fieldsTable}.id
-        )
-      `
+      `,
     );
 
   // If no critical fields, return empty
@@ -196,7 +211,7 @@ router.get("/fields/critical", async (req, res): Promise<void> => {
         page,
         limit,
         totalPages: 1,
-      })
+      }),
     );
     return;
   }
@@ -215,7 +230,7 @@ router.get("/fields/critical", async (req, res): Promise<void> => {
       chave: fieldsTable.chave,
     })
     .from(fieldsTable)
-    .leftJoin(validationsTable, eq(validationsTable.fieldId, fieldsTable.id))
+    .innerJoin(validationsTable, eq(validationsTable.fieldId, fieldsTable.id))
     .where(
       sql`
         (
@@ -223,11 +238,7 @@ router.get("/fields/critical", async (req, res): Promise<void> => {
           FROM ${validationsTable}
           WHERE ${validationsTable}.field_id = ${fieldsTable}.id
         ) < ${SCORE_THRESHOLDS.ATTENTION}
-        OR
-        NOT EXISTS (
-          SELECT 1 FROM ${validationsTable} WHERE ${validationsTable}.field_id = ${fieldsTable}.id
-        )
-      `
+      `,
     )
     .groupBy(fieldsTable.id)
     .orderBy(fieldsTable.campoOrigem)
@@ -253,7 +264,7 @@ router.get("/fields/critical", async (req, res): Promise<void> => {
       page,
       limit,
       totalPages,
-    })
+    }),
   );
 });
 

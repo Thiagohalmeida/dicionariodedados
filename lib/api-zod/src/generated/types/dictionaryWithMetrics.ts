@@ -5,7 +5,7 @@
  * API specification for Data Dictionary Validator
  * OpenAPI spec version: 0.1.0
  */
-import type { DictionaryWithMetricsStatus } from './dictionaryWithMetricsStatus';
+import type { DictionaryWithMetricsStatus } from "./dictionaryWithMetricsStatus";
 
 export interface DictionaryWithMetrics {
   id: number;

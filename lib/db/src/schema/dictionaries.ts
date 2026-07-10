@@ -1,8 +1,19 @@
-import { pgTable, text, serial, timestamp, integer, pgEnum } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  serial,
+  timestamp,
+  integer,
+  pgEnum,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const dictionaryStatusEnum = pgEnum("dictionary_status", ["pending", "in_review", "validated"]);
+export const dictionaryStatusEnum = pgEnum("dictionary_status", [
+  "pending",
+  "in_review",
+  "validated",
+]);
 
 export const dictionariesTable = pgTable("dictionaries", {
   id: serial("id").primaryKey(),
@@ -12,11 +23,18 @@ export const dictionariesTable = pgTable("dictionaries", {
   version: integer("version").notNull().default(1),
   parentId: integer("parent_id"),
   status: dictionaryStatusEnum("status").notNull().default("pending"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
-export const insertDictionarySchema = createInsertSchema(dictionariesTable).omit({
+export const insertDictionarySchema = createInsertSchema(
+  dictionariesTable,
+).omit({
   id: true,
   createdAt: true,
   updatedAt: true,

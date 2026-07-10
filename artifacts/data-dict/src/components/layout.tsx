@@ -1,6 +1,13 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { BookOpen, AlertTriangle, LayoutDashboard, Info, HelpCircle, Settings } from "lucide-react";
+import {
+  BookOpen,
+  AlertTriangle,
+  LayoutDashboard,
+  Info,
+  HelpCircle,
+  Settings,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -34,7 +41,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <SidebarHeader className="border-b border-sidebar-border bg-sidebar px-4 py-4">
           <div className="flex items-center gap-2 font-bold text-lg text-sidebar-foreground">
             <BookOpen className="h-5 w-5 text-primary" />
-            <span className="group-data-[collapsible=icon]:hidden">Validador DD</span>
+            <span className="group-data-[collapsible=icon]:hidden">
+              Validador DD
+            </span>
           </div>
         </SidebarHeader>
         <SidebarContent>
@@ -79,9 +88,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <SidebarTrigger />
           <div className="flex-1" />
         </header>
-        <main className="flex-1 p-6 overflow-auto">
-          {children}
-        </main>
+        <main className="flex-1 p-6 overflow-auto">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );

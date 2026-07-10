@@ -5,7 +5,7 @@
  * API specification for Data Dictionary Validator
  * OpenAPI spec version: 0.1.0
  */
-import type { DictionaryWithMetrics } from './dictionaryWithMetrics';
+import type { DictionaryWithMetrics } from "./dictionaryWithMetrics";
 
 export type ListDictionaries200 = {
   data: DictionaryWithMetrics[];

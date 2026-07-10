@@ -45,34 +45,45 @@ export function auditMiddleware(action: string, entityType: string) {
 
         // Determine entity ID from params or response
         let entityId = 0;
-        const paramId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+        const paramId = Array.isArray(req.params.id)
+          ? req.params.id[0]
+          : req.params.id;
         if (paramId) {
           entityId = parseInt(paramId, 10);
-        } else if (responseBody && typeof responseBody === "object" && "id" in responseBody) {
+        } else if (
+          responseBody &&
+          typeof responseBody === "object" &&
+          "id" in responseBody
+        ) {
           entityId = (responseBody as any).id;
         }
 
         if (!entityId) return;
 
-const userAgentHeader = req.get("user-agent");
-            const userAgent = Array.isArray(userAgentHeader) ? userAgentHeader[0] : userAgentHeader ?? "";
-            const auditLog: InsertAuditLog = {
-              action: action as any,
-              entityType,
-              entityId,
-              userId: userId ?? null,
-              userEmail: userEmail ?? null,
-              before: req.auditBody ?? null,
-              after: responseBody && typeof responseBody === "object" ? responseBody : null,
-              metadata: {
-                method: req.method,
-                path: req.path,
-                ip: req.ip ?? "",
-                userAgent,
-                durationMs: Date.now() - startTime,
-                statusCode: res.statusCode,
-              },
-            };
+        const userAgentHeader = req.get("user-agent");
+        const userAgent = Array.isArray(userAgentHeader)
+          ? userAgentHeader[0]
+          : (userAgentHeader ?? "");
+        const auditLog: InsertAuditLog = {
+          action: action as any,
+          entityType,
+          entityId,
+          userId: userId ?? null,
+          userEmail: userEmail ?? null,
+          before: req.auditBody ?? null,
+          after:
+            responseBody && typeof responseBody === "object"
+              ? responseBody
+              : null,
+          metadata: {
+            method: req.method,
+            path: req.path,
+            ip: req.ip ?? "",
+            userAgent,
+            durationMs: Date.now() - startTime,
+            statusCode: res.statusCode,
+          },
+        };
 
         await db.insert(auditLogsTable).values(auditLog);
       } catch (err) {

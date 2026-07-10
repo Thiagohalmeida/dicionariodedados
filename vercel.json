@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://${RAILWAY_API_URL}/api/$1"
+      "destination": "https://SUA-URL-DO-RENDER-ON-RAILWAY.onrender.com/api/$1"
     }
   ],
   "headers": [

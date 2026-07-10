@@ -5,8 +5,8 @@
  * API specification for Data Dictionary Validator
  * OpenAPI spec version: 0.1.0
  */
-import type { DictionaryDetailStatus } from './dictionaryDetailStatus';
-import type { FieldWithSummary } from './fieldWithSummary';
+import type { DictionaryDetailStatus } from "./dictionaryDetailStatus";
+import type { FieldWithSummary } from "./fieldWithSummary";
 
 export interface DictionaryDetail {
   id: number;

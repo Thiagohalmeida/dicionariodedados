@@ -4,13 +4,30 @@ import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { getApiBase } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { FileSpreadsheet, FileJson, Upload, CheckCircle2, Info, Save, Download } from "lucide-react";
+import {
+  FileSpreadsheet,
+  FileJson,
+  Upload,
+  CheckCircle2,
+  Info,
+  Save,
+  Download,
+  ArrowRight,
+  Sparkles,
+  Zap,
+} from "lucide-react";
 import PreviewValidationSheet from "@/components/preview-validation-sheet";
 
 const EXEMPLO_JSON = `{
@@ -39,18 +56,35 @@ function JsonImportTab() {
   const handleImport = () => {
     try {
       const parsed = JSON.parse(jsonInput);
-      importMutation.mutate({ data: parsed }, {
-        onSuccess: (dict) => {
-          toast({ title: "Importação concluída", description: "Dicionário importado com sucesso." });
-          setLocation(`/dictionaries/${dict.id}`);
+      importMutation.mutate(
+        { data: parsed },
+        {
+          onSuccess: (dict) => {
+            toast({
+              title: "Importação concluída",
+              description: "Dicionário importado com sucesso.",
+            });
+            setLocation(`/dictionaries/${dict.id}`);
+          },
+          onError: (err: unknown) => {
+            const msg =
+              err instanceof Error
+                ? err.message
+                : "Verifique o formato do JSON e tente novamente.";
+            toast({
+              title: "Erro na importação",
+              description: msg,
+              variant: "destructive",
+            });
+          },
         },
-        onError: (err: unknown) => {
-          const msg = err instanceof Error ? err.message : "Verifique o formato do JSON e tente novamente.";
-          toast({ title: "Erro na importação", description: msg, variant: "destructive" });
-        }
-      });
+      );
     } catch {
-      toast({ title: "JSON inválido", description: "O conteúdo inserido não é um JSON válido.", variant: "destructive" });
+      toast({
+        title: "JSON inválido",
+        description: "O conteúdo inserido não é um JSON válido.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -63,10 +97,17 @@ function JsonImportTab() {
         onChange={(e) => setJsonInput(e.target.value)}
       />
       <div className="flex justify-between items-center gap-2">
-        <Button variant="ghost" size="sm" onClick={() => setJsonInput(EXEMPLO_JSON)}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setJsonInput(EXEMPLO_JSON)}
+        >
           Usar exemplo
         </Button>
-        <Button disabled={importMutation.isPending || !jsonInput.trim()} onClick={handleImport}>
+        <Button
+          disabled={importMutation.isPending || !jsonInput.trim()}
+          onClick={handleImport}
+        >
           {importMutation.isPending ? "Importando..." : "Importar Dicionário"}
         </Button>
       </div>
@@ -80,6 +121,12 @@ interface ExcelMeta {
   abas_ignoradas: { aba: string; motivo: string }[];
   total_colunas_raw: number;
   colunas_removidas: string[];
+}
+
+interface ResolvedMeta {
+  processo: string;
+  categoria: string;
+  tabela: string;
 }
 
 function extractGeneratedDictionary(payload: unknown): unknown {
@@ -99,7 +146,12 @@ function extractGeneratedDictionary(payload: unknown): unknown {
 
   if (record.payload && typeof record.payload === "object") {
     const nested = record.payload as Record<string, unknown>;
-    const nestedCandidates = [nested.json_gerado, nested.jsonGerado, nested.generatedJson, nested.dictionary];
+    const nestedCandidates = [
+      nested.json_gerado,
+      nested.jsonGerado,
+      nested.generatedJson,
+      nested.dictionary,
+    ];
     for (const candidate of nestedCandidates) {
       if (candidate !== undefined && candidate !== null) return candidate;
     }
@@ -122,18 +174,26 @@ function ExcelImportTab() {
   const [loading, setLoading] = useState(false);
   const [meta, setMeta] = useState<ExcelMeta | null>(null);
   const [previewJson, setPreviewJson] = useState("");
-  const [previewFields, setPreviewFields] = useState<Array<{
-    id: number;
-    campoOrigem: string;
-    campoTecnico: string;
-    descricao: string;
-    tipoDado: string;
-    origem: string;
-    periodicidade: string;
-    chave: boolean;
-    included: boolean;
-    validation?: any;
-  }>>([]);
+  const [previewFields, setPreviewFields] = useState<
+    Array<{
+      id: number;
+      campoOrigem: string;
+      campoTecnico: string;
+      descricao: string;
+      tipoDado: string;
+      origem: string;
+      periodicidade: string;
+      chave: boolean;
+      included: boolean;
+      validation?: any;
+    }>
+  >([]);
+  const [resolvedMeta, setResolvedMeta] = useState<{
+    processo: string;
+    categoria: string;
+    tabela: string;
+  } | null>(null);
+
   const [showValidationSheet, setShowValidationSheet] = useState(false);
 
   const [form, setForm] = useState({
@@ -151,9 +211,16 @@ function ExcelImportTab() {
   }
 
   async function handlePreview() {
-    if (!file) { toast({ title: "Selecione um arquivo Excel", variant: "destructive" }); return; }
+    if (!file) {
+      toast({ title: "Selecione um arquivo Excel", variant: "destructive" });
+      return;
+    }
     if (!form.processo.trim() || !form.categoria.trim()) {
-      toast({ title: "Campos obrigatórios", description: "Informe processo e categoria antes de continuar.", variant: "destructive" });
+      toast({
+        title: "Campos obrigatórios",
+        description: "Informe processo e categoria antes de continuar.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -164,27 +231,39 @@ function ExcelImportTab() {
       fd.append("processo", form.processo.trim());
       fd.append("categoria", form.categoria.trim());
       if (form.tabela.trim()) fd.append("tabela", form.tabela.trim());
-      if (form.aba_preferencial.trim()) fd.append("aba_preferencial", form.aba_preferencial.trim());
+      if (form.aba_preferencial.trim())
+        fd.append("aba_preferencial", form.aba_preferencial.trim());
 
       const basePath = getApiBase();
-      const res = await fetch(`${basePath}/api/excel/preview`, { method: "POST", body: fd });
+      const res = await fetch(`${basePath}/api/excel/preview`, {
+        method: "POST",
+        body: fd,
+      });
 
       if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: "Erro desconhecido" }));
+        const err = await res
+          .json()
+          .catch(() => ({ error: "Erro desconhecido" }));
         throw new Error(err.error ?? "Erro no servidor");
       }
 
       const data = await res.json();
       const generated = extractGeneratedDictionary(data);
       if (!generated) {
-        throw new Error("O endpoint não retornou um JSON de dicionário válido para pré-visualização.");
+        throw new Error(
+          "O endpoint não retornou um JSON de dicionário válido para pré-visualização.",
+        );
       }
 
       const meta = (data as { meta?: ExcelMeta }).meta ?? null;
-      const previewText = typeof generated === "string" ? generated : JSON.stringify(generated, null, 2);
+      const previewText =
+        typeof generated === "string"
+          ? generated
+          : JSON.stringify(generated, null, 2);
 
       // Parse fields for validation sheet
-      const parsed = typeof generated === "string" ? JSON.parse(generated) : generated;
+      const parsed =
+        typeof generated === "string" ? JSON.parse(generated) : generated;
       const fields = (parsed.campos || []).map((c: any, idx: number) => ({
         id: idx + 1,
         campoOrigem: c.campo_origem,
@@ -197,6 +276,14 @@ function ExcelImportTab() {
         included: true,
       }));
 
+      // Use resolved values from backend (processo, categoria, tabela)
+      // If backend didn't return them, fall back to form values
+      setResolvedMeta({
+        processo: parsed.processo ?? form.processo,
+        categoria: parsed.categoria ?? form.categoria,
+        tabela: parsed.tabela ?? form.tabela,
+      });
+
       setMeta(meta);
       setPreviewJson(previewText);
       setPreviewFields(fields);
@@ -207,8 +294,13 @@ function ExcelImportTab() {
         description: `${meta?.total_colunas_raw ?? 0} colunas lidas, ${meta?.colunas_removidas?.length ?? 0} removidas por ruído.`,
       });
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Erro ao processar arquivo";
-      toast({ title: "Erro na pré-visualização", description: msg, variant: "destructive" });
+      const msg =
+        err instanceof Error ? err.message : "Erro ao processar arquivo";
+      toast({
+        title: "Erro na pré-visualização",
+        description: msg,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -216,7 +308,11 @@ function ExcelImportTab() {
 
   function handleImportPreview() {
     if (!previewJson.trim()) {
-      toast({ title: "Nenhum preview disponível", description: "Gere um preview antes de importar.", variant: "destructive" });
+      toast({
+        title: "Nenhum preview disponível",
+        description: "Gere um preview antes de importar.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -226,26 +322,43 @@ function ExcelImportTab() {
         { data: parsed },
         {
           onSuccess: (dict) => {
-            toast({ title: "Importação concluída", description: "O dicionário foi criado com sucesso." });
+            toast({
+              title: "Importação concluída",
+              description: "O dicionário foi criado com sucesso.",
+            });
             setLocation(`/dictionaries/${dict.id}`);
           },
           onError: (err: unknown) => {
-            const msg = err instanceof Error ? err.message : "Verifique o JSON gerado e tente novamente.";
-            toast({ title: "Erro na importação", description: msg, variant: "destructive" });
+            const msg =
+              err instanceof Error
+                ? err.message
+                : "Verifique o JSON gerado e tente novamente.";
+            toast({
+              title: "Erro na importação",
+              description: msg,
+              variant: "destructive",
+            });
           },
-        }
+        },
       );
     } catch {
-      toast({ title: "JSON inválido", description: "O preview contém JSON inválido. Corrija o conteúdo e tente novamente.", variant: "destructive" });
+      toast({
+        title: "JSON inválido",
+        description:
+          "O preview contém JSON inválido. Corrija o conteúdo e tente novamente.",
+        variant: "destructive",
+      });
     }
   }
 
-  const handleGenerateValidatedJson = (validatedFields: typeof previewFields) => {
+  const handleGenerateValidatedJson = (
+    validatedFields: typeof previewFields,
+  ) => {
     // Update previewJson with validated fields
     const parsed = JSON.parse(previewJson);
     parsed.campos = validatedFields
-      .filter(f => f.included)
-      .map(f => ({
+      .filter((f) => f.included)
+      .map((f) => ({
         campo_origem: f.campoOrigem,
         campo_tecnico: f.campoTecnico,
         descricao: f.descricao,
@@ -255,7 +368,10 @@ function ExcelImportTab() {
         chave: f.chave,
       }));
     setPreviewJson(JSON.stringify(parsed, null, 2));
-    toast({ title: "JSON atualizado", description: "Validações aplicadas ao JSON editável." });
+    toast({
+      title: "JSON atualizado",
+      description: "Validações aplicadas ao JSON editável.",
+    });
   };
 
   const handleImportFromSheet = (json: any) => {
@@ -263,15 +379,25 @@ function ExcelImportTab() {
       { data: json },
       {
         onSuccess: (dict) => {
-          toast({ title: "Importação concluída", description: "O dicionário foi criado com sucesso." });
+          toast({
+            title: "Importação concluída",
+            description: "O dicionário foi criado com sucesso.",
+          });
           setShowValidationSheet(false);
           setLocation(`/dictionaries/${dict.id}`);
         },
         onError: (err: unknown) => {
-          const msg = err instanceof Error ? err.message : "Verifique o JSON e tente novamente.";
-          toast({ title: "Erro na importação", description: msg, variant: "destructive" });
+          const msg =
+            err instanceof Error
+              ? err.message
+              : "Verifique o JSON e tente novamente.";
+          toast({
+            title: "Erro na importação",
+            description: msg,
+            variant: "destructive",
+          });
         },
-      }
+      },
     );
   };
 
@@ -279,7 +405,9 @@ function ExcelImportTab() {
     <div className="space-y-5">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <Label>Processo <span className="text-destructive">*</span></Label>
+          <Label>
+            Processo <span className="text-destructive">*</span>
+          </Label>
           <Input
             placeholder="Ex: rfq, contrato, compra"
             value={form.processo}
@@ -287,7 +415,9 @@ function ExcelImportTab() {
           />
         </div>
         <div className="space-y-1.5">
-          <Label>Categoria <span className="text-destructive">*</span></Label>
+          <Label>
+            Categoria <span className="text-destructive">*</span>
+          </Label>
           <Input
             placeholder="Ex: medicamentos, laboratorio"
             value={form.categoria}
@@ -295,7 +425,10 @@ function ExcelImportTab() {
           />
         </div>
         <div className="space-y-1.5">
-          <Label>Nome da Tabela <span className="text-muted-foreground text-xs">(opcional)</span></Label>
+          <Label>
+            Nome da Tabela{" "}
+            <span className="text-muted-foreground text-xs">(opcional)</span>
+          </Label>
           <Input
             placeholder="Gerado automaticamente se vazio"
             value={form.tabela}
@@ -303,11 +436,16 @@ function ExcelImportTab() {
           />
         </div>
         <div className="space-y-1.5">
-          <Label>Aba Preferencial <span className="text-muted-foreground text-xs">(opcional)</span></Label>
+          <Label>
+            Aba Preferencial{" "}
+            <span className="text-muted-foreground text-xs">(opcional)</span>
+          </Label>
           <Input
             placeholder="Detectada automaticamente se vazia"
             value={form.aba_preferencial}
-            onChange={(e) => setForm({ ...form, aba_preferencial: e.target.value })}
+            onChange={(e) =>
+              setForm({ ...form, aba_preferencial: e.target.value })
+            }
           />
         </div>
       </div>
@@ -327,13 +465,19 @@ function ExcelImportTab() {
           <div className="space-y-1">
             <FileSpreadsheet className="h-8 w-8 mx-auto text-emerald-500" />
             <p className="font-medium text-sm">{file.name}</p>
-            <p className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(1)} KB — clique para trocar</p>
+            <p className="text-xs text-muted-foreground">
+              {(file.size / 1024).toFixed(1)} KB — clique para trocar
+            </p>
           </div>
         ) : (
           <div className="space-y-2">
             <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
-            <p className="text-sm font-medium">Clique para selecionar um arquivo Excel</p>
-            <p className="text-xs text-muted-foreground">.xlsx, .xls, .xlsm — máx. 20 MB</p>
+            <p className="text-sm font-medium">
+              Clique para selecionar um arquivo Excel
+            </p>
+            <p className="text-xs text-muted-foreground">
+              .xlsx, .xls, .xlsm — máx. 20 MB
+            </p>
           </div>
         )}
       </div>
@@ -341,9 +485,12 @@ function ExcelImportTab() {
       <div className="rounded-lg bg-blue-50 border border-blue-100 p-3 flex gap-2 text-sm text-blue-700">
         <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
         <div>
-          O sistema detecta automaticamente a aba mais relevante, remove colunas de ruído (%, variação, projeções)
-          e infere tipos de dados. Colunas com <code className="font-mono text-xs">%</code>, <code className="font-mono text-xs">∆</code> ou
-          {" "}<code className="font-mono text-xs">variação</code> são filtradas automaticamente.
+          O sistema detecta automaticamente a aba mais relevante, remove colunas
+          de ruído (%, variação, projeções) e infere tipos de dados. Colunas com{" "}
+          <code className="font-mono text-xs">%</code>,{" "}
+          <code className="font-mono text-xs">∆</code> ou{" "}
+          <code className="font-mono text-xs">variação</code> são filtradas
+          automaticamente.
         </div>
       </div>
 
@@ -360,13 +507,17 @@ function ExcelImportTab() {
             {meta.colunas_removidas.length > 0 && (
               <>
                 <span className="text-muted-foreground">Colunas removidas</span>
-                <span className="text-amber-600">{meta.colunas_removidas.join(", ")}</span>
+                <span className="text-amber-600">
+                  {meta.colunas_removidas.join(", ")}
+                </span>
               </>
             )}
             {meta.abas_ignoradas.length > 0 && (
               <>
                 <span className="text-muted-foreground">Abas ignoradas</span>
-                <span className="text-muted-foreground">{meta.abas_ignoradas.map((a) => a.aba).join(", ")}</span>
+                <span className="text-muted-foreground">
+                  {meta.abas_ignoradas.map((a) => a.aba).join(", ")}
+                </span>
               </>
             )}
           </div>
@@ -377,7 +528,9 @@ function ExcelImportTab() {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label>JSON gerado (editável)</Label>
-            <span className="text-xs text-muted-foreground">Edite antes de importar</span>
+            <span className="text-xs text-muted-foreground">
+              Edite antes de importar
+            </span>
           </div>
           <Textarea
             className="font-mono text-sm min-h-[260px]"
@@ -388,29 +541,36 @@ function ExcelImportTab() {
       )}
 
       <div className="flex justify-end gap-2">
-        <Button onClick={handlePreview} disabled={loading || !file} className="gap-2">
+        <Button
+          onClick={handlePreview}
+          disabled={loading || !file}
+          className="gap-2"
+        >
           {loading ? (
             <>Processando Excel...</>
           ) : (
-            <><FileSpreadsheet className="h-4 w-4" /> Processar e Pré-visualizar</>
+            <>
+              <FileSpreadsheet className="h-4 w-4" /> Processar e Pré-visualizar
+            </>
           )}
         </Button>
-        <Button onClick={handleImportPreview} disabled={!previewJson.trim() || importMutation.isPending} variant="outline" className="gap-2">
+        <Button
+          onClick={handleImportPreview}
+          disabled={!previewJson.trim() || importMutation.isPending}
+          variant="outline"
+          className="gap-2"
+        >
           {importMutation.isPending ? "Importando..." : "Importar JSON"}
         </Button>
       </div>
 
-      <PreviewValidationSheet
+<PreviewValidationSheet
         open={showValidationSheet}
         onOpenChange={setShowValidationSheet}
         fields={previewFields}
         onGenerateValidatedJson={handleGenerateValidatedJson}
         onImportDictionary={handleImportFromSheet}
-        formContext={{
-          processo: form.processo,
-          categoria: form.categoria,
-          tabela: form.tabela,
-        }}
+        resolvedMeta={resolvedMeta}
       />
     </div>
   );
@@ -420,18 +580,30 @@ export default function NewDictionary() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Importar Dicionário de Dados</h1>
-        <p className="text-muted-foreground">Importe um dicionário a partir de JSON estruturado ou faça upload de um arquivo Excel.</p>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Importar Dicionário de Dados
+        </h1>
+        <p className="text-muted-foreground">
+          Importe um dicionário a partir de JSON estruturado ou faça upload de
+          um arquivo Excel.
+        </p>
       </div>
 
       <Tabs defaultValue="excel">
         <TabsList className="grid grid-cols-2 w-full max-w-sm">
-          <TabsTrigger value="excel" className="gap-2">
-            <FileSpreadsheet className="h-4 w-4" /> Excel
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 ml-1">Novo</Badge>
+          <TabsTrigger value="excel" className="gap-2 relative">
+            <FileSpreadsheet className="h-4 w-4" />
+            <span>Ingestão de Excel</span>
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 ml-1">
+              Passo 1/2
+            </Badge>
           </TabsTrigger>
-          <TabsTrigger value="json" className="gap-2">
-            <FileJson className="h-4 w-4" /> JSON
+          <TabsTrigger value="json" className="gap-2 relative">
+            <FileJson className="h-4 w-4" />
+            <span>Importação por JSON</span>
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 ml-1">
+              Direto
+            </Badge>
           </TabsTrigger>
         </TabsList>
 
@@ -441,9 +613,16 @@ export default function NewDictionary() {
               <CardTitle className="flex items-center gap-2">
                 <FileSpreadsheet className="h-5 w-5 text-emerald-500" />
                 Ingestão de Excel
+                <Badge variant="default" className="text-[10px] px-2 py-0.5">
+                  Novo
+                </Badge>
               </CardTitle>
               <CardDescription>
-                Informe o contexto do processo e faça upload da planilha. O sistema detecta a aba correta, infere tipos e gera o dicionário automaticamente.
+                Upload de planilha → Preview JSON → Validação campo a campo →
+                Importação.
+                <span className="ml-2 inline-flex items-center gap-1 text-emerald-600 font-medium">
+                  <Zap className="h-3 w-3" /> Fluxo guiado 2 passos
+                </span>
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -458,7 +637,11 @@ export default function NewDictionary() {
                 Importação por JSON
               </CardTitle>
               <CardDescription>
-                Cole o JSON do seu dicionário seguindo o formato padrão: <code className="font-mono text-xs">processo</code>, <code className="font-mono text-xs">categoria</code>, <code className="font-mono text-xs">tabela</code> e array <code className="font-mono text-xs">campos</code>.
+                Cole o JSON do dicionário seguindo o formato padrão:
+                <code className="font-mono text-xs">processo</code>,
+                <code className="font-mono text-xs">categoria</code>,
+                <code className="font-mono text-xs">tabela</code> e array
+                <code className="font-mono text-xs">campos</code>.
               </CardDescription>
             </CardHeader>
             <CardContent>

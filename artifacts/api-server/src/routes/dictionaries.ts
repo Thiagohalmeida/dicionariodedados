@@ -1,6 +1,11 @@
 import { Router, type IRouter } from "express";
 import { eq, inArray, desc, count } from "drizzle-orm";
-import { db, dictionariesTable, fieldsTable, validationsTable } from "@workspace/db";
+import {
+  db,
+  dictionariesTable,
+  fieldsTable,
+  validationsTable,
+} from "@workspace/db";
 import {
   ImportDictionaryBody,
   ImportDictionaryResponse,
@@ -18,7 +23,10 @@ import {
   UpdateDictionaryResponse,
 } from "@workspace/api-zod";
 import { logger } from "../lib/logger";
-import { computeFieldSummariesBatch, getFieldsWithSummaries } from "../lib/summary";
+import {
+  computeFieldSummariesBatch,
+  getFieldsWithSummaries,
+} from "../lib/summary";
 import { FIELD_STATUS, DICTIONARY_STATUS } from "../lib/constants";
 
 const router: IRouter = Router();
@@ -55,7 +63,7 @@ router.get("/dictionaries", async (req, res): Promise<void> => {
         page,
         limit,
         totalPages,
-      })
+      }),
     );
     return;
   }
@@ -108,7 +116,10 @@ router.get("/dictionaries", async (req, res): Promise<void> => {
       approvedFields,
       rejectedFields,
       pendingFields,
-      avgScore: scoredFields > 0 ? Math.round((totalScore / scoredFields) * 100) / 100 : null,
+      avgScore:
+        scoredFields > 0
+          ? Math.round((totalScore / scoredFields) * 100) / 100
+          : null,
     };
   });
 
@@ -119,7 +130,7 @@ router.get("/dictionaries", async (req, res): Promise<void> => {
       page,
       limit,
       totalPages,
-    })
+    }),
   );
 });
 
@@ -135,7 +146,13 @@ router.post("/dictionaries", async (req, res): Promise<void> => {
 
   const [dict] = await db
     .insert(dictionariesTable)
-    .values({ processo, categoria, tabela, version: 1, status: DICTIONARY_STATUS.PENDING })
+    .values({
+      processo,
+      categoria,
+      tabela,
+      version: 1,
+      status: DICTIONARY_STATUS.PENDING,
+    })
     .returning();
 
   await db.insert(fieldsTable).values(
@@ -148,7 +165,7 @@ router.post("/dictionaries", async (req, res): Promise<void> => {
       campoTecnico: c.campo_tecnico,
       tipoDado: c.tipo_dado,
       chave: c.chave,
-    }))
+    })),
   );
 
   req.log.info({ dictionaryId: dict.id }, "Dictionary imported");
@@ -163,7 +180,7 @@ router.post("/dictionaries", async (req, res): Promise<void> => {
       parentId: dict.parentId ?? null,
       status: dict.status,
       createdAt: dict.createdAt.toISOString(),
-    })
+    }),
   );
 });
 
@@ -199,7 +216,7 @@ router.get("/dictionaries/:id", async (req, res): Promise<void> => {
       status: dict.status,
       createdAt: dict.createdAt.toISOString(),
       fields: fieldsWithSummaries,
-    })
+    }),
   );
 });
 
@@ -219,8 +236,10 @@ router.patch("/dictionaries/:id", async (req, res): Promise<void> => {
   }
 
   const updates: Record<string, unknown> = {};
-  if (parsed.data.processo !== undefined) updates.processo = parsed.data.processo;
-  if (parsed.data.categoria !== undefined) updates.categoria = parsed.data.categoria;
+  if (parsed.data.processo !== undefined)
+    updates.processo = parsed.data.processo;
+  if (parsed.data.categoria !== undefined)
+    updates.categoria = parsed.data.categoria;
   if (parsed.data.tabela !== undefined) updates.tabela = parsed.data.tabela;
 
   if (Object.keys(updates).length === 0) {
@@ -253,7 +272,7 @@ router.patch("/dictionaries/:id", async (req, res): Promise<void> => {
       parentId: dict.parentId ?? null,
       status: dict.status,
       createdAt: dict.createdAt.toISOString(),
-    })
+    }),
   );
 });
 
@@ -298,7 +317,8 @@ router.get("/dictionaries/:id/export", async (req, res): Promise<void> => {
     return;
   }
 
-  const format = typeof req.query.format === "string" ? req.query.format : "json";
+  const format =
+    typeof req.query.format === "string" ? req.query.format : "json";
   const fieldsWithSummaries = await getFieldsWithSummaries(dict.id);
 
   if (format === "csv") {
@@ -327,13 +347,15 @@ router.get("/dictionaries/:id/export", async (req, res): Promise<void> => {
         f.summary.statusFinal,
         f.summary.score ?? "",
         f.summary.classification,
-      ].join(",")
+      ].join(","),
     );
 
     const content = [header, ...rows].join("\n");
     const filename = `${dict.tabela}_v${dict.version}.csv`;
 
-    res.json(ExportDictionaryResponse.parse({ format: "csv", filename, content }));
+    res.json(
+      ExportDictionaryResponse.parse({ format: "csv", filename, content }),
+    );
     return;
   }
 
@@ -361,7 +383,13 @@ router.get("/dictionaries/:id/export", async (req, res): Promise<void> => {
   };
 
   const filename = `${dict.tabela}_v${dict.version}.json`;
-  res.json(ExportDictionaryResponse.parse({ format: "json", filename, content: JSON.stringify(exportData, null, 2) }));
+  res.json(
+    ExportDictionaryResponse.parse({
+      format: "json",
+      filename,
+      content: JSON.stringify(exportData, null, 2),
+    }),
+  );
 });
 
 export default router;

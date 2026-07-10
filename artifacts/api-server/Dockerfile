@@ -15,9 +15,11 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 # Copy all packages (needed for workspace dependencies)
 COPY lib/ lib/
 COPY artifacts/api-server/ artifacts/api-server/
+COPY artifacts/data-dict/package.json artifacts/data-dict/package.json
 COPY scripts/ scripts/
 
 # Install dependencies
+ENV HUSKY=0
 RUN pnpm install --frozen-lockfile
 
 # Build API server

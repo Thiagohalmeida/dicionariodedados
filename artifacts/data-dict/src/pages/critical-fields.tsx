@@ -1,7 +1,14 @@
 import React, { useState } from "react";
 import { useGetCriticalFields } from "@workspace/api-client-react";
 import { Card } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
@@ -10,9 +17,17 @@ import { Link } from "wouter";
 export default function CriticalFields() {
   const [page, setPage] = useState(1);
   const LIMIT = 20;
-  const { data: pageData, isLoading } = useGetCriticalFields({ page, limit: LIMIT });
+  const { data: pageData, isLoading } = useGetCriticalFields({
+    page,
+    limit: LIMIT,
+  });
 
-  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Carregando campos críticos...</div>;
+  if (isLoading)
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        Carregando campos críticos...
+      </div>
+    );
 
   const fields = pageData?.data ?? [];
   const total = pageData?.total ?? 0;
@@ -25,8 +40,13 @@ export default function CriticalFields() {
       <div className="flex items-center gap-3 text-destructive">
         <AlertTriangle className="h-8 w-8" />
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Campos Críticos</h1>
-          <p className="text-muted-foreground">Campos com pontuação de validação abaixo de 60 — requerem atenção imediata.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            Campos Críticos
+          </h1>
+          <p className="text-muted-foreground">
+            Campos com pontuação de validação abaixo de 60 — requerem atenção
+            imediata.
+          </p>
         </div>
       </div>
 
@@ -44,18 +64,30 @@ export default function CriticalFields() {
           <TableBody>
             {fields.map((field) => (
               <TableRow key={field.id}>
-                <TableCell className="font-medium text-destructive">{field.campoOrigem}</TableCell>
+                <TableCell className="font-medium text-destructive">
+                  {field.campoOrigem}
+                </TableCell>
                 <TableCell>
-                  <Link href={`/dictionaries/${field.dictionaryId}`} className="text-primary hover:underline">
+                  <Link
+                    href={`/dictionaries/${field.dictionaryId}`}
+                    className="text-primary hover:underline"
+                  >
                     #{field.dictionaryId}
                   </Link>
                 </TableCell>
-                <TableCell className="max-w-[300px] truncate">{field.descricao}</TableCell>
+                <TableCell className="max-w-[300px] truncate">
+                  {field.descricao}
+                </TableCell>
                 <TableCell>
-                  <Badge variant="destructive">{field.summary?.score ?? "-"}</Badge>
+                  <Badge variant="destructive">
+                    {field.summary?.score ?? "-"}
+                  </Badge>
                 </TableCell>
                 <TableCell className="text-right">
-                  <Link href={`/dictionaries/${field.dictionaryId}`} className="text-sm font-medium text-primary hover:underline">
+                  <Link
+                    href={`/dictionaries/${field.dictionaryId}`}
+                    className="text-sm font-medium text-primary hover:underline"
+                  >
                     Ver Dicionário
                   </Link>
                 </TableCell>
@@ -88,7 +120,9 @@ export default function CriticalFields() {
           >
             Anterior
           </Button>
-          <span className="px-2">Página {page} de {totalPages}</span>
+          <span className="px-2">
+            Página {page} de {totalPages}
+          </span>
           <Button
             variant="outline"
             size="sm"

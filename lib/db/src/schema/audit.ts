@@ -1,8 +1,23 @@
-import { pgTable, text, serial, timestamp, integer, jsonb, pgEnum } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  serial,
+  timestamp,
+  integer,
+  jsonb,
+  pgEnum,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const auditActionEnum = pgEnum("audit_action", ["create", "update", "delete", "validate", "export", "import"]);
+export const auditActionEnum = pgEnum("audit_action", [
+  "create",
+  "update",
+  "delete",
+  "validate",
+  "export",
+  "import",
+]);
 
 export const auditLogsTable = pgTable("audit_logs", {
   id: serial("id").primaryKey(),
@@ -14,7 +29,9 @@ export const auditLogsTable = pgTable("audit_logs", {
   before: jsonb("before"), // JSON snapshot before change
   after: jsonb("after"), // JSON snapshot after change
   metadata: jsonb("metadata"), // Additional context (IP, user agent, etc.)
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
 
 export const insertAuditLogSchema = createInsertSchema(auditLogsTable).omit({
@@ -33,10 +50,14 @@ export const storageObjectsTable = pgTable("storage_objects", {
   size: integer("size").notNull(),
   uploadedBy: text("uploaded_by"),
   dictionaryId: integer("dictionary_id"), // Link to dictionary if applicable
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
 
-export const insertStorageObjectSchema = createInsertSchema(storageObjectsTable).omit({
+export const insertStorageObjectSchema = createInsertSchema(
+  storageObjectsTable,
+).omit({
   id: true,
   createdAt: true,
 });

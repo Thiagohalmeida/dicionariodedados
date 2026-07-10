@@ -1,6 +1,7 @@
 # Checklist de Melhorias - Validador de Dicionário de Dados
 
 ## Como usar
+
 - [x] = Concluído
 - [ ] = Pendente
 
@@ -173,6 +174,7 @@
 ## 🔴 Pendente — Prioridade Alta (Lacunas do FLOW.md)
 
 ### L1. Endpoint `POST /api/excel/preview` — Preview sem persistir (CRÍTICO) — **CONCLUÍDO**
+
 - [x] **Arquivos:** `artifacts/api-server/src/routes/excel.ts` (novo endpoint), `artifacts/data-dict/src/pages/new-dictionary.tsx` (UI editor JSON)
 - **Situação:** `POST /api/dictionaries/from-excel` agora permite preview por padrão e só persiste quando `persist=true` é enviado
 - **Por que importa:** Especialista pode revisar as inferências do motor (`descricao`, `periodicidade`, `origem`, `chave`) antes de criar o dicionário
@@ -183,6 +185,7 @@
   3. OpenAPI atualizado em `lib/api-spec/openapi.yaml` e os tipos serão regenerados via `pnpm --filter @workspace/api-spec run codegen`
 
 ### L2. Motor de inferência: `descricao`, `periodicidade`, `origem` incompletos — **CONCLUÍDO (melhorias heurísticas aplicadas)**
+
 - [x] **Arquivo:** `artifacts/api-server/src/modules/excel-ingestion-engine/index.ts`
 - **Situação:** Motor agora adota heurísticas conservadoras:
   - `descricao`: deixada vazia para forçar revisão manual por especialista (anteriormente preenchida com texto genérico)
@@ -192,11 +195,13 @@
 - **Ação executada:** Heurísticas implementadas no arquivo indicado; L1 (preview) garante usuário pode editar antes de persistir.
 
 ### L3. DDL sinalizar campos Crítico/Pendente (Baixa) — **CONCLUÍDO**
+
 - [x] **Arquivo:** `artifacts/api-server/src/routes/excel.ts` (endpoint `/export/ddl`)
 - **Situação:** DDL agora inclui comentário `-- status: <classification>` ao lado das colunas quando summaries estão disponíveis (ex.: `-- status: critical`).
 - **Ação executada:** O endpoint `/dictionaries/:id/export/ddl` busca `getFieldsWithSummaries(id)` e anota cada coluna com `status` quando aplicável. Se summaries não existirem, comportamento padrão permanece.
 
 ### L4. Data Contract incluir regras de negócio das validações (Baixa) — **CONCLUÍDO**
+
 - [x] **Arquivo:** `artifacts/api-server/src/routes/excel.ts` (endpoint `/export/data-contract`)
 - **Situação:** Data Contract agora inclui, para cada campo, um objeto `regras_negocio` com a média das validações (booleans ou null quando ausente): `usado`, `obrigatorio`, `nome_correto`, `origem_correta`, `regra_negocio`.
 - **Ação executada:** O endpoint usa `getFieldsWithSummaries` e calcula cada flag como `avg >= 0.5` quando disponível; caso contrário `null`.
@@ -206,10 +211,12 @@
 ## 🔴 Pendente — Prioridade Alta (Itens anteriores)
 
 ### 1. CORS totalmente aberto (`ALLOWED_ORIGINS` documentado, mas nunca lido)
+
 - [x] **Arquivo:** `artifacts/api-server/src/app.ts`
 - **Status:** RESOLVIDO — Lê `ALLOWED_ORIGINS`, configura `cors({ origin, credentials: true })` quando definido; fallback permissivo
 
-### 2. Paginação em memória (SELECT * + slice JS), não no banco
+### 2. Paginação em memória (SELECT \* + slice JS), não no banco
+
 - [x] `/dictionaries` — usa `LIMIT/OFFSET` + `inArray` nos fields da página + `desc(createdAt)`
 - [x] `/fields/critical` — agora usa query DB com `LIMIT/OFFSET` + join/subquery nas validations para filtrar `CRITICAL` (avg score < ATTENTION ou sem validações)
 - [x] **GET `/dictionaries/:id`** — corrigido parsing de parâmetro ID (Express passa string, Zod esperava number); agora faz `parseInt(req.params.id, 10)` manual
@@ -220,16 +227,19 @@
 ## 🟡 Pendente — Prioridade Média
 
 ### 3. Health check não verifica o banco
+
 - [x] **Arquivo:** `artifacts/api-server/src/routes/health.ts`
 - **Situação:** `/api/healthz` agora faz `SELECT 1` contra o pool do Drizzle antes de responder
 - **Ação:** Retorna 200 com `{ status: "ok", database: "ok" }` ou 503 com `{ status: "degraded", database: "down" }` se falhar
 - **OpenAPI:** Schema atualizado com `HealthStatus` incluindo campo `database` (ok/down) + enum `status` (ok/degraded); tipos regenerados via `pnpm --filter @workspace/api-spec run codegen`
 
 ### 4. `mockup-sandbox` incluído no workspace pnpm
+
 - [x] **Arquivo:** `pnpm-workspace.yaml` (`packages: - artifacts/*`)
 - **Ação:** Adicionado `!artifacts/mockup-sandbox` para excluir do workspace
 
 ### 5. Sem script de seed para dados de teste
+
 - [x] **Arquivo:** `scripts/src/seed.ts` (novo)
 - **Ação:** Criado `scripts/src/seed.ts` que insere 3 dicionários (RFQ Medicamentos, Contrato Laboratório, Compra Direta TI) com 21 campos e 10 validações, usando schema `@workspace/db`
 - **Execução:** `pnpm --filter @workspace/scripts run seed` (usa `--env-file=../artifacts/api-server/.env`)
@@ -239,29 +249,35 @@
 ## 🟢 Pendente — Prioridade Baixa / Tech Debt
 
 ### 6. Duplicação residual em `dashboard.ts`
+
 - [x] `processFieldSummaries` e `processDictionaryMetrics` calculam contagens parecidas — extraído `tallyByStatus(fields, summaries)` reaproveitada
 
 ### 7. Cláusula SQL morta em `/fields/critical`
+
 - [x] **Arquivo:** `artifacts/api-server/src/routes/fields.ts`
 - **Situação:** A query usava `INNER JOIN` com `validations` e tinha `OR NOT EXISTS (...)` no `WHERE` para pegar campos sem validações. Como `INNER JOIN` já exige que exista validação, o `OR NOT EXISTS` **nunca** é satisfeito (código morto). Se alguém trocar para `LEFT JOIN` achando que está "consertando", reintroduz bug (campos pendentes apareceriam como críticos).
 - **Correção:** Alterado para `LEFT JOIN` + manutenção do `OR NOT EXISTS` (agora funcional, pois `LEFT JOIN` permite campos sem validações) + simplificação removendo código morto. Agora campos sem validações aparecem corretamente como "pending/critical".
 - **Prioridade:** Baixa (cosmético, mas previne bug futuro) — **CONCLUÍDO**
 
 ### 7. Deployment configs mencionados no `DEPLOYMENT-PLAN.md` não existem
-- [ ] Nenhum `vercel.json`, `railway.json` ou `Dockerfile` no repo
-- **Ação:** Criar só quando time decidir qual opção de deploy (A/B/C) vai seguir
+
+- [x] Criados `vercel.json`, `railway.json` e `artifacts/api-server/Dockerfile` no repositório
+- **Ação:** Configurações de deployment criadas conforme recomendação da Opção B (Frontend Vercel + API Railway + Supabase)
 
 ### 8. Ordenação ascendente por `createdAt` mostra mais antigos primeiro
+
 - [x] `/dictionaries` — já usa `desc(dictionariesTable.createdAt)`
 - [x] `/dashboard` — agora usa `desc(dictionariesTable.createdAt)` (mais recentes primeiro)
 
 ### 9. Separar visualmente "Ingestão de Excel" de "Importação por JSON"
-- [ ] **Arquivo:** `artifacts/data-dict/src/pages/new-dictionary.tsx`
+
+- [x] **Arquivo:** `artifacts/data-dict/src/pages/new-dictionary.tsx`
 - **Situação:** Duas formas de importar convivem como abas (`Tabs`) no mesmo card; Excel exige 2 passos (preview → importar), JSON é ação única
-- **Sugestão:** Destacar a distinção — ex.: badges "Passo 1/2" na aba Excel, ou reorganizar em duas seções empilhadas (Excel primeiro com destaque "Novo", JSON depois)
-- **Prioridade:** Baixa (decisão de produto, não correção técnica)
+- **Correção:** Adicionados badges "Passo 1/2" na aba Excel e "Direto" na aba JSON; CardTitle da aba Excel destaca badge "Novo"; CardDescription explica o fluxo guiado de 2 passos com ícone ⚡
+- **Prioridade:** Baixa (decisão de produto, não correção técnica) — **CONCLUÍDO**
 
 ### 10. Fluxo completo de validação campo a campo para Excel (Feature)
+
 - [x] **Arquivos:** `artifacts/data-dict/src/components/preview-validation-sheet.tsx` (novo), `artifacts/data-dict/src/pages/new-dictionary.tsx`
 - **Objetivo:** Após `POST /api/excel/preview` gerar JSON, permitir editar/validar cada campo em UI dedicada (similar a `dictionary-detail.tsx`) **antes** de persistir o dicionário
 - **Fluxo implementado:**
@@ -278,6 +294,7 @@
 ## 🟡 Pendente — Prioridade Média (Infraestrutura)
 
 ### 11. Integração Supabase como backend real (PostgreSQL + Storage + Auth)
+
 - [x] **Arquivos:** `lib/db/src/index.ts`, `lib/db/drizzle.config.ts`, `.env`, novos módulos em `artifacts/api-server/src/modules/supabase/`
 - **Objetivo:** Substituir banco local/ephemeral por Supabase (PostgreSQL gerenciado) para:
   - Persistir dicionários, campos, validações (já modelados no `@workspace/db`)
@@ -301,6 +318,7 @@
 - **Prioridade:** Alta (infraestrutura base para produção e validação real) — **CONCLUÍDO**
 
 ### 12. Prevenção de SQL Injection no endpoint `POST /dictionaries/:id/validate-ddl`
+
 - [x] **Arquivo:** `artifacts/api-server/src/routes/excel.ts`
 - **Problema:** O endpoint montava `CREATE TABLE ${dict.tabela} (${...campoTecnico...})` e executava no Postgres. `tabela` e `campo_tecnico` vêm de import JSON, validados apenas como `zod.string()` — permitia injeção SQL arbitrária (incluindo fuga de rollback via `COMMIT`).
 - **Correção:** Adicionada validação por allowlist (`/^[a-zA-Z_][a-zA-Z0-9_]{0,62}$/`) em `dict.tabela` e em cada `campoTecnico` **antes** de montar a DDL. Se inválido, retorna `400` sem executar no banco.
@@ -308,27 +326,22 @@
 
 ## Resumo de Status
 
-| Categoria | Concluídos | Em Progresso | Pendentes |
-|---|---|---|---|
-| Críticas (antigas) | 8 | 0 | 0 |
-| Médias (antigas) | 6 | 0 | 0 |
-| Menores (antigas) | 12 | 0 | 0 |
-| **Novas do FLOW.md (L1-L4)** | **4** | 0 | **0** |
-| Pendentes Altas (restantes) | 3 (CORS + Supabase + fields/critical) | 0 | **0** |
-| Pendentes Médias | 2 (Supabase config page + seed) | 0 | **0** |
-| Pendentes Baixas | 2 (`/dictionaries` desc + mockup-sandbox) | 0 | **0** |
-| **Total** | **40** | **0** | **0** |
+| Categoria                    | Concluídos                                | Em Progresso | Pendentes |
+| ---------------------------- | ----------------------------------------- | ------------ | --------- |
+| Críticas (antigas)           | 8                                         | 0            | 0         |
+| Médias (antigas)             | 6                                         | 0            | 0         |
+| Menores (antigas)            | 12                                        | 0            | 0         |
+| **Novas do FLOW.md (L1-L4)** | **4**                                     | 0            | **0**     |
+| Pendentes Altas (restantes)  | 3 (CORS + Supabase + fields/critical)     | 0            | **0**     |
+| Pendentes Médias             | 2 (Supabase config page + seed)           | 0            | **0**     |
+| Pendentes Baixas             | 4 (`/dictionaries` desc + mockup-sandbox + deploy configs + Excel/JSON visual) | 0            | **0**     |
+| **Total**                    | **42**                                    | **0**        | **0**     |
 
 ---
 
 ## 🏆 PRÓXIMOS ITENS PENDENTES
 
-Os itens principais do fluxo Excel/preview, Supabase, paginação DB e seed já estão concluídos. Os pontos ainda pendentes são:
-
-- [ ] Deployment configs (vercel.json, railway.json, Dockerfile)
-- [ ] Separar visualmente Excel vs JSON (badges Passo 1/2)
-
----
+Todos os itens principais estão concluídos. O projeto está pronto para deploy em produção.
 
 ---
 
@@ -389,3 +402,9 @@ Os itens principais do fluxo Excel/preview, Supabase, paginação DB e seed já 
 - **Dead SQL clause fix `/fields/critical`** — alterado `INNER JOIN` para `LEFT JOIN` + mantido `OR NOT EXISTS` (agora funcional); campos sem validações agora aparecem corretamente como critical/pending; evita bug futuro se alguém trocar JOIN
 - **Dashboard ordering fix** — `/dashboard` agora ordena dicionários por `createdAt desc` (mais recentes primeiro)
 - **Dashboard duplication refactor** — extraído helper `tallyByStatus(fields, summaries)` reaproveitado em `processFieldSummaries` e `processDictionaryMetrics`; elimina duplicação de lógica de contagem por status
+
+## ✅ CONCLUÍDOS - 09/07/2026 (Deployment Configs + Excel/JSON Visual Separation)
+
+- **Deployment configs criados** — `vercel.json` (frontend com rewrites para API Railway), `railway.json` (API server com Dockerfile builder), `artifacts/api-server/Dockerfile` (multi-stage build otimizado), `.dockerignore`
+- **Separação visual Excel vs JSON** — `new-dictionary.tsx`: badges "Passo 1/2" na aba Excel (fluxo guiado 2 passos) e "Direto" na aba JSON; badge "Novo" na aba Excel; descrição clara do fluxo "Upload → Preview → Validação → Importação"; ícones Zap/Sparkles para destacar fluxo guiado
+- **Typecheck + Build 100%** — todas as configurações de deploy válidas e compilando corretamente

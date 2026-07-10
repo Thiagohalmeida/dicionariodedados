@@ -15,33 +15,32 @@ O **Validador DD** permite que equipes multidisciplinares — gestores de TI, es
 ## Funcionalidades
 
 Funcionalidades
-*Importação via JSON* — Importa dicionários de dados no formato JSON padronizado (processo, categoria, tabela, campos)
-*Importação via Excel* — Upload de planilha .xlsx/.xls/.xlsm com detecção automática da aba mais relevante, filtro de colunas de ruído (%, variação, projeções) e inferência automática de tipo de dado
-*Validação colaborativa* — Revisão campo a campo com 5 critérios de qualidade binários (sim/não)
-*Score automático* — Cada critério atendido vale 20 pontos (máx. 100); classificação em Confiável / Atenção / Crítico
-*Detecção de conflitos* — Identifica campos com validações aprovadas e reprovadas simultâneas
-*Dashboard de governança* — Métricas globais: total de dicionários, campos, taxa de aprovação, pontuação média
-*Campos Críticos* — Visão cruzada de todos os campos com score abaixo de 60 pontos
-*Exportação* — Download do dicionário validado em JSON, CSV, DDL (CREATE TABLE) ou Data Contract (JSON estruturado)
-
+_Importação via JSON_ — Importa dicionários de dados no formato JSON padronizado (processo, categoria, tabela, campos)
+_Importação via Excel_ — Upload de planilha .xlsx/.xls/.xlsm com detecção automática da aba mais relevante, filtro de colunas de ruído (%, variação, projeções) e inferência automática de tipo de dado
+_Validação colaborativa_ — Revisão campo a campo com 5 critérios de qualidade binários (sim/não)
+_Score automático_ — Cada critério atendido vale 20 pontos (máx. 100); classificação em Confiável / Atenção / Crítico
+_Detecção de conflitos_ — Identifica campos com validações aprovadas e reprovadas simultâneas
+_Dashboard de governança_ — Métricas globais: total de dicionários, campos, taxa de aprovação, pontuação média
+_Campos Críticos_ — Visão cruzada de todos os campos com score abaixo de 60 pontos
+_Exportação_ — Download do dicionário validado em JSON, CSV, DDL (CREATE TABLE) ou Data Contract (JSON estruturado)
 
 ---
 
 ## Stack
 
-| Camada | Tecnologia |
-|---|---|
-| Runtime | Node.js 24, TypeScript 5.9 |
-| Gerenciamento de pacotes | pnpm workspaces (monorepo) |
-| Backend | Express 5 |
-| Banco de dados | PostgreSQL + Drizzle ORM |
-| Validação | Zod (v4), drizzle-zod |
-| Contrato de API | OpenAPI 3 + Orval (codegen) |
-| Build do servidor | esbuild (bundle CJS) |
-| Frontend | React + Vite + Tailwind CSS + shadcn/ui |
-| Roteamento (client) | wouter |
-| Estado assíncrono | TanStack Query |
-| Ingestão de Excel | ExcelJS + Multer (upload em memória) |
+| Camada                   | Tecnologia                              |
+| ------------------------ | --------------------------------------- |
+| Runtime                  | Node.js 24, TypeScript 5.9              |
+| Gerenciamento de pacotes | pnpm workspaces (monorepo)              |
+| Backend                  | Express 5                               |
+| Banco de dados           | PostgreSQL + Drizzle ORM                |
+| Validação                | Zod (v4), drizzle-zod                   |
+| Contrato de API          | OpenAPI 3 + Orval (codegen)             |
+| Build do servidor        | esbuild (bundle CJS)                    |
+| Frontend                 | React + Vite + Tailwind CSS + shadcn/ui |
+| Roteamento (client)      | wouter                                  |
+| Estado assíncrono        | TanStack Query                          |
+| Ingestão de Excel        | ExcelJS + Multer (upload em memória)    |
 
 ---
 
@@ -79,12 +78,12 @@ Cada campo é avaliado com 5 critérios binários (sim/não), cada um valendo 20
 
 ### Classificação
 
-| Score | Classificação |
-|---|---|
-| ≥ 90 | ✅ Confiável |
-| 60 – 89 | ⚠️ Atenção |
-| < 60 | 🔴 Crítico |
-| Sem validações | ⏳ Pendente |
+| Score          | Classificação |
+| -------------- | ------------- |
+| ≥ 90           | ✅ Confiável  |
+| 60 – 89        | ⚠️ Atenção    |
+| < 60           | 🔴 Crítico    |
+| Sem validações | ⏳ Pendente   |
 
 ---
 

@@ -35,14 +35,16 @@ export async function uploadFile(
   path: string,
   file: Buffer | Uint8Array,
   contentType: string,
-  options?: { upsert?: boolean }
+  options?: { upsert?: boolean },
 ): Promise<UploadResult> {
   const supabase = getSupabaseClient();
 
-  const { data, error } = await supabase.storage.from(bucket).upload(path, file, {
-    contentType,
-    upsert: options?.upsert ?? false,
-  });
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .upload(path, file, {
+      contentType,
+      upsert: options?.upsert ?? false,
+    });
 
   if (error) {
     throw new Error(`Upload failed: ${error.message}`);
@@ -55,7 +57,10 @@ export async function uploadFile(
   };
 }
 
-export async function downloadFile(bucket: BucketName, path: string): Promise<Buffer> {
+export async function downloadFile(
+  bucket: BucketName,
+  path: string,
+): Promise<Buffer> {
   const supabase = getSupabaseClient();
 
   const { data, error } = await supabase.storage.from(bucket).download(path);
@@ -68,7 +73,10 @@ export async function downloadFile(bucket: BucketName, path: string): Promise<Bu
   return Buffer.from(arrayBuffer);
 }
 
-export async function deleteFile(bucket: BucketName, path: string): Promise<void> {
+export async function deleteFile(
+  bucket: BucketName,
+  path: string,
+): Promise<void> {
   const supabase = getSupabaseClient();
 
   const { error } = await supabase.storage.from(bucket).remove([path]);
@@ -81,11 +89,13 @@ export async function deleteFile(bucket: BucketName, path: string): Promise<void
 export async function createSignedUrl(
   bucket: BucketName,
   path: string,
-  expiresInSeconds = 3600
+  expiresInSeconds = 3600,
 ): Promise<SignedUrlResult> {
   const supabase = getSupabaseClient();
 
-  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, expiresInSeconds);
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .createSignedUrl(path, expiresInSeconds);
 
   if (error) {
     throw new Error(`Signed URL creation failed: ${error.message}`);
@@ -97,7 +107,10 @@ export async function createSignedUrl(
   };
 }
 
-export async function listFiles(bucket: BucketName, folderPath?: string): Promise<string[]> {
+export async function listFiles(
+  bucket: BucketName,
+  folderPath?: string,
+): Promise<string[]> {
   const supabase = getSupabaseClient();
 
   const { data, error } = await supabase.storage.from(bucket).list(folderPath, {
@@ -111,7 +124,10 @@ export async function listFiles(bucket: BucketName, folderPath?: string): Promis
   return data?.map((f) => f.name) ?? [];
 }
 
-export async function getPublicUrl(bucket: BucketName, path: string): Promise<string> {
+export async function getPublicUrl(
+  bucket: BucketName,
+  path: string,
+): Promise<string> {
   const supabase = getSupabaseClient();
 
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);
@@ -124,7 +140,10 @@ export function generateExcelUploadPath(filename: string): string {
   return `uploads/${timestamp}-${sanitized}`;
 }
 
-export function generateExportPath(format: "ddl" | "data-contract" | "csv" | "json", tableName: string): string {
+export function generateExportPath(
+  format: "ddl" | "data-contract" | "csv" | "json",
+  tableName: string,
+): string {
   const timestamp = new Date().toISOString().split("T")[0];
   return `exports/${format}/${tableName}_${timestamp}.${format === "data-contract" ? "json" : format}`;
 }

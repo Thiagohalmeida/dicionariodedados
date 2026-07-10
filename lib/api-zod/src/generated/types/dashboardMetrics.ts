@@ -5,9 +5,9 @@
  * API specification for Data Dictionary Validator
  * OpenAPI spec version: 0.1.0
  */
-import type { ClassificationCount } from './classificationCount';
-import type { DictionaryWithMetrics } from './dictionaryWithMetrics';
-import type { StatusCount } from './statusCount';
+import type { ClassificationCount } from "./classificationCount";
+import type { DictionaryWithMetrics } from "./dictionaryWithMetrics";
+import type { StatusCount } from "./statusCount";
 
 export interface DashboardMetrics {
   totalDictionaries: number;

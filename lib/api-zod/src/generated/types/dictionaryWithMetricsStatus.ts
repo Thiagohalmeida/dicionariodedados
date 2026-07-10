@@ -6,11 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type DictionaryWithMetricsStatus = typeof DictionaryWithMetricsStatus[keyof typeof DictionaryWithMetricsStatus];
-
+export type DictionaryWithMetricsStatus =
+  (typeof DictionaryWithMetricsStatus)[keyof typeof DictionaryWithMetricsStatus];
 
 export const DictionaryWithMetricsStatus = {
-  pending: 'pending',
-  in_review: 'in_review',
-  validated: 'validated',
+  pending: "pending",
+  in_review: "in_review",
+  validated: "validated",
 } as const;

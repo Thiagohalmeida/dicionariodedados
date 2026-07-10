@@ -2,13 +2,19 @@ import { Router, type IRouter } from "express";
 import multer from "multer";
 import { eq } from "drizzle-orm";
 import { db, dictionariesTable, fieldsTable, pool } from "@workspace/db";
-import { parseExcelToDataDictionary, type UserContext } from "../modules/excel-ingestion-engine/index";
+import {
+  parseExcelToDataDictionary,
+  type UserContext,
+} from "../modules/excel-ingestion-engine/index";
 import { DICTIONARY_STATUS } from "../lib/constants";
 import { getFieldsWithSummaries } from "../lib/summary";
 import { ImportDictionaryBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024 },
+});
 
 // Preview endpoint: parse Excel and return the generated JSON without persisting
 router.post(
@@ -17,7 +23,13 @@ router.post(
     upload.single("file")(req, res, (err) => {
       if (err) {
         req.log.error({ err }, "Multer upload error");
-        res.status(400).json({ error: "Erro ao processar upload: " + (err instanceof Error ? err.message : String(err)) });
+        res
+          .status(400)
+          .json({
+            error:
+              "Erro ao processar upload: " +
+              (err instanceof Error ? err.message : String(err)),
+          });
         return;
       }
       next();
@@ -33,18 +45,27 @@ router.post(
     const originalName = req.file.originalname?.toLowerCase() ?? "";
     const validExtensions = [".xlsx", ".xlsm"];
     if (!validExtensions.some((ext) => originalName.endsWith(ext))) {
-      req.log.error({ originalname: req.file.originalname }, "Unsupported file extension");
+      req.log.error(
+        { originalname: req.file.originalname },
+        "Unsupported file extension",
+      );
       res.status(400).json({
-        error: "Formato não suportado. Use .xlsx ou .xlsm (Excel 2007+). Arquivos .xls antigos não são suportados.",
+        error:
+          "Formato não suportado. Use .xlsx ou .xlsm (Excel 2007+). Arquivos .xls antigos não são suportados.",
       });
       return;
     }
 
-    const { processo, categoria, tabela, aba_preferencial } = req.body as Record<string, string>;
+    const { processo, categoria, tabela, aba_preferencial } =
+      req.body as Record<string, string>;
 
     if (!processo?.trim() || !categoria?.trim()) {
       req.log.error({ processo, categoria }, "Missing required fields");
-      res.status(400).json({ error: "Os campos 'processo' e 'categoria' são obrigatórios." });
+      res
+        .status(400)
+        .json({
+          error: "Os campos 'processo' e 'categoria' são obrigatórios.",
+        });
       return;
     }
 
@@ -57,10 +78,18 @@ router.post(
 
     let parsed;
     try {
-      parsed = await parseExcelToDataDictionary(req.file.buffer, req.file.originalname, ctx);
+      parsed = await parseExcelToDataDictionary(
+        req.file.buffer,
+        req.file.originalname,
+        ctx,
+      );
     } catch (err) {
-      req.log.error({ err, originalname: req.file.originalname }, "Excel parse failed");
-      const msg = err instanceof Error ? err.message : "Erro ao processar arquivo Excel";
+      req.log.error(
+        { err, originalname: req.file.originalname },
+        "Excel parse failed",
+      );
+      const msg =
+        err instanceof Error ? err.message : "Erro ao processar arquivo Excel";
       res.status(400).json({ error: `Falha ao ler o arquivo Excel: ${msg}` });
       return;
     }
@@ -80,14 +109,14 @@ router.post(
         colunas_removidas: parsed.meta.colunas_removidas,
         total_campos: parsed.campos.length,
       },
-      "Excel preview generated"
+      "Excel preview generated",
     );
 
     res.status(200).json({
       meta: parsed.meta,
       json_gerado: jsonGerado,
     });
-  }
+  },
 );
 
 // Ingest endpoint kept for compatibility: it now previews by default and only persists when persist=true is sent.
@@ -97,7 +126,13 @@ router.post(
     upload.single("file")(req, res, (err) => {
       if (err) {
         req.log.error({ err }, "Multer upload error");
-        res.status(400).json({ error: "Erro ao processar upload: " + (err instanceof Error ? err.message : String(err)) });
+        res
+          .status(400)
+          .json({
+            error:
+              "Erro ao processar upload: " +
+              (err instanceof Error ? err.message : String(err)),
+          });
         return;
       }
       next();
@@ -113,18 +148,27 @@ router.post(
     const originalName = req.file.originalname?.toLowerCase() ?? "";
     const validExtensions = [".xlsx", ".xlsm"];
     if (!validExtensions.some((ext) => originalName.endsWith(ext))) {
-      req.log.error({ originalname: req.file.originalname }, "Unsupported file extension");
+      req.log.error(
+        { originalname: req.file.originalname },
+        "Unsupported file extension",
+      );
       res.status(400).json({
-        error: "Formato não suportado. Use .xlsx ou .xlsm (Excel 2007+). Arquivos .xls antigos não são suportados.",
+        error:
+          "Formato não suportado. Use .xlsx ou .xlsm (Excel 2007+). Arquivos .xls antigos não são suportados.",
       });
       return;
     }
 
-    const { processo, categoria, tabela, aba_preferencial } = req.body as Record<string, string>;
+    const { processo, categoria, tabela, aba_preferencial } =
+      req.body as Record<string, string>;
 
     if (!processo?.trim() || !categoria?.trim()) {
       req.log.error({ processo, categoria }, "Missing required fields");
-      res.status(400).json({ error: "Os campos 'processo' e 'categoria' são obrigatórios." });
+      res
+        .status(400)
+        .json({
+          error: "Os campos 'processo' e 'categoria' são obrigatórios.",
+        });
       return;
     }
 
@@ -137,10 +181,18 @@ router.post(
 
     let parsed;
     try {
-      parsed = await parseExcelToDataDictionary(req.file.buffer, req.file.originalname, ctx);
+      parsed = await parseExcelToDataDictionary(
+        req.file.buffer,
+        req.file.originalname,
+        ctx,
+      );
     } catch (err) {
-      req.log.error({ err, originalname: req.file.originalname }, "Excel parse failed");
-      const msg = err instanceof Error ? err.message : "Erro ao processar arquivo Excel";
+      req.log.error(
+        { err, originalname: req.file.originalname },
+        "Excel parse failed",
+      );
+      const msg =
+        err instanceof Error ? err.message : "Erro ao processar arquivo Excel";
       res.status(400).json({ error: `Falha ao ler o arquivo Excel: ${msg}` });
       return;
     }
@@ -163,13 +215,14 @@ router.post(
           colunas_removidas: parsed.meta.colunas_removidas,
           total_campos: parsed.campos.length,
         },
-        "Excel preview generated without persistence"
+        "Excel preview generated without persistence",
       );
 
       res.status(200).json({
         meta: parsed.meta,
         json_gerado: jsonGerado,
-        message: "Preview only: send persist=true to insert the dictionary into the database.",
+        message:
+          "Preview only: send persist=true to insert the dictionary into the database.",
       });
       return;
     }
@@ -182,12 +235,18 @@ router.post(
         colunas_removidas: parsed.meta.colunas_removidas,
         total_campos: parsed.campos.length,
       },
-      "Excel ingested"
+      "Excel ingested",
     );
 
     const [dict] = await db
       .insert(dictionariesTable)
-      .values({ processo: parsed.processo, categoria: parsed.categoria, tabela: parsed.tabela, version: 1, status: DICTIONARY_STATUS.PENDING })
+      .values({
+        processo: parsed.processo,
+        categoria: parsed.categoria,
+        tabela: parsed.tabela,
+        version: 1,
+        status: DICTIONARY_STATUS.PENDING,
+      })
       .returning();
 
     await db.insert(fieldsTable).values(
@@ -200,7 +259,7 @@ router.post(
         campoTecnico: c.campo_tecnico,
         tipoDado: c.tipo_dado,
         chave: c.chave,
-      }))
+      })),
     );
 
     res.status(201).json({
@@ -213,20 +272,28 @@ router.post(
       createdAt: dict.createdAt.toISOString(),
       meta: parsed.meta,
     });
-  }
+  },
 );
 
 router.get("/dictionaries/:id/export/ddl", async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) {
-    req.log.error({ id: req.params.id }, "Invalid dictionary ID for DDL export");
-    res.status(400).json({ error: "ID inválido" }); return;
+    req.log.error(
+      { id: req.params.id },
+      "Invalid dictionary ID for DDL export",
+    );
+    res.status(400).json({ error: "ID inválido" });
+    return;
   }
 
-  const [dict] = await db.select().from(dictionariesTable).where(eq(dictionariesTable.id, id));
+  const [dict] = await db
+    .select()
+    .from(dictionariesTable)
+    .where(eq(dictionariesTable.id, id));
   if (!dict) {
     req.log.error({ dictionaryId: id }, "Dictionary not found for DDL export");
-    res.status(404).json({ error: "Dicionário não encontrado" }); return;
+    res.status(404).json({ error: "Dicionário não encontrado" });
+    return;
   }
 
   // Fetch fields with summaries so DDL can annotate status if available
@@ -242,9 +309,11 @@ router.get("/dictionaries/:id/export/ddl", async (req, res): Promise<void> => {
   const cols = fields.map((f) => {
     const sqlType = typeMap[f.tipoDado] ?? "VARCHAR(255)";
     const pk = f.chave ? " PRIMARY KEY" : "";
-    const statusComment = f.summary?.classification === "critical" || f.summary?.classification === "pending"
-      ? ` -- status: ${f.summary.classification}`
-      : "";
+    const statusComment =
+      f.summary?.classification === "critical" ||
+      f.summary?.classification === "pending"
+        ? ` -- status: ${f.summary.classification}`
+        : "";
     return `  ${f.campoTecnico} ${sqlType}${pk}${statusComment}`;
   });
 
@@ -254,139 +323,189 @@ router.get("/dictionaries/:id/export/ddl", async (req, res): Promise<void> => {
   res.json({ format: "ddl", filename, content: ddl });
 });
 
-router.get("/dictionaries/:id/export/data-contract", async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
-  if (isNaN(id)) {
-    req.log.error({ id: req.params.id }, "Invalid dictionary ID for data contract export");
-    res.status(400).json({ error: "ID inválido" }); return;
-  }
+router.get(
+  "/dictionaries/:id/export/data-contract",
+  async (req, res): Promise<void> => {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      req.log.error(
+        { id: req.params.id },
+        "Invalid dictionary ID for data contract export",
+      );
+      res.status(400).json({ error: "ID inválido" });
+      return;
+    }
 
-  const [dict] = await db.select().from(dictionariesTable).where(eq(dictionariesTable.id, id));
-  if (!dict) {
-    req.log.error({ dictionaryId: id }, "Dictionary not found for data contract export");
-    res.status(404).json({ error: "Dicionário não encontrado" }); return;
-  }
+    const [dict] = await db
+      .select()
+      .from(dictionariesTable)
+      .where(eq(dictionariesTable.id, id));
+    if (!dict) {
+      req.log.error(
+        { dictionaryId: id },
+        "Dictionary not found for data contract export",
+      );
+      res.status(404).json({ error: "Dicionário não encontrado" });
+      return;
+    }
 
-  const fields = await getFieldsWithSummaries(id);
+    const fields = await getFieldsWithSummaries(id);
 
-  const contract = {
-    versao: "1.0",
-    processo: dict.processo,
-    categoria: dict.categoria,
-    tabela: dict.tabela,
-    geradoEm: new Date().toISOString(),
-    campos: fields.map((f) => ({
-      campo: f.campoTecnico,
-      campo_origem: f.campoOrigem,
-      tipo: f.tipoDado,
-      descricao: f.descricao,
-      obrigatorio: f.summary?.avgRequired == null ? null : f.summary.avgRequired >= 0.5,
-      chave: f.chave,
-      origem: f.origem,
-      periodicidade: f.periodicidade,
-      regras_negocio: f.summary ? {
-        usado: f.summary.avgUsed == null ? null : f.summary.avgUsed >= 0.5,
-        obrigatorio: f.summary.avgRequired == null ? null : f.summary.avgRequired >= 0.5,
-        nome_correto: f.summary.avgCorrectName == null ? null : f.summary.avgCorrectName >= 0.5,
-        origem_correta: f.summary.avgCorrectOrigin == null ? null : f.summary.avgCorrectOrigin >= 0.5,
-        regra_negocio: f.summary.avgHasBusinessRule == null ? null : f.summary.avgHasBusinessRule >= 0.5,
-      } : null,
-    })),
-  };
+    const contract = {
+      versao: "1.0",
+      processo: dict.processo,
+      categoria: dict.categoria,
+      tabela: dict.tabela,
+      geradoEm: new Date().toISOString(),
+      campos: fields.map((f) => ({
+        campo: f.campoTecnico,
+        campo_origem: f.campoOrigem,
+        tipo: f.tipoDado,
+        descricao: f.descricao,
+        obrigatorio:
+          f.summary?.avgRequired == null ? null : f.summary.avgRequired >= 0.5,
+        chave: f.chave,
+        origem: f.origem,
+        periodicidade: f.periodicidade,
+        regras_negocio: f.summary
+          ? {
+              usado:
+                f.summary.avgUsed == null ? null : f.summary.avgUsed >= 0.5,
+              obrigatorio:
+                f.summary.avgRequired == null
+                  ? null
+                  : f.summary.avgRequired >= 0.5,
+              nome_correto:
+                f.summary.avgCorrectName == null
+                  ? null
+                  : f.summary.avgCorrectName >= 0.5,
+              origem_correta:
+                f.summary.avgCorrectOrigin == null
+                  ? null
+                  : f.summary.avgCorrectOrigin >= 0.5,
+              regra_negocio:
+                f.summary.avgHasBusinessRule == null
+                  ? null
+                  : f.summary.avgHasBusinessRule >= 0.5,
+            }
+          : null,
+      })),
+    };
 
-  const filename = `${dict.tabela}_data_contract_v${dict.version}.json`;
-  res.json({ format: "data-contract", filename, content: JSON.stringify(contract, null, 2) });
-});
+    const filename = `${dict.tabela}_data_contract_v${dict.version}.json`;
+    res.json({
+      format: "data-contract",
+      filename,
+      content: JSON.stringify(contract, null, 2),
+    });
+  },
+);
 
 // Validate DDL endpoint: executes CREATE TABLE in a transaction and rolls back
 // Returns validation result without persisting
-router.post("/dictionaries/:id/validate-ddl", async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
-  if (isNaN(id)) {
-    req.log.error({ id: req.params.id }, "Invalid dictionary ID for DDL validation");
-    res.status(400).json({ error: "ID inválido" });
-    return;
-  }
-
-  const [dict] = await db.select().from(dictionariesTable).where(eq(dictionariesTable.id, id));
-  if (!dict) {
-    req.log.error({ dictionaryId: id }, "Dictionary not found for DDL validation");
-    res.status(404).json({ error: "Dicionário não encontrado" });
-    return;
-  }
-
-  const fields = await getFieldsWithSummaries(id);
-
-  // Validate identifiers to prevent SQL injection (table name and column names come from import JSON)
-  const identifierRegex = /^[a-zA-Z_][a-zA-Z0-9_]{0,62}$/;
-  if (!identifierRegex.test(dict.tabela)) {
-    res.status(400).json({ error: "Nome de tabela inválido para DDL" });
-    return;
-  }
-  for (const f of fields) {
-    if (!identifierRegex.test(f.campoTecnico)) {
-      res.status(400).json({ error: `Nome de coluna inválido para DDL: ${f.campoTecnico}` });
+router.post(
+  "/dictionaries/:id/validate-ddl",
+  async (req, res): Promise<void> => {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      req.log.error(
+        { id: req.params.id },
+        "Invalid dictionary ID for DDL validation",
+      );
+      res.status(400).json({ error: "ID inválido" });
       return;
     }
-  }
 
-  const typeMap: Record<string, string> = {
-    string: "VARCHAR(255)",
-    int: "INTEGER",
-    decimal: "DECIMAL(18,4)",
-    date: "DATE",
-  };
-
-  const cols = fields.map((f) => {
-    const sqlType = typeMap[f.tipoDado] ?? "VARCHAR(255)";
-    const pk = f.chave ? " PRIMARY KEY" : "";
-    const nullable = f.chave ? "" : " NULL";
-    return `  ${f.campoTecnico} ${sqlType}${pk}${nullable}`;
-  });
-
-  const ddl = `CREATE TABLE ${dict.tabela} (\n${cols.join(",\n")}\n);`;
-
-  // Execute in a transaction and rollback to validate
-  const client = await pool.connect();
-  let validationPassed = false;
-  let errorMessage = "";
-
-  try {
-    await client.query("BEGIN");
-
-    // Create a temporary schema for staging validation
-    const stagingSchema = `staging_${id}_${Date.now()}`;
-    await client.query(`CREATE SCHEMA ${stagingSchema}`);
-    await client.query(`SET search_path TO ${stagingSchema}`);
-
-    // Execute the DDL
-    await client.query(ddl);
-
-    // If we get here, DDL is valid
-    validationPassed = true;
-
-    // Rollback - drop the staging schema
-    await client.query(`DROP SCHEMA ${stagingSchema} CASCADE`);
-    await client.query("ROLLBACK");
-  } catch (err) {
-    errorMessage = err instanceof Error ? err.message : "Erro desconhecido";
-    validationPassed = false;
-    try {
-      await client.query("ROLLBACK");
-    } catch {
-      // Ignore rollback errors
+    const [dict] = await db
+      .select()
+      .from(dictionariesTable)
+      .where(eq(dictionariesTable.id, id));
+    if (!dict) {
+      req.log.error(
+        { dictionaryId: id },
+        "Dictionary not found for DDL validation",
+      );
+      res.status(404).json({ error: "Dicionário não encontrado" });
+      return;
     }
-  } finally {
-    client.release();
-  }
 
-  res.json({
-    valid: validationPassed,
-    ddl,
-    message: validationPassed
-      ? "DDL válido - tabela pode ser criada no PostgreSQL"
-      : `Erro de validação: ${errorMessage}`,
-  });
-});
+    const fields = await getFieldsWithSummaries(id);
+
+    // Validate identifiers to prevent SQL injection (table name and column names come from import JSON)
+    const identifierRegex = /^[a-zA-Z_][a-zA-Z0-9_]{0,62}$/;
+    if (!identifierRegex.test(dict.tabela)) {
+      res.status(400).json({ error: "Nome de tabela inválido para DDL" });
+      return;
+    }
+    for (const f of fields) {
+      if (!identifierRegex.test(f.campoTecnico)) {
+        res
+          .status(400)
+          .json({
+            error: `Nome de coluna inválido para DDL: ${f.campoTecnico}`,
+          });
+        return;
+      }
+    }
+
+    const typeMap: Record<string, string> = {
+      string: "VARCHAR(255)",
+      int: "INTEGER",
+      decimal: "DECIMAL(18,4)",
+      date: "DATE",
+    };
+
+    const cols = fields.map((f) => {
+      const sqlType = typeMap[f.tipoDado] ?? "VARCHAR(255)";
+      const pk = f.chave ? " PRIMARY KEY" : "";
+      const nullable = f.chave ? "" : " NULL";
+      return `  ${f.campoTecnico} ${sqlType}${pk}${nullable}`;
+    });
+
+    const ddl = `CREATE TABLE ${dict.tabela} (\n${cols.join(",\n")}\n);`;
+
+    // Execute in a transaction and rollback to validate
+    const client = await pool.connect();
+    let validationPassed = false;
+    let errorMessage = "";
+
+    try {
+      await client.query("BEGIN");
+
+      // Create a temporary schema for staging validation
+      const stagingSchema = `staging_${id}_${Date.now()}`;
+      await client.query(`CREATE SCHEMA ${stagingSchema}`);
+      await client.query(`SET search_path TO ${stagingSchema}`);
+
+      // Execute the DDL
+      await client.query(ddl);
+
+      // If we get here, DDL is valid
+      validationPassed = true;
+
+      // Rollback - drop the staging schema
+      await client.query(`DROP SCHEMA ${stagingSchema} CASCADE`);
+      await client.query("ROLLBACK");
+    } catch (err) {
+      errorMessage = err instanceof Error ? err.message : "Erro desconhecido";
+      validationPassed = false;
+      try {
+        await client.query("ROLLBACK");
+      } catch {
+        // Ignore rollback errors
+      }
+    } finally {
+      client.release();
+    }
+
+    res.json({
+      valid: validationPassed,
+      ddl,
+      message: validationPassed
+        ? "DDL válido - tabela pode ser criada no PostgreSQL"
+        : `Erro de validação: ${errorMessage}`,
+    });
+  },
+);
 
 export default router;

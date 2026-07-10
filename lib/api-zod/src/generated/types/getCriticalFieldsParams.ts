@@ -7,15 +7,15 @@
  */
 
 export type GetCriticalFieldsParams = {
-/**
- * Page number (1-based)
- * @minimum 1
- */
-page?: number;
-/**
- * Number of items per page
- * @minimum 1
- * @maximum 100
- */
-limit?: number;
+  /**
+   * Page number (1-based)
+   * @minimum 1
+   */
+  page?: number;
+  /**
+   * Number of items per page
+   * @minimum 1
+   * @maximum 100
+   */
+  limit?: number;
 };

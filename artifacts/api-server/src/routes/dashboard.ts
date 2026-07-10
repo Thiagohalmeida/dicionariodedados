@@ -45,8 +45,8 @@ function initStatusCounts(): Record<string, number> {
 
 // Shared tally function - counts fields by status final
 function tallyByStatus(
-  fields: typeof fieldsTable.$inferSelect[],
-  allSummaries: Map<number, FieldSummary>
+  fields: (typeof fieldsTable.$inferSelect)[],
+  allSummaries: Map<number, FieldSummary>,
 ): {
   approvedFields: number;
   rejectedFields: number;
@@ -75,8 +75,8 @@ function tallyByStatus(
 }
 
 function processFieldSummaries(
-  fields: typeof fieldsTable.$inferSelect[],
-  allSummaries: Map<number, FieldSummary>
+  fields: (typeof fieldsTable.$inferSelect)[],
+  allSummaries: Map<number, FieldSummary>,
 ) {
   const classificationCounts = initClassificationCounts();
   let totalFields = 0;
@@ -86,7 +86,8 @@ function processFieldSummaries(
   for (const field of fields) {
     totalFields++;
     const summary = allSummaries.get(field.id)!;
-    classificationCounts[summary.classification] = (classificationCounts[summary.classification] ?? 0) + 1;
+    classificationCounts[summary.classification] =
+      (classificationCounts[summary.classification] ?? 0) + 1;
 
     if (summary.score !== null) {
       totalScore += summary.score;
@@ -106,9 +107,9 @@ function processFieldSummaries(
 }
 
 function processDictionaryMetrics(
-  dicts: typeof dictionariesTable.$inferSelect[],
-  fieldsByDict: Map<number, typeof fieldsTable.$inferSelect[]>,
-  allSummaries: Map<number, FieldSummary>
+  dicts: (typeof dictionariesTable.$inferSelect)[],
+  fieldsByDict: Map<number, (typeof fieldsTable.$inferSelect)[]>,
+  allSummaries: Map<number, FieldSummary>,
 ) {
   const statusCounts = initStatusCounts();
   const dictionaryMetrics: Array<{
@@ -156,7 +157,10 @@ function processDictionaryMetrics(
       approvedFields: fieldStatusCounts.approvedFields,
       rejectedFields: fieldStatusCounts.rejectedFields,
       pendingFields: fieldStatusCounts.pendingFields,
-      avgScore: dictScoredFields > 0 ? Math.round((dictTotalScore / dictScoredFields) * 100) / 100 : null,
+      avgScore:
+        dictScoredFields > 0
+          ? Math.round((dictTotalScore / dictScoredFields) * 100) / 100
+          : null,
     });
   }
 
@@ -164,7 +168,10 @@ function processDictionaryMetrics(
 }
 
 router.get("/dashboard", async (_req, res): Promise<void> => {
-  const dicts = await db.select().from(dictionariesTable).orderBy(desc(dictionariesTable.createdAt));
+  const dicts = await db
+    .select()
+    .from(dictionariesTable)
+    .orderBy(desc(dictionariesTable.createdAt));
 
   if (dicts.length === 0) {
     res.json(getEmptyDashboardResponse());
@@ -187,16 +194,24 @@ router.get("/dashboard", async (_req, res): Promise<void> => {
 
   const globalStats = processFieldSummaries(allFields, allSummaries);
 
-  const { statusCounts, dictionaryMetrics } = processDictionaryMetrics(dicts, fieldsByDict, allSummaries);
+  const { statusCounts, dictionaryMetrics } = processDictionaryMetrics(
+    dicts,
+    fieldsByDict,
+    allSummaries,
+  );
 
   const recentDictionaries = dictionaryMetrics.slice(-5).reverse();
 
-  const dictionariesByStatus = Object.entries(statusCounts).map(([status, count]) => ({
-    status,
-    count,
-  }));
+  const dictionariesByStatus = Object.entries(statusCounts).map(
+    ([status, count]) => ({
+      status,
+      count,
+    }),
+  );
 
-  const fieldsByClassification = Object.entries(globalStats.classificationCounts).map(([classification, count]) => ({
+  const fieldsByClassification = Object.entries(
+    globalStats.classificationCounts,
+  ).map(([classification, count]) => ({
     classification,
     count,
   }));
@@ -209,11 +224,16 @@ router.get("/dashboard", async (_req, res): Promise<void> => {
       rejectedFields: globalStats.rejectedFields,
       pendingFields: globalStats.pendingFields,
       conflictFields: globalStats.conflictFields,
-      globalScore: globalStats.scoredFields > 0 ? Math.round((globalStats.totalScore / globalStats.scoredFields) * 100) / 100 : null,
+      globalScore:
+        globalStats.scoredFields > 0
+          ? Math.round(
+              (globalStats.totalScore / globalStats.scoredFields) * 100,
+            ) / 100
+          : null,
       dictionariesByStatus,
       fieldsByClassification,
       recentDictionaries,
-    })
+    }),
   );
 });
 

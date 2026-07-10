@@ -1,5 +1,11 @@
 import React, { useState } from "react";
-import { useGetDictionary, useSubmitValidation, useUpdateField, getGetDictionaryQueryKey, useExportDictionary } from "@workspace/api-client-react";
+import {
+  useGetDictionary,
+  useSubmitValidation,
+  useUpdateField,
+  getGetDictionaryQueryKey,
+  useExportDictionary,
+} from "@workspace/api-client-react";
 import { useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -9,10 +15,34 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Download, Pencil, ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
@@ -59,12 +89,20 @@ interface FieldWithSummary extends Field {
 export default function DictionaryDetail() {
   const params = useParams();
   const id = parseInt(params.id || "0", 10);
-  const { data: dict, isLoading } = useGetDictionary(id, { query: { enabled: !!id, queryKey: getGetDictionaryQueryKey(id) } });
-  const [selectedField, setSelectedField] = useState<FieldWithSummary | null>(null);
-  const [editingField, setEditingField] = useState<FieldWithSummary | null>(null);
+  const { data: dict, isLoading } = useGetDictionary(id, {
+    query: { enabled: !!id, queryKey: getGetDictionaryQueryKey(id) },
+  });
+  const [selectedField, setSelectedField] = useState<FieldWithSummary | null>(
+    null,
+  );
+  const [editingField, setEditingField] = useState<FieldWithSummary | null>(
+    null,
+  );
   const { toast } = useToast();
 
-  const { isFetching: isExporting } = useExportDictionary(id, { query: { enabled: false, queryKey: ['export', id] } });
+  const { isFetching: isExporting } = useExportDictionary(id, {
+    query: { enabled: false, queryKey: ["export", id] },
+  });
   const [isExportingExtra, setIsExportingExtra] = useState(false);
 
   const handleExport = async (format?: "csv") => {
@@ -73,9 +111,17 @@ export default function DictionaryDetail() {
       const res = await fetch(url);
       if (!res.ok) throw new Error();
       const data = await res.json();
-      triggerDownload(data.content, data.filename, format === "csv" ? "text/csv" : "application/json");
+      triggerDownload(
+        data.content,
+        data.filename,
+        format === "csv" ? "text/csv" : "application/json",
+      );
     } catch {
-      toast({ title: "Erro ao exportar", description: "Não foi possível baixar o arquivo.", variant: "destructive" });
+      toast({
+        title: "Erro ao exportar",
+        description: "Não foi possível baixar o arquivo.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -86,15 +132,27 @@ export default function DictionaryDetail() {
       const res = await fetch(`${base}/api/dictionaries/${id}/export/${type}`);
       if (!res.ok) throw new Error();
       const data = await res.json();
-      triggerDownload(data.content, data.filename, type === "ddl" ? "text/plain" : "application/json");
+      triggerDownload(
+        data.content,
+        data.filename,
+        type === "ddl" ? "text/plain" : "application/json",
+      );
     } catch {
-      toast({ title: "Erro ao exportar", description: "Não foi possível gerar o arquivo.", variant: "destructive" });
+      toast({
+        title: "Erro ao exportar",
+        description: "Não foi possível gerar o arquivo.",
+        variant: "destructive",
+      });
     } finally {
       setIsExportingExtra(false);
     }
   };
 
-  function triggerDownload(content: string, filename: string, mimeType: string) {
+  function triggerDownload(
+    content: string,
+    filename: string,
+    mimeType: string,
+  ) {
     const blob = new Blob([content], { type: mimeType });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -114,13 +172,20 @@ export default function DictionaryDetail() {
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{dict.tabela}</h1>
-          <p className="text-muted-foreground">{dict.processo} / {dict.categoria}</p>
+          <p className="text-muted-foreground">
+            {dict.processo} / {dict.categoria}
+          </p>
         </div>
         <div className="flex gap-4 items-center">
-          <Badge variant="outline" className="text-lg py-1 px-3">{traduzirStatus(dict.status)}</Badge>
+          <Badge variant="outline" className="text-lg py-1 px-3">
+            {traduzirStatus(dict.status)}
+          </Badge>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" disabled={isExporting || isExportingExtra}>
+              <Button
+                variant="outline"
+                disabled={isExporting || isExportingExtra}
+              >
                 <Download className="h-4 w-4 mr-2" />
                 Exportar
                 <ChevronDown className="h-3.5 w-3.5 ml-1 opacity-60" />
@@ -137,7 +202,9 @@ export default function DictionaryDetail() {
               <DropdownMenuItem onClick={() => handleExportExtra("ddl")}>
                 DDL (CREATE TABLE)
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExportExtra("data-contract")}>
+              <DropdownMenuItem
+                onClick={() => handleExportExtra("data-contract")}
+              >
                 Data Contract (JSON)
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -164,31 +231,69 @@ export default function DictionaryDetail() {
             </TableHeader>
             <TableBody>
               {dict.fields.map((field) => (
-                <TableRow key={field.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedField(field)}>
-                  <TableCell className="font-medium">{field.campoOrigem}</TableCell>
-                  <TableCell className="font-mono text-sm">{field.campoTecnico}</TableCell>
-                  <TableCell className="max-w-[200px] truncate" title={field.descricao}>{field.descricao}</TableCell>
-                  <TableCell className="font-mono text-sm">{field.tipoDado}</TableCell>
+                <TableRow
+                  key={field.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => setSelectedField(field)}
+                >
+                  <TableCell className="font-medium">
+                    {field.campoOrigem}
+                  </TableCell>
+                  <TableCell className="font-mono text-sm">
+                    {field.campoTecnico}
+                  </TableCell>
+                  <TableCell
+                    className="max-w-[200px] truncate"
+                    title={field.descricao}
+                  >
+                    {field.descricao}
+                  </TableCell>
+                  <TableCell className="font-mono text-sm">
+                    {field.tipoDado}
+                  </TableCell>
                   <TableCell>{field.periodicidade}</TableCell>
                   <TableCell>{field.chave ? "Sim" : "Não"}</TableCell>
                   <TableCell>
-                    <Badge variant={field.summary?.statusFinal === "conflict" ? "destructive" : "outline"}>
+                    <Badge
+                      variant={
+                        field.summary?.statusFinal === "conflict"
+                          ? "destructive"
+                          : "outline"
+                      }
+                    >
                       {traduzirStatus(field.summary?.statusFinal || "pending")}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={
-                      field.summary?.classification === 'reliable' ? 'default' :
-                      field.summary?.classification === 'attention' ? 'secondary' :
-                      field.summary?.classification === 'critical' ? 'destructive' : 'outline'
-                    }>
-                      {traduzirClassificacao(field.summary?.classification || "pending")}
+                    <Badge
+                      variant={
+                        field.summary?.classification === "reliable"
+                          ? "default"
+                          : field.summary?.classification === "attention"
+                            ? "secondary"
+                            : field.summary?.classification === "critical"
+                              ? "destructive"
+                              : "outline"
+                      }
+                    >
+                      {traduzirClassificacao(
+                        field.summary?.classification || "pending",
+                      )}
                     </Badge>
                   </TableCell>
                   <TableCell>{field.summary?.score ?? "-"}</TableCell>
-                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                  <TableCell
+                    className="text-right"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => setSelectedField(field)}>Validar</Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedField(field)}
+                      >
+                        Validar
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -226,7 +331,15 @@ export default function DictionaryDetail() {
   );
 }
 
-function EditFieldDialog({ field, dictId, onClose }: { field: FieldWithSummary; dictId: number; onClose: () => void }) {
+function EditFieldDialog({
+  field,
+  dictId,
+  onClose,
+}: {
+  field: FieldWithSummary;
+  dictId: number;
+  onClose: () => void;
+}) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const updateField = useUpdateField();
@@ -242,20 +355,37 @@ function EditFieldDialog({ field, dictId, onClose }: { field: FieldWithSummary; 
   });
 
   function handleSave() {
-    updateField.mutate({ id: field.id, data: form }, {
-      onSuccess: () => {
-        toast({ title: "Campo atualizado", description: "As informações do campo foram salvas." });
-        queryClient.invalidateQueries({ queryKey: getGetDictionaryQueryKey(dictId) });
-        onClose();
+    updateField.mutate(
+      { id: field.id, data: form },
+      {
+        onSuccess: () => {
+          toast({
+            title: "Campo atualizado",
+            description: "As informações do campo foram salvas.",
+          });
+          queryClient.invalidateQueries({
+            queryKey: getGetDictionaryQueryKey(dictId),
+          });
+          onClose();
+        },
+        onError: () => {
+          toast({
+            title: "Erro ao salvar",
+            description: "Não foi possível salvar as alterações.",
+            variant: "destructive",
+          });
+        },
       },
-      onError: () => {
-        toast({ title: "Erro ao salvar", description: "Não foi possível salvar as alterações.", variant: "destructive" });
-      },
-    });
+    );
   }
 
   return (
-    <Dialog open={true} onOpenChange={(open) => { if (!open) onClose(); }}>
+    <Dialog
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Editar Campo: {field.campoOrigem}</DialogTitle>
@@ -263,27 +393,53 @@ function EditFieldDialog({ field, dictId, onClose }: { field: FieldWithSummary; 
         <div className="grid grid-cols-2 gap-4 py-2">
           <div className="space-y-1.5">
             <Label>Campo de Origem</Label>
-            <Input value={form.campoOrigem} onChange={(e) => setForm({ ...form, campoOrigem: e.target.value })} />
+            <Input
+              value={form.campoOrigem}
+              onChange={(e) =>
+                setForm({ ...form, campoOrigem: e.target.value })
+              }
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Campo Técnico</Label>
-            <Input value={form.campoTecnico} onChange={(e) => setForm({ ...form, campoTecnico: e.target.value })} className="font-mono" />
+            <Input
+              value={form.campoTecnico}
+              onChange={(e) =>
+                setForm({ ...form, campoTecnico: e.target.value })
+              }
+              className="font-mono"
+            />
           </div>
           <div className="col-span-2 space-y-1.5">
             <Label>Descrição</Label>
-            <Input value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} />
+            <Input
+              value={form.descricao}
+              onChange={(e) => setForm({ ...form, descricao: e.target.value })}
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Tipo de Dado</Label>
-            <Input value={form.tipoDado} onChange={(e) => setForm({ ...form, tipoDado: e.target.value })} className="font-mono" />
+            <Input
+              value={form.tipoDado}
+              onChange={(e) => setForm({ ...form, tipoDado: e.target.value })}
+              className="font-mono"
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Origem</Label>
-            <Input value={form.origem} onChange={(e) => setForm({ ...form, origem: e.target.value })} />
+            <Input
+              value={form.origem}
+              onChange={(e) => setForm({ ...form, origem: e.target.value })}
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Periodicidade</Label>
-            <Input value={form.periodicidade} onChange={(e) => setForm({ ...form, periodicidade: e.target.value })} />
+            <Input
+              value={form.periodicidade}
+              onChange={(e) =>
+                setForm({ ...form, periodicidade: e.target.value })
+              }
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Chave Primária</Label>
@@ -302,7 +458,9 @@ function EditFieldDialog({ field, dictId, onClose }: { field: FieldWithSummary; 
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
           <Button onClick={handleSave} disabled={updateField.isPending}>
             {updateField.isPending ? "Salvando..." : "Salvar Alterações"}
           </Button>
@@ -312,7 +470,15 @@ function EditFieldDialog({ field, dictId, onClose }: { field: FieldWithSummary; 
   );
 }
 
-function ValidationPanel({ field, onClose, dictId }: { field: FieldWithSummary, onClose: () => void, dictId: number }) {
+function ValidationPanel({
+  field,
+  onClose,
+  dictId,
+}: {
+  field: FieldWithSummary;
+  onClose: () => void;
+  dictId: number;
+}) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const submitValidation = useSubmitValidation();
@@ -324,26 +490,42 @@ function ValidationPanel({ field, onClose, dictId }: { field: FieldWithSummary, 
     correctName: false,
     correctOrigin: false,
     hasBusinessRule: false,
-    comment: ""
+    comment: "",
   });
 
   const handleSubmit = () => {
     const name = form.validatorName.trim();
     if (!name) {
-      toast({ title: "Campo obrigatório", description: "Informe seu nome antes de enviar a validação.", variant: "destructive" });
+      toast({
+        title: "Campo obrigatório",
+        description: "Informe seu nome antes de enviar a validação.",
+        variant: "destructive",
+      });
       return;
     }
 
-    submitValidation.mutate({ id: field.id, data: { ...form, validatorName: name } }, {
-      onSuccess: () => {
-        toast({ title: "Validação registrada", description: "Sua validação foi salva com sucesso." });
-        queryClient.invalidateQueries({ queryKey: getGetDictionaryQueryKey(dictId) });
-        onClose();
+    submitValidation.mutate(
+      { id: field.id, data: { ...form, validatorName: name } },
+      {
+        onSuccess: () => {
+          toast({
+            title: "Validação registrada",
+            description: "Sua validação foi salva com sucesso.",
+          });
+          queryClient.invalidateQueries({
+            queryKey: getGetDictionaryQueryKey(dictId),
+          });
+          onClose();
+        },
+        onError: () => {
+          toast({
+            title: "Erro ao registrar",
+            description: "Não foi possível salvar a validação.",
+            variant: "destructive",
+          });
+        },
       },
-      onError: () => {
-        toast({ title: "Erro ao registrar", description: "Não foi possível salvar a validação.", variant: "destructive" });
-      },
-    });
+    );
   };
 
   return (
@@ -375,33 +557,92 @@ function ValidationPanel({ field, onClose, dictId }: { field: FieldWithSummary, 
               <Label>Seu Nome (Responsável pela Validação)</Label>
               <Input
                 value={form.validatorName}
-                onChange={(e) => setForm({...form, validatorName: e.target.value})}
+                onChange={(e) =>
+                  setForm({ ...form, validatorName: e.target.value })
+                }
                 placeholder="Ex: Ana Lima"
               />
             </div>
 
             <div className="space-y-3 pt-4 border-t">
-              <Label className="text-base font-semibold">Critérios de Validação (20 pts cada)</Label>
+              <Label className="text-base font-semibold">
+                Critérios de Validação (20 pts cada)
+              </Label>
 
               <div className="flex items-center space-x-2">
-                <Checkbox id="used" checked={form.used} onCheckedChange={(c) => setForm({...form, used: c === true})} />
-                <label htmlFor="used" className="text-sm font-medium leading-none cursor-pointer">Campo utilizado no processo</label>
+                <Checkbox
+                  id="used"
+                  checked={form.used}
+                  onCheckedChange={(c) =>
+                    setForm({ ...form, used: c === true })
+                  }
+                />
+                <label
+                  htmlFor="used"
+                  className="text-sm font-medium leading-none cursor-pointer"
+                >
+                  Campo utilizado no processo
+                </label>
               </div>
               <div className="flex items-center space-x-2">
-                <Checkbox id="required" checked={form.required} onCheckedChange={(c) => setForm({...form, required: c === true})} />
-                <label htmlFor="required" className="text-sm font-medium leading-none cursor-pointer">Campo obrigatório</label>
+                <Checkbox
+                  id="required"
+                  checked={form.required}
+                  onCheckedChange={(c) =>
+                    setForm({ ...form, required: c === true })
+                  }
+                />
+                <label
+                  htmlFor="required"
+                  className="text-sm font-medium leading-none cursor-pointer"
+                >
+                  Campo obrigatório
+                </label>
               </div>
               <div className="flex items-center space-x-2">
-                <Checkbox id="correctName" checked={form.correctName} onCheckedChange={(c) => setForm({...form, correctName: c === true})} />
-                <label htmlFor="correctName" className="text-sm font-medium leading-none cursor-pointer">Nome técnico correto</label>
+                <Checkbox
+                  id="correctName"
+                  checked={form.correctName}
+                  onCheckedChange={(c) =>
+                    setForm({ ...form, correctName: c === true })
+                  }
+                />
+                <label
+                  htmlFor="correctName"
+                  className="text-sm font-medium leading-none cursor-pointer"
+                >
+                  Nome técnico correto
+                </label>
               </div>
               <div className="flex items-center space-x-2">
-                <Checkbox id="correctOrigin" checked={form.correctOrigin} onCheckedChange={(c) => setForm({...form, correctOrigin: c === true})} />
-                <label htmlFor="correctOrigin" className="text-sm font-medium leading-none cursor-pointer">Origem do dado correta</label>
+                <Checkbox
+                  id="correctOrigin"
+                  checked={form.correctOrigin}
+                  onCheckedChange={(c) =>
+                    setForm({ ...form, correctOrigin: c === true })
+                  }
+                />
+                <label
+                  htmlFor="correctOrigin"
+                  className="text-sm font-medium leading-none cursor-pointer"
+                >
+                  Origem do dado correta
+                </label>
               </div>
               <div className="flex items-center space-x-2">
-                <Checkbox id="hasBusinessRule" checked={form.hasBusinessRule} onCheckedChange={(c) => setForm({...form, hasBusinessRule: c === true})} />
-                <label htmlFor="hasBusinessRule" className="text-sm font-medium leading-none cursor-pointer">Possui regra de negócio definida</label>
+                <Checkbox
+                  id="hasBusinessRule"
+                  checked={form.hasBusinessRule}
+                  onCheckedChange={(c) =>
+                    setForm({ ...form, hasBusinessRule: c === true })
+                  }
+                />
+                <label
+                  htmlFor="hasBusinessRule"
+                  className="text-sm font-medium leading-none cursor-pointer"
+                >
+                  Possui regra de negócio definida
+                </label>
               </div>
             </div>
 
@@ -409,13 +650,19 @@ function ValidationPanel({ field, onClose, dictId }: { field: FieldWithSummary, 
               <Label>Observação (opcional)</Label>
               <Input
                 value={form.comment}
-                onChange={(e) => setForm({...form, comment: e.target.value})}
+                onChange={(e) => setForm({ ...form, comment: e.target.value })}
                 placeholder="Comentários adicionais sobre o campo..."
               />
             </div>
 
-            <Button className="w-full mt-4" onClick={handleSubmit} disabled={submitValidation.isPending}>
-              {submitValidation.isPending ? "Enviando..." : "Registrar Validação"}
+            <Button
+              className="w-full mt-4"
+              onClick={handleSubmit}
+              disabled={submitValidation.isPending}
+            >
+              {submitValidation.isPending
+                ? "Enviando..."
+                : "Registrar Validação"}
             </Button>
           </div>
         </div>

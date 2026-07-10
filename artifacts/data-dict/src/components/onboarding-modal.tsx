@@ -43,12 +43,19 @@ const slides = [
       <div className="space-y-3 text-sm text-muted-foreground">
         <p>
           Esta plataforma ajuda equipes de compras hospitalares e especialistas
-          de dados a <strong className="text-foreground">validar dicionários de dados</strong> entregues
-          por fornecedores de sistemas de informação em saúde.
+          de dados a{" "}
+          <strong className="text-foreground">
+            validar dicionários de dados
+          </strong>{" "}
+          entregues por fornecedores de sistemas de informação em saúde.
         </p>
         <p>
-          Você <strong className="text-foreground">não precisa ser especialista em TI</strong> para
-          participar — seu conhecimento sobre o processo de compras é o que faz a diferença.
+          Você{" "}
+          <strong className="text-foreground">
+            não precisa ser especialista em TI
+          </strong>{" "}
+          para participar — seu conhecimento sobre o processo de compras é o que
+          faz a diferença.
         </p>
       </div>
     ),
@@ -62,7 +69,8 @@ const slides = [
     content: (
       <div className="space-y-3">
         <p className="text-sm text-muted-foreground">
-          Para cada campo do dicionário, você responde <strong className="text-foreground">5 perguntas objetivas</strong>:
+          Para cada campo do dicionário, você responde{" "}
+          <strong className="text-foreground">5 perguntas objetivas</strong>:
         </p>
         <ol className="space-y-2">
           {[
@@ -92,29 +100,42 @@ const slides = [
     content: (
       <div className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Cada critério atendido vale <strong className="text-foreground">20 pontos</strong>. O sistema
+          Cada critério atendido vale{" "}
+          <strong className="text-foreground">20 pontos</strong>. O sistema
           classifica automaticamente cada campo:
         </p>
         <div className="space-y-2">
           <div className="flex items-center gap-3 p-3 rounded-lg bg-emerald-50 border border-emerald-100">
             <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0" />
             <div>
-              <p className="text-sm font-semibold text-emerald-700">Confiável (≥ 90 pts)</p>
-              <p className="text-xs text-emerald-600">Campo bem documentado, seguro para uso</p>
+              <p className="text-sm font-semibold text-emerald-700">
+                Confiável (≥ 90 pts)
+              </p>
+              <p className="text-xs text-emerald-600">
+                Campo bem documentado, seguro para uso
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-50 border border-amber-100">
             <CheckCircle2 className="h-4 w-4 text-amber-600 flex-shrink-0" />
             <div>
-              <p className="text-sm font-semibold text-amber-700">Atenção (60–89 pts)</p>
-              <p className="text-xs text-amber-600">Precisa de revisão antes de ser usado</p>
+              <p className="text-sm font-semibold text-amber-700">
+                Atenção (60–89 pts)
+              </p>
+              <p className="text-xs text-amber-600">
+                Precisa de revisão antes de ser usado
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3 p-3 rounded-lg bg-red-50 border border-red-100">
             <CheckCircle2 className="h-4 w-4 text-red-600 flex-shrink-0" />
             <div>
-              <p className="text-sm font-semibold text-red-700">Crítico (&lt; 60 pts)</p>
-              <p className="text-xs text-red-600">Não deve ser usado sem correções</p>
+              <p className="text-sm font-semibold text-red-700">
+                Crítico (&lt; 60 pts)
+              </p>
+              <p className="text-xs text-red-600">
+                Não deve ser usado sem correções
+              </p>
             </div>
           </div>
         </div>
@@ -129,9 +150,7 @@ const slides = [
     subtitle: "Veja os dicionários disponíveis para validação",
     content: (
       <div className="space-y-3 text-sm text-muted-foreground">
-        <p>
-          Para validar um dicionário:
-        </p>
+        <p>Para validar um dicionário:</p>
         <ol className="space-y-2 list-none">
           {[
             'Acesse "Dicionários" no menu lateral',
@@ -148,8 +167,9 @@ const slides = [
           ))}
         </ol>
         <p className="pt-1">
-          Dúvidas? Acesse a página <strong className="text-foreground">Sobre</strong> no menu para
-          saber mais sobre o processo.
+          Dúvidas? Acesse a página{" "}
+          <strong className="text-foreground">Sobre</strong> no menu para saber
+          mais sobre o processo.
         </p>
       </div>
     ),
@@ -197,7 +217,12 @@ export function OnboardingModal() {
   const isLast = step === slides.length - 1;
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) finish(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) finish();
+      }}
+    >
       <DialogContent className="sm:max-w-md p-0 overflow-hidden gap-0">
         {/* Top bar */}
         <div className="px-6 pt-5 pb-4 border-b bg-muted/30">
@@ -219,10 +244,14 @@ export function OnboardingModal() {
         {/* Content */}
         <div className="px-6 py-6 space-y-5">
           <DialogHeader className="space-y-1 text-left">
-            <div className={`w-12 h-12 rounded-xl ${slide.iconBg} flex items-center justify-center mb-3`}>
+            <div
+              className={`w-12 h-12 rounded-xl ${slide.iconBg} flex items-center justify-center mb-3`}
+            >
               <Icon className={`h-6 w-6 ${slide.iconColor}`} />
             </div>
-            <DialogTitle className="text-lg leading-tight">{slide.title}</DialogTitle>
+            <DialogTitle className="text-lg leading-tight">
+              {slide.title}
+            </DialogTitle>
             <p className="text-sm text-muted-foreground">{slide.subtitle}</p>
           </DialogHeader>
 

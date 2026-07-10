@@ -1,4 +1,9 @@
-import { db, dictionariesTable, fieldsTable, validationsTable } from "@workspace/db";
+import {
+  db,
+  dictionariesTable,
+  fieldsTable,
+  validationsTable,
+} from "@workspace/db";
 import { eq } from "drizzle-orm";
 
 async function seed() {
@@ -418,9 +423,12 @@ async function seed() {
 
     console.log("\n🎉 Seed concluído com sucesso!");
     console.log(`   - 3 dicionários criados`);
-    console.log(`   - ${insertedFields1.length + insertedFields2.length + insertedFields3.length} campos criados`);
-    console.log(`   - ${validations1.length + validations2.length + validations3.length} validações criadas`);
-
+    console.log(
+      `   - ${insertedFields1.length + insertedFields2.length + insertedFields3.length} campos criados`,
+    );
+    console.log(
+      `   - ${validations1.length + validations2.length + validations3.length} validações criadas`,
+    );
   } catch (error) {
     console.error("❌ Erro no seed:", error);
     throw error;

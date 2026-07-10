@@ -23,6 +23,7 @@ Durante a análise, foram identificados diversos pontos que necessitavam de aten
 **Arquivo Modificado:** `/home/ubuntu/project/dicionariodedados-main/package.json`
 
 **Trecho Corrigido:**
+
 ```json
 "dev": "pnpm run dev:api & pnpm run dev:web",
 ```
@@ -44,78 +45,103 @@ Durante a análise, foram identificados diversos pontos que necessitavam de aten
 **Trechos Corrigidos:**
 
 **Antes:**
+
 ```typescript
-  const allFields = await db
+const allFields = await db
+  .select()
+  .from(fieldsTable)
+  .where(eq(fieldsTable.dictionaryId, dicts[0].id));
+
+const fieldsByDict = new Map<number, typeof allFields>();
+const allFieldIds: number[] = [];
+
+for (const dict of dicts) {
+  const dictFields = await db
     .select()
     .from(fieldsTable)
-    .where(eq(fieldsTable.dictionaryId, dicts[0].id));
-
-  const fieldsByDict = new Map<number, typeof allFields>();
-  const allFieldIds: number[] = [];
-
-  for (const dict of dicts) {
-    const dictFields = await db.select().from(fieldsTable).where(eq(fieldsTable.dictionaryId, dict.id));
-    fieldsByDict.set(dict.id, dictFields);
-    for (const f of dictFields) allFieldIds.push(f.id);
-  }
+    .where(eq(fieldsTable.dictionaryId, dict.id));
+  fieldsByDict.set(dict.id, dictFields);
+  for (const f of dictFields) allFieldIds.push(f.id);
+}
 ```
 
 **Depois:**
+
 ```typescript
-  const allFields = await db.select().from(fieldsTable);
+const allFields = await db.select().from(fieldsTable);
 
-  const fieldsByDict = new Map<number, typeof allFields>();
-  const allFieldIds: number[] = [];
+const fieldsByDict = new Map<number, typeof allFields>();
+const allFieldIds: number[] = [];
 
-  for (const f of allFields) {
-    const list = fieldsByDict.get(f.dictionaryId) ?? [];
-    list.push(f);
-    fieldsByDict.set(f.dictionaryId, list);
-    allFieldIds.push(f.id);
-  }
+for (const f of allFields) {
+  const list = fieldsByDict.get(f.dictionaryId) ?? [];
+  list.push(f);
+  fieldsByDict.set(f.dictionaryId, list);
+  allFieldIds.push(f.id);
+}
 ```
 
 E para `totalFields`:
 
 **Antes:**
+
 ```typescript
-    for (const field of fields) {
-      const summary = allSummaries.get(field.id)!;
-      classificationCounts[summary.classification] = (classificationCounts[summary.classification] ?? 0) + 1;
+for (const field of fields) {
+  const summary = allSummaries.get(field.id)!;
+  classificationCounts[summary.classification] =
+    (classificationCounts[summary.classification] ?? 0) + 1;
 
-      if (summary.statusFinal === "approved") { approvedFields++; dictApproved++; }
-      else if (summary.statusFinal === "rejected") { rejectedFields++; dictRejected++; }
-      else if (summary.statusFinal === "conflict") { conflictFields++; }
-      else { pendingFields++; dictPending++; }
+  if (summary.statusFinal === "approved") {
+    approvedFields++;
+    dictApproved++;
+  } else if (summary.statusFinal === "rejected") {
+    rejectedFields++;
+    dictRejected++;
+  } else if (summary.statusFinal === "conflict") {
+    conflictFields++;
+  } else {
+    pendingFields++;
+    dictPending++;
+  }
 
-      if (summary.score !== null) {
-        totalScore += summary.score;
-        scoredFields++;
-        dictTotalScore += summary.score;
-        dictScoredFields++;
-      }
-    }
+  if (summary.score !== null) {
+    totalScore += summary.score;
+    scoredFields++;
+    dictTotalScore += summary.score;
+    dictScoredFields++;
+  }
+}
 ```
 
 **Depois:**
+
 ```typescript
-    for (const field of fields) {
-      totalFields++;
-      const summary = allSummaries.get(field.id)!;
-      classificationCounts[summary.classification] = (classificationCounts[summary.classification] ?? 0) + 1;
+for (const field of fields) {
+  totalFields++;
+  const summary = allSummaries.get(field.id)!;
+  classificationCounts[summary.classification] =
+    (classificationCounts[summary.classification] ?? 0) + 1;
 
-      if (summary.statusFinal === "approved") { approvedFields++; dictApproved++; }
-      else if (summary.statusFinal === "rejected") { rejectedFields++; dictRejected++; }
-      else if (summary.statusFinal === "conflict") { conflictFields++; }
-      else { pendingFields++; dictPending++; }
+  if (summary.statusFinal === "approved") {
+    approvedFields++;
+    dictApproved++;
+  } else if (summary.statusFinal === "rejected") {
+    rejectedFields++;
+    dictRejected++;
+  } else if (summary.statusFinal === "conflict") {
+    conflictFields++;
+  } else {
+    pendingFields++;
+    dictPending++;
+  }
 
-      if (summary.score !== null) {
-        totalScore += summary.score;
-        scoredFields++;
-        dictTotalScore += summary.score;
-        dictScoredFields++;
-      }
-    }
+  if (summary.score !== null) {
+    totalScore += summary.score;
+    scoredFields++;
+    dictTotalScore += summary.score;
+    dictScoredFields++;
+  }
+}
 ```
 
 #### 3.2.2. Endpoint `/dictionaries` (Listagem)
@@ -125,17 +151,22 @@ E para `totalFields`:
 **Trecho Corrigido:**
 
 **Antes:**
+
 ```typescript
-  const allFields: typeof fieldsTable.$inferSelect[] = [];
-  for (const dict of dicts) {
-    const dictFields = await db.select().from(fieldsTable).where(eq(fieldsTable.dictionaryId, dict.id));
-    allFields.push(...dictFields);
-  }
+const allFields: (typeof fieldsTable.$inferSelect)[] = [];
+for (const dict of dicts) {
+  const dictFields = await db
+    .select()
+    .from(fieldsTable)
+    .where(eq(fieldsTable.dictionaryId, dict.id));
+  allFields.push(...dictFields);
+}
 ```
 
 **Depois:**
+
 ```typescript
-  const allFields = await db.select().from(fieldsTable);
+const allFields = await db.select().from(fieldsTable);
 ```
 
 #### 3.2.3. Endpoint `/fields/critical`
@@ -145,17 +176,22 @@ E para `totalFields`:
 **Trecho Corrigido:**
 
 **Antes:**
+
 ```typescript
-  const allFields: typeof fieldsTable.$inferSelect[] = [];
-  for (const dict of dicts) {
-    const dictFields = await db.select().from(fieldsTable).where(eq(fieldsTable.dictionaryId, dict.id));
-    allFields.push(...dictFields);
-  }
+const allFields: (typeof fieldsTable.$inferSelect)[] = [];
+for (const dict of dicts) {
+  const dictFields = await db
+    .select()
+    .from(fieldsTable)
+    .where(eq(fieldsTable.dictionaryId, dict.id));
+  allFields.push(...dictFields);
+}
 ```
 
 **Depois:**
+
 ```typescript
-  const allFields = await db.select().from(fieldsTable);
+const allFields = await db.select().from(fieldsTable);
 ```
 
 ### 3.3. Inconsistência na Documentação (README.md)
@@ -171,6 +207,7 @@ E para `totalFields`:
 **Trecho Corrigido:**
 
 **Antes:**
+
 ```json
 {
   "processo": "Compras Hospitalares",
@@ -189,6 +226,7 @@ E para `totalFields`:
 ```
 
 **Depois:**
+
 ```json
 {
   "processo": "Compras Hospitalares",
@@ -214,7 +252,7 @@ Com base no `CHECKLIST-MELHORIAS.md` e na análise do código, as seguintes melh
 
 ### 4.1. Extração de Strings Mágicas
 
-**Problema:** Strings como 
+**Problema:** Strings como
 "pending", "approved", "rejected", "conflict", "reliable", "attention", "critical" estão hardcoded em `artifacts/api-server/src/lib/summary.ts`.
 
 **Impacto:** Dificulta a manutenção, introduz erros potenciais se as strings forem alteradas em um local e não em outro, e reduz a legibilidade do código.
@@ -269,64 +307,73 @@ Os scripts corrigidos foram aplicados diretamente nos arquivos mencionados na se
 ### 5.2. `artifacts/api-server/src/routes/dashboard.ts`
 
 ```typescript
-  const allFields = await db.select().from(fieldsTable);
+const allFields = await db.select().from(fieldsTable);
 
-  const fieldsByDict = new Map<number, typeof allFields>();
-  const allFieldIds: number[] = [];
+const fieldsByDict = new Map<number, typeof allFields>();
+const allFieldIds: number[] = [];
 
-  for (const f of allFields) {
-    const list = fieldsByDict.get(f.dictionaryId) ?? [];
-    list.push(f);
-    fieldsByDict.set(f.dictionaryId, list);
-    allFieldIds.push(f.id);
+for (const f of allFields) {
+  const list = fieldsByDict.get(f.dictionaryId) ?? [];
+  list.push(f);
+  fieldsByDict.set(f.dictionaryId, list);
+  allFieldIds.push(f.id);
+}
+
+const allSummaries = await computeFieldSummariesBatch(allFieldIds);
+
+let totalFields = 0;
+// ... (restante do código)
+
+for (const field of fields) {
+  totalFields++;
+  const summary = allSummaries.get(field.id)!;
+  classificationCounts[summary.classification] =
+    (classificationCounts[summary.classification] ?? 0) + 1;
+
+  if (summary.statusFinal === "approved") {
+    approvedFields++;
+    dictApproved++;
+  } else if (summary.statusFinal === "rejected") {
+    rejectedFields++;
+    dictRejected++;
+  } else if (summary.statusFinal === "conflict") {
+    conflictFields++;
+  } else {
+    pendingFields++;
+    dictPending++;
   }
 
-  const allSummaries = await computeFieldSummariesBatch(allFieldIds);
-
-  let totalFields = 0;
-  // ... (restante do código)
-
-    for (const field of fields) {
-      totalFields++;
-      const summary = allSummaries.get(field.id)!;
-      classificationCounts[summary.classification] = (classificationCounts[summary.classification] ?? 0) + 1;
-
-      if (summary.statusFinal === "approved") { approvedFields++; dictApproved++; }
-      else if (summary.statusFinal === "rejected") { rejectedFields++; dictRejected++; }
-      else if (summary.statusFinal === "conflict") { conflictFields++; }
-      else { pendingFields++; dictPending++; }
-
-      if (summary.score !== null) {
-        totalScore += summary.score;
-        scoredFields++;
-        dictTotalScore += summary.score;
-        dictScoredFields++;
-      }
-    }
+  if (summary.score !== null) {
+    totalScore += summary.score;
+    scoredFields++;
+    dictTotalScore += summary.score;
+    dictScoredFields++;
+  }
+}
 ```
 
 ### 5.3. `artifacts/api-server/src/routes/dictionaries.ts`
 
 ```typescript
-  const allFields = await db.select().from(fieldsTable);
+const allFields = await db.select().from(fieldsTable);
 
-  const fieldsByDict = new Map<number, typeof allFields>();
-  for (const f of allFields) {
-    const list = fieldsByDict.get(f.dictionaryId) ?? [];
-    list.push(f);
-    fieldsByDict.set(f.dictionaryId, list);
-  }
+const fieldsByDict = new Map<number, typeof allFields>();
+for (const f of allFields) {
+  const list = fieldsByDict.get(f.dictionaryId) ?? [];
+  list.push(f);
+  fieldsByDict.set(f.dictionaryId, list);
+}
 ```
 
 ### 5.4. `artifacts/api-server/src/routes/fields.ts`
 
 ```typescript
-  const allFields = await db.select().from(fieldsTable);
+const allFields = await db.select().from(fieldsTable);
 
-  if (allFields.length === 0) {
-    res.json(GetCriticalFieldsResponse.parse([]));
-    return;
-  }
+if (allFields.length === 0) {
+  res.json(GetCriticalFieldsResponse.parse([]));
+  return;
+}
 ```
 
 ### 5.5. `README.md`

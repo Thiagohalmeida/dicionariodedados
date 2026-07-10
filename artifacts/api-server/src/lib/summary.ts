@@ -7,7 +7,8 @@ import {
 } from "./constants";
 
 export type FieldStatus = (typeof FIELD_STATUS)[keyof typeof FIELD_STATUS];
-export type FieldClassification = (typeof FIELD_CLASSIFICATION)[keyof typeof FIELD_CLASSIFICATION];
+export type FieldClassification =
+  (typeof FIELD_CLASSIFICATION)[keyof typeof FIELD_CLASSIFICATION];
 
 export type FieldSummary = {
   fieldId: number;
@@ -25,14 +26,22 @@ export type FieldSummary = {
   avgHasBusinessRule: number | null;
 };
 
-function classify(score: number | null, totalValidations: number): FieldClassification {
-  if (totalValidations === 0 || score === null) return FIELD_CLASSIFICATION.PENDING;
+function classify(
+  score: number | null,
+  totalValidations: number,
+): FieldClassification {
+  if (totalValidations === 0 || score === null)
+    return FIELD_CLASSIFICATION.PENDING;
   if (score >= SCORE_THRESHOLDS.RELIABLE) return FIELD_CLASSIFICATION.RELIABLE;
-  if (score >= SCORE_THRESHOLDS.ATTENTION) return FIELD_CLASSIFICATION.ATTENTION;
+  if (score >= SCORE_THRESHOLDS.ATTENTION)
+    return FIELD_CLASSIFICATION.ATTENTION;
   return FIELD_CLASSIFICATION.CRITICAL;
 }
 
-function computeSummaryFromValidations(fieldId: number, validations: typeof import("@workspace/db").validationsTable.$inferSelect[]): FieldSummary {
+function computeSummaryFromValidations(
+  fieldId: number,
+  validations: (typeof import("@workspace/db").validationsTable.$inferSelect)[],
+): FieldSummary {
   if (validations.length === 0) {
     return {
       fieldId,
@@ -55,13 +64,21 @@ function computeSummaryFromValidations(fieldId: number, validations: typeof impo
   const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
 
   const avgUsed = validations.filter((v) => v.used).length / validations.length;
-  const avgRequired = validations.filter((v) => v.required).length / validations.length;
-  const avgCorrectName = validations.filter((v) => v.correctName).length / validations.length;
-  const avgCorrectOrigin = validations.filter((v) => v.correctOrigin).length / validations.length;
-  const avgHasBusinessRule = validations.filter((v) => v.hasBusinessRule).length / validations.length;
+  const avgRequired =
+    validations.filter((v) => v.required).length / validations.length;
+  const avgCorrectName =
+    validations.filter((v) => v.correctName).length / validations.length;
+  const avgCorrectOrigin =
+    validations.filter((v) => v.correctOrigin).length / validations.length;
+  const avgHasBusinessRule =
+    validations.filter((v) => v.hasBusinessRule).length / validations.length;
 
-  const approvedCount = validations.filter((v) => Number(v.score) >= SCORE_THRESHOLDS.APPROVE).length;
-  const rejectedCount = validations.filter((v) => Number(v.score) < SCORE_THRESHOLDS.APPROVE).length;
+  const approvedCount = validations.filter(
+    (v) => Number(v.score) >= SCORE_THRESHOLDS.APPROVE,
+  ).length;
+  const rejectedCount = validations.filter(
+    (v) => Number(v.score) < SCORE_THRESHOLDS.APPROVE,
+  ).length;
 
   let statusFinal: FieldStatus;
   if (approvedCount > 0 && rejectedCount > 0) {
@@ -91,7 +108,9 @@ function computeSummaryFromValidations(fieldId: number, validations: typeof impo
   };
 }
 
-export async function computeFieldSummariesBatch(fieldIds: number[]): Promise<Map<number, FieldSummary>> {
+export async function computeFieldSummariesBatch(
+  fieldIds: number[],
+): Promise<Map<number, FieldSummary>> {
   if (fieldIds.length === 0) return new Map();
 
   const validations = await db
@@ -109,12 +128,17 @@ export async function computeFieldSummariesBatch(fieldIds: number[]): Promise<Ma
   const result = new Map<number, FieldSummary>();
   for (const fieldId of fieldIds) {
     const fieldValidations = validationsByField.get(fieldId) ?? [];
-    result.set(fieldId, computeSummaryFromValidations(fieldId, fieldValidations as any));
+    result.set(
+      fieldId,
+      computeSummaryFromValidations(fieldId, fieldValidations as any),
+    );
   }
   return result;
 }
 
-export async function computeFieldSummary(fieldId: number): Promise<FieldSummary> {
+export async function computeFieldSummary(
+  fieldId: number,
+): Promise<FieldSummary> {
   const validations = await db
     .select()
     .from(validationsTable)

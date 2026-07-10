@@ -15,7 +15,11 @@ declare global {
 
   var File: {
     prototype: File;
-    new(fileBits: BlobPart[], fileName: string, options?: FilePropertyBag): File;
+    new (
+      fileBits: BlobPart[],
+      fileName: string,
+      options?: FilePropertyBag,
+    ): File;
   };
 
   interface Blob {
@@ -29,7 +33,7 @@ declare global {
 
   var Blob: {
     prototype: Blob;
-    new(blobParts?: BlobPart[], options?: BlobPropertyBag): Blob;
+    new (blobParts?: BlobPart[], options?: BlobPropertyBag): Blob;
   };
 
   type BlobPart = BufferSource | Blob | string;

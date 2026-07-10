@@ -5,7 +5,7 @@
  * API specification for Data Dictionary Validator
  * OpenAPI spec version: 0.1.0
  */
-import type { FieldWithSummary } from './fieldWithSummary';
+import type { FieldWithSummary } from "./fieldWithSummary";
 
 export type GetCriticalFields200 = {
   data: FieldWithSummary[];

@@ -38,14 +38,14 @@ Se uma máquina precisar tocar em arquivos que a outra já está editando, isso 
 
 ## Fluxo recomendado para cada máquina
 
-1) Verificar o estado local
+1. Verificar o estado local
 
 ```powershell
 git status
 git stash push -m "wip-before-sync"   # somente se houver alterações locais não commitadas
 ```
 
-2) Atualizar a base a partir de `main`
+2. Atualizar a base a partir de `main`
 
 ```powershell
 git fetch origin
@@ -53,7 +53,7 @@ git switch main
 git pull --rebase origin main
 ```
 
-3) Criar uma branch específica para a frente
+3. Criar uma branch específica para a frente
 
 ```powershell
 git switch -c feature/<seu-nome>/<frente> origin/main
@@ -66,12 +66,12 @@ git switch -c feature/thiago/backend origin/main
 git switch -c feature/ana/frontend origin/main
 ```
 
-4) Trabalhar somente na frente definida
+4. Trabalhar somente na frente definida
 
 - Evitar modificar arquivos de outra frente sem necessidade.
 - Se for preciso alterar um arquivo compartilhado, comunicar antes e manter a mudança mínima.
 
-5) Sincronizar com frequência
+5. Sincronizar com frequência
 
 ```powershell
 git fetch origin
@@ -80,7 +80,7 @@ git rebase origin/main
 
 Se houver mudanças da outra máquina no remoto e elas não forem conflitantes, o rebase mantém o histórico limpo.
 
-6) Enviar a branch para o repositório remoto
+6. Enviar a branch para o repositório remoto
 
 ```powershell
 git push -u origin feature/<seu-nome>/<frente>

@@ -9,10 +9,10 @@
 /**
  * Database connectivity status
  */
-export type HealthStatusDatabase = typeof HealthStatusDatabase[keyof typeof HealthStatusDatabase];
-
+export type HealthStatusDatabase =
+  (typeof HealthStatusDatabase)[keyof typeof HealthStatusDatabase];
 
 export const HealthStatusDatabase = {
-  ok: 'ok',
-  down: 'down',
+  ok: "ok",
+  down: "down",
 } as const;

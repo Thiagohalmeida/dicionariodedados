@@ -5,7 +5,7 @@
  * API specification for Data Dictionary Validator
  * OpenAPI spec version: 0.1.0
  */
-import type { CampoInput } from './campoInput';
+import type { CampoInput } from "./campoInput";
 
 export interface DictionaryImport {
   /** @minLength 1 */
