@@ -8,7 +8,7 @@ services:
       corepack prepare pnpm@latest --activate
       pnpm install --frozen-lockfile
       pnpm --filter @workspace/api-server run build
-    startCommand: pnpm --filter @workspace/api-server run start
+    startCommand: node --enable-source-maps artifacts/api-server/dist/index.mjs
     healthCheckPath: /api/healthz
     envVars:
       - key: NODE_ENV
