@@ -1,12 +1,16 @@
 services:
   - type: web
     name: validador-api
-    runtime: docker
-    dockerfilePath: ./artifacts/api-server/Dockerfile
-    dockerContext: .
+    runtime: node
+    plan: free
+    buildCommand: |
+      corepack enable
+      corepack prepare pnpm@latest --activate
+      pnpm install --frozen-lockfile
+      pnpm --filter @workspace/api-server run build
+    startCommand: pnpm --filter @workspace/api-server run start
+    healthCheckPath: /api/healthz
     envVars:
-      - key: DATABASE_URL
-        sync: false
       - key: NODE_ENV
         value: production
       - key: PORT
@@ -15,6 +19,8 @@ services:
         value: info
       - key: ALLOWED_ORIGINS
         value: https://seu-app.vercel.app
+      - key: DATABASE_URL
+        sync: false
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
@@ -23,6 +29,4 @@ services:
         value: excel-uploads
       - key: SUPABASE_BUCKET_EXPORTS
         value: exports
-    healthCheckPath: /api/healthz
     autoDeploy: true
-    numInstances: 1
