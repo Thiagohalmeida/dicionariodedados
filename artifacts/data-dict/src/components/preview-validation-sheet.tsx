@@ -514,7 +514,7 @@ export default function PreviewValidationSheet({
     try {
       const includedFields = fields.filter((f) => f.included);
       const jsonGerado = {
-        processo: resolvedMeta?.processo || includedFields[0]?.validation?.validatorName || "preview",
+        processo: resolvedMeta?.processo || "",
         categoria: resolvedMeta?.categoria || "",
         tabela: resolvedMeta?.tabela || "",
         campos: includedFields.map((f) => ({

@@ -4,12 +4,13 @@ import { pool } from "@workspace/db";
 
 const router: IRouter = Router();
 
-router.get("/healthz", async (_req: Request, res: Response) => {
+router.get("/healthz", async (req: Request, res: Response) => {
   let dbStatus = "ok";
   try {
     await pool.query("SELECT 1");
-  } catch {
+  } catch (err) {
     dbStatus = "down";
+    req.log.error({ err }, "Health check: database connection failed");
   }
 
   const status = dbStatus === "ok" ? "ok" : "degraded";
