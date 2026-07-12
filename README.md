@@ -1,12 +1,22 @@
 # Validador de Dicionário de Dados
 
-Micro SaaS para **validação colaborativa de dicionários de dados** com score de qualidade, detecção de conflitos e dashboard de governança — voltado para processos de compras em saúde.
+Micro SaaS para **construção e validação colaborativa de dicionários de dados** a partir de arquivos Excel da área, com score de qualidade, detecção de conflitos e dashboard de governança — voltado para processos de compras em saúde.
 
 ---
 
 ## Visão Geral
 
-Em aquisições de sistemas de informação hospitalar, fornecedores entregam **dicionários de dados** que descrevem os campos, tipos e origens dos dados de seus sistemas. Esses documentos são críticos para garantir interoperabilidade, conformidade regulatória e qualidade da informação em saúde.
+**A área NÃO possui dicionários de dados formalizados.** O conhecimento está disperso em arquivos Excel operacionais, planilhas de controle, cabeças de especialistas e documentação fragmentada.
+
+O **Validador DD** resolve isso transformando **arquivos Excel brutos da área** em dicionários de dados estruturados, validados e governados:
+
+1. **Importação Excel** → Upload de planilhas operacionais da área
+2. **Inferência automática** → Motor detecta tipos, periodicidade, origem, chaves via heurísticas
+3. **Preview + Edição** → Especialista revisa e corrige as inferências antes de persistir
+4. **Validação colaborativa** → 5 critérios objetivos por campo (score 0-100)
+5. **Exportação pronta** → DDL (PostgreSQL), Data Contract (JSON), CSV, Excel
+
+Em aquisições de sistemas de informação hospitalar, fornecedores entregam dicionários de dados que descrevem os campos, tipos e origens dos dados de seus sistemas. Esses documentos são críticos para garantir interoperabilidade, conformidade regulatória e qualidade da informação em saúde.
 
 O **Validador DD** permite que equipes multidisciplinares — gestores de TI, especialistas em dados e equipes de compras — revisem colaborativamente esses dicionários, aplicando 5 critérios objetivos de qualidade e gerando evidências de governança.
 
