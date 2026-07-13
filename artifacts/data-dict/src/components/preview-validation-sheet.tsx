@@ -299,7 +299,7 @@ function ValidationPanel({
         if (!open) onClose();
       }}
     >
-      <DialogContent className="sm:max-w-[540px] overflow-y-auto">
+      <DialogContent className="sm:max-w-[540px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Validar Campo: {field.campoOrigem}</DialogTitle>
         </DialogHeader>

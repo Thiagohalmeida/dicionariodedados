@@ -587,7 +587,7 @@ function ValidationPanel({
 
   return (
     <Sheet open={true} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
+      <SheetContent className="w-[400px] sm:w-[540px] max-h-[90vh] overflow-y-auto">
         <SheetHeader>
           <SheetTitle>Validar Campo: {field.campoOrigem}</SheetTitle>
         </SheetHeader>
