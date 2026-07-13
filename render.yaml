@@ -17,7 +17,7 @@ services:
       - key: LOG_LEVEL
         value: info
       - key: ALLOWED_ORIGINS
-        value: https://seu-app.vercel.app
+        value: https://dicionariodedados-api-server.vercel.app
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL
