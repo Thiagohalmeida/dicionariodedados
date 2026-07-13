@@ -6,10 +6,23 @@ import {
   integer,
   boolean,
   numeric,
+  pgEnum,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { fieldsTable } from "./fields";
+
+export const originTypeEnum = pgEnum("origin_type", [
+  "interno",
+  "externo",
+]);
+
+export const originDetailEnum = pgEnum("origin_detail", [
+  "sap",
+  "m303m",
+  "outro_interno",
+  "fornecedor",
+]);
 
 export const validationsTable = pgTable("validations", {
   id: serial("id").primaryKey(),
@@ -21,7 +34,10 @@ export const validationsTable = pgTable("validations", {
   required: boolean("required").notNull(),
   correctName: boolean("correct_name").notNull(),
   correctOrigin: boolean("correct_origin").notNull(),
+  originType: originTypeEnum("origin_type"),
+  originDetail: originDetailEnum("origin_detail"),
   hasBusinessRule: boolean("has_business_rule").notNull(),
+  businessRuleRationale: text("business_rule_rationale"),
   score: numeric("score", { precision: 5, scale: 2 }).notNull(),
   comment: text("comment"),
   createdAt: timestamp("created_at", { withTimezone: true })

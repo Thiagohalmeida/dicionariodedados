@@ -39,12 +39,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <Sidebar variant="inset" collapsible="icon">
         <SidebarHeader className="border-b border-sidebar-border bg-sidebar px-4 py-4">
-          <div className="flex items-center gap-2 font-bold text-lg text-sidebar-foreground">
-            <BookOpen className="h-5 w-5 text-primary" />
+          <Link href="/" className="flex items-center gap-2 font-bold text-lg text-sidebar-foreground">
+            <img src="/logo.png" alt="Validador de Dados" className="h-8 w-auto" />
             <span className="group-data-[collapsible=icon]:hidden">
-              Validador DD
+              Validador de Dados
             </span>
-          </div>
+          </Link>
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu className="mt-4">

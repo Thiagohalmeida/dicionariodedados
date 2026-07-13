@@ -8,6 +8,20 @@
       "when": 1783508776393,
       "tag": "0000_overconfident_ted_forrester",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783953894456,
+      "tag": "0001_flimsy_nemesis",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783955597928,
+      "tag": "0002_stiff_kingpin",
+      "breakpoints": true
     }
   ]
 }

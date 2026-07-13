@@ -65,6 +65,10 @@ interface PreviewField {
     correctName?: boolean;
     correctOrigin?: boolean;
     hasBusinessRule?: boolean;
+    originType?: string;
+    originDetail?: string;
+    businessRuleRationale?: string;
+    formula?: string;
     comment?: string;
   };
 }
@@ -229,8 +233,23 @@ function ValidationPanel({
     correctName: field.validation?.correctName ?? false,
     correctOrigin: field.validation?.correctOrigin ?? false,
     hasBusinessRule: field.validation?.hasBusinessRule ?? false,
+    originType: field.validation?.originType ?? "",
+    originDetail: field.validation?.originDetail ?? "",
+    businessRuleRationale: field.validation?.businessRuleRationale ?? "",
+    formula: field.validation?.formula ?? "nao",
     comment: field.validation?.comment ?? "",
   });
+
+  const validatorOptions = [
+    "Cleber Horta",
+    "Fernando Rosseto",
+    "Lucas Silva",
+    "Rosangela Goncalves",
+    "Alexandra Joelma",
+    "Tania Ribeiro",
+    "Ricardo Paulino",
+    "Eduardo Lefundes",
+  ];
 
   const handleSubmit = () => {
     const name = form.validatorName.trim();
@@ -242,7 +261,29 @@ function ValidationPanel({
       });
       return;
     }
-    onSave(form);
+
+    if (!form.originType) {
+      toast({
+        title: "Campo obrigatório",
+        description: "Selecione o tipo de origem do dado.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (form.hasBusinessRule && !form.businessRuleRationale.trim()) {
+      toast({
+        title: "Campo obrigatório",
+        description: "Informe o conceito/racional da regra de negócio.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Auto-fill comment when formula is "sim"
+    const comment = form.formula === "sim" ? "fórmula" : form.comment;
+
+    onSave({ ...form, comment });
     onClose();
   };
 
@@ -277,14 +318,24 @@ function ValidationPanel({
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Seu Nome (Responsável pela Validação)</Label>
-              <Input
+              <Label>Responsável pela Validação</Label>
+              <Select
                 value={form.validatorName}
-                onChange={(e) =>
-                  setForm({ ...form, validatorName: e.target.value })
+                onValueChange={(value) =>
+                  setForm({ ...form, validatorName: value })
                 }
-                placeholder="Ex: Ana Lima"
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o validador" />
+                </SelectTrigger>
+                <SelectContent>
+                  {validatorOptions.map((validator) => (
+                    <SelectItem key={validator} value={validator}>
+                      {validator}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-3 pt-4 border-t">
@@ -337,21 +388,71 @@ function ValidationPanel({
                   Nome técnico correto
                 </label>
               </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="correctOrigin"
-                  checked={form.correctOrigin}
-                  onCheckedChange={(c) =>
-                    setForm({ ...form, correctOrigin: c === true })
-                  }
-                />
-                <label
-                  htmlFor="correctOrigin"
-                  className="text-sm font-medium leading-none cursor-pointer"
-                >
-                  Origem correta
-                </label>
+
+              <div className="space-y-2 pt-2 border-t">
+                <Label className="text-sm font-medium">
+                  Origem do Dado Correta
+                </Label>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="correctOrigin"
+                    checked={form.correctOrigin}
+                    onCheckedChange={(c) =>
+                      setForm({ ...form, correctOrigin: c === true })
+                    }
+                  />
+                  <label
+                    htmlFor="correctOrigin"
+                    className="text-sm font-medium leading-none cursor-pointer"
+                  >
+                    Origem do dado correta
+                  </label>
+                </div>
+                <div className="ml-6 space-y-2">
+                  <Label className="text-sm">Tipo de Origem</Label>
+                  <Select
+                    value={form.originType}
+                    onValueChange={(value) =>
+                      setForm({ ...form, originType: value, originDetail: "" })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="interno">Interno</SelectItem>
+                      <SelectItem value="externo">Externo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <div className="ml-4 space-y-2">
+                    {form.originType === "interno" && (
+                      <div className="space-y-2">
+                        <Label className="text-sm">Plataforma / Relatório</Label>
+                        <Input
+                          value={form.originDetail}
+                          onChange={(e) =>
+                            setForm({ ...form, originDetail: e.target.value })
+                          }
+                          placeholder="Ex: SAP - M303M"
+                        />
+                      </div>
+                    )}
+                    {form.originType === "externo" && (
+                      <div className="space-y-2">
+                        <Label className="text-sm">Origem Externa</Label>
+                        <Input
+                          value={form.originDetail}
+                          onChange={(e) =>
+                            setForm({ ...form, originDetail: e.target.value })
+                          }
+                          placeholder="Ex: Fornecedor"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
+
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="hasBusinessRule"
@@ -364,20 +465,58 @@ function ValidationPanel({
                   htmlFor="hasBusinessRule"
                   className="text-sm font-medium leading-none cursor-pointer"
                 >
-                  Possui regra de negócio
+                  Possui regra de negócio definida
                 </label>
               </div>
 
-              <div className="space-y-2 pt-4 border-t">
-                <Label>Comentário (opcional)</Label>
-                <Input
-                  value={form.comment}
-                  onChange={(e) =>
-                    setForm({ ...form, comment: e.target.value })
-                  }
-                  placeholder="Observações adicionais..."
-                />
+              {form.hasBusinessRule && (
+                <div className="ml-6 space-y-2 pt-2 border-l-2 border-primary/20 pl-4">
+                  <Label className="text-sm">Conceito / Racional da Regra</Label>
+                  <Input
+                    value={form.businessRuleRationale}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        businessRuleRationale: e.target.value,
+                      })
+                    }
+                    placeholder="Descreva o conceito e a lógica da regra de negócio..."
+                  />
+                </div>
+              )}
+
+              <div className="space-y-2 pt-2 border-t">
+                <Label className="text-sm">Campo Fórmula</Label>
+                <Select
+                  value={form.formula}
+                  onValueChange={(value) => setForm({ ...form, formula: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="nao">Não</SelectItem>
+                    <SelectItem value="sim">Sim</SelectItem>
+                    <SelectItem value="suporte">Suporte</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {form.formula === "sim"
+                    ? "Campo será excluído do JSON. Observação preenchida com 'fórmula'."
+                    : form.formula === "suporte"
+                    ? "Campo será excluído do JSON (campo de suporte)."
+                    : "Campo será incluído normalmente no JSON."}
+                </p>
               </div>
+            </div>
+
+            <div className="space-y-2 pt-4 border-t">
+              <Label>Observação (opcional)</Label>
+              <Input
+                value={form.comment}
+                onChange={(e) => setForm({ ...form, comment: e.target.value })}
+                placeholder="Comentários adicionais sobre o campo..."
+              />
             </div>
 
             <div className="flex justify-end gap-2 pt-4 border-t">
@@ -513,11 +652,13 @@ export default function PreviewValidationSheet({
     setIsImporting(true);
     try {
       const includedFields = fields.filter((f) => f.included);
+      // Filter out formula fields (sim/suporte)
+      const validFields = includedFields.filter((f) => f.validation?.formula !== "sim" && f.validation?.formula !== "suporte");
       const jsonGerado = {
         processo: resolvedMeta?.processo || "",
         categoria: resolvedMeta?.categoria || "",
         tabela: resolvedMeta?.tabela || "",
-        campos: includedFields.map((f) => ({
+        campos: validFields.map((f) => ({
           campo_origem: f.campoOrigem,
           campo_tecnico: f.campoTecnico,
           descricao: f.descricao,

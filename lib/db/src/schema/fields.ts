@@ -5,10 +5,17 @@ import {
   timestamp,
   integer,
   boolean,
+  pgEnum,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { dictionariesTable } from "./dictionaries";
+
+export const formulaTypeEnum = pgEnum("formula_type", [
+  "nao",
+  "sim",
+  "suporte",
+]);
 
 export const fieldsTable = pgTable("fields", {
   id: serial("id").primaryKey(),
@@ -22,6 +29,7 @@ export const fieldsTable = pgTable("fields", {
   campoTecnico: text("campo_tecnico").notNull(),
   tipoDado: text("tipo_dado").notNull(),
   chave: boolean("chave").notNull().default(false),
+  formula: formulaTypeEnum("formula").notNull().default("nao"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

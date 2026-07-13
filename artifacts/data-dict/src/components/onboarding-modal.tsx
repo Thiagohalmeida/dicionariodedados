@@ -37,25 +37,17 @@ const slides = [
     icon: Database,
     iconColor: "text-blue-500",
     iconBg: "bg-blue-50",
-    title: "Bem-vindo ao Validador DD",
-    subtitle: "Governança de dados em compras de saúde",
+    title: "Bem-vindo ao Validador de dados",
+    subtitle: "Suprimentos - Medicamentos, material médico, laboratório e demais.",
     content: (
       <div className="space-y-3 text-sm text-muted-foreground">
         <p>
-          Esta plataforma ajuda equipes de compras hospitalares e especialistas
-          de dados a{" "}
-          <strong className="text-foreground">
-            validar dicionários de dados
-          </strong>{" "}
-          entregues por fornecedores de sistemas de informação em saúde.
+          Esta plataforma tem o objetivo de desenvolver a cultura de dados e
+          implementar a governança de dados na área de suprimentos.
         </p>
         <p>
-          Você{" "}
-          <strong className="text-foreground">
-            não precisa ser especialista em TI
-          </strong>{" "}
-          para participar — seu conhecimento sobre o processo de compras é o que
-          faz a diferença.
+          Os campos Observação (opcional), tipo de dado, Origem e chave poderiam
+          lista de opções.
         </p>
       </div>
     ),

@@ -107,7 +107,7 @@ export default function About() {
       {/* Hero */}
       <section className="text-center pt-8 space-y-5">
         <Badge variant="secondary" className="text-xs px-3 py-1">
-          Governança de Dados em Saúde
+          Governança de Dados em Suprimentos
         </Badge>
         <h1 className="text-4xl font-bold tracking-tight text-foreground leading-tight">
           Validação colaborativa de
@@ -115,9 +115,9 @@ export default function About() {
           <span className="text-primary">dicionários de dados</span>
         </h1>
         <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          Uma plataforma que aproxima especialistas técnicos e equipes de
-          compras hospitalares para garantir que os dados utilizados em
-          processos licitatórios sejam confiáveis, completos e bem documentados.
+          Uma plataforma para desenvolver a cultura de dados e implementar a
+          governança de dados na área de suprimentos — medicamentos, material
+          médico, laboratório e demais.
         </p>
         <div className="flex items-center justify-center gap-3 pt-2">
           <Link href="/dictionaries">
@@ -139,7 +139,7 @@ export default function About() {
           <BookOpen className="h-4 w-4" /> O que é
         </div>
         <h2 className="text-2xl font-bold">
-          Um validador de dicionários de dados para compras em saúde
+          Validador de dados para a área de suprimentos
         </h2>
         <p className="text-muted-foreground leading-relaxed">
           Em processos de aquisição de sistemas de informação hospitalar, os
@@ -150,10 +150,11 @@ export default function About() {
           regulatória e qualidade da informação em saúde.
         </p>
         <p className="text-muted-foreground leading-relaxed">
-          O <strong>Validador DD</strong> permite que equipes multidisciplinares
-          — gestores de TI, especialistas em dados e equipes de compras —
-          revisem colaborativamente esses dicionários, aplicando critérios
-          objetivos de qualidade e gerando evidências de governança de dados.
+          O <strong>Validador de Dados</strong> permite que equipes
+          multidisciplinares — gestores de TI, especialistas em dados e equipes
+          de suprimentos — revisem colaborativamente esses dicionários, aplicando
+          critérios objetivos de qualidade e gerando evidências de governança de
+          dados.
         </p>
       </section>
 

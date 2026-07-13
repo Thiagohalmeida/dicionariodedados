@@ -43,7 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Download, Pencil, ChevronDown } from "lucide-react";
+import { Download, Pencil, ChevronDown, AlertCircle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -483,6 +483,17 @@ function ValidationPanel({
   const { toast } = useToast();
   const submitValidation = useSubmitValidation();
 
+  const validatorOptions = [
+    "Cleber Horta",
+    "Fernando Rosseto",
+    "Lucas Silva",
+    "Rosangela Goncalves",
+    "Alexandra Joelma",
+    "Tania Ribeiro",
+    "Ricardo Paulino",
+    "Eduardo Lefundes",
+  ];
+
   const [form, setForm] = useState({
     validatorName: "",
     used: false,
@@ -490,6 +501,10 @@ function ValidationPanel({
     correctName: false,
     correctOrigin: false,
     hasBusinessRule: false,
+    originType: "",
+    originDetail: "",
+    businessRuleRationale: "",
+    formula: "nao",
     comment: "",
   });
 
@@ -504,8 +519,29 @@ function ValidationPanel({
       return;
     }
 
+    if (!form.originType) {
+      toast({
+        title: "Campo obrigatório",
+        description: "Selecione o tipo de origem do dado.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (form.hasBusinessRule && !form.businessRuleRationale.trim()) {
+      toast({
+        title: "Campo obrigatório",
+        description: "Informe o conceito/racional da regra de negócio.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Auto-fill comment when formula is "sim"
+    const comment = form.formula === "sim" ? "fórmula" : form.comment;
+
     submitValidation.mutate(
-      { id: field.id, data: { ...form, validatorName: name } },
+      { id: field.id, data: { ...form, validatorName: name, comment } },
       {
         onSuccess: () => {
           toast({
@@ -554,14 +590,24 @@ function ValidationPanel({
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Seu Nome (Responsável pela Validação)</Label>
-              <Input
+              <Label>Responsável pela Validação</Label>
+              <Select
                 value={form.validatorName}
-                onChange={(e) =>
-                  setForm({ ...form, validatorName: e.target.value })
+                onValueChange={(value) =>
+                  setForm({ ...form, validatorName: value })
                 }
-                placeholder="Ex: Ana Lima"
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o validador" />
+                </SelectTrigger>
+                <SelectContent>
+                  {validatorOptions.map((validator) => (
+                    <SelectItem key={validator} value={validator}>
+                      {validator}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-3 pt-4 border-t">
@@ -614,21 +660,90 @@ function ValidationPanel({
                   Nome técnico correto
                 </label>
               </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="correctOrigin"
-                  checked={form.correctOrigin}
-                  onCheckedChange={(c) =>
-                    setForm({ ...form, correctOrigin: c === true })
-                  }
-                />
-                <label
-                  htmlFor="correctOrigin"
-                  className="text-sm font-medium leading-none cursor-pointer"
-                >
-                  Origem do dado correta
-                </label>
+
+              <div className="space-y-2 pt-2 border-t">
+                <Label className="text-sm font-medium">
+                  Origem do Dado Correta
+                </Label>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="correctOrigin"
+                    checked={form.correctOrigin}
+                    onCheckedChange={(c) =>
+                      setForm({ ...form, correctOrigin: c === true })
+                    }
+                  />
+                  <label
+                    htmlFor="correctOrigin"
+                    className="text-sm font-medium leading-none cursor-pointer"
+                  >
+                    Origem do dado correta
+                  </label>
+                </div>
+                <div className="ml-6 space-y-2">
+                  <Label className="text-sm">Tipo de Origem</Label>
+                  <Select
+                    value={form.originType}
+                    onValueChange={(value) =>
+                      setForm({ ...form, originType: value, originDetail: "" })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="interno">Interno</SelectItem>
+                      <SelectItem value="externo">Externo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {form.originType === "interno" && (
+                    <div className="space-y-2">
+                      <Label className="text-sm">Plataforma / Relatório</Label>
+                      <Select
+                        value={form.originDetail}
+                        onValueChange={(value) =>
+                          setForm({ ...form, originDetail: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="SAP - M303M">SAP - M303M</SelectItem>
+                          <SelectItem value="SAP - Outro relatório">
+                            SAP - Outro relatório
+                          </SelectItem>
+                          <SelectItem value="Outra plataforma local">
+                            Outra plataforma local
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  {form.originType === "externo" && (
+                    <div className="space-y-2">
+                      <Label className="text-sm">Origem Externa</Label>
+                      <Select
+                        value={form.originDetail}
+                        onValueChange={(value) =>
+                          setForm({ ...form, originDetail: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Fornecedor">Fornecedor</SelectItem>
+                          <SelectItem value="Outra origem externa">
+                            Outra origem externa
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
               </div>
+
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="hasBusinessRule"
@@ -644,9 +759,46 @@ function ValidationPanel({
                   Possui regra de negócio definida
                 </label>
               </div>
-            </div>
+{form.hasBusinessRule && (
+                <div className="ml-6 space-y-2 pt-2 border-t">
+                  <Label className="text-sm">
+                    Conceito / Racional da Regra de Negócio
+                  </Label>
+                  <Input
+                    value={form.businessRuleRationale}
+                    onChange={(e) =>
+                      setForm({ ...form, businessRuleRationale: e.target.value })
+                    }
+                    placeholder="Explique o conceito e a lógica da regra de negócio..."
+                  />
+                </div>
+              )}
 
-            <div className="space-y-2 pt-4 border-t">
+              <div className="space-y-2 pt-2 border-t">
+                <Label className="text-sm">Campo Fórmula</Label>
+                <Select
+                  value={form.formula}
+                  onValueChange={(value) => setForm({ ...form, formula: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="nao">Não</SelectItem>
+                    <SelectItem value="sim">Sim</SelectItem>
+                    <SelectItem value="suporte">Suporte</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {form.formula === "sim"
+                    ? "Campo será excluído do JSON. Observação preenchida com 'fórmula'."
+                    : form.formula === "suporte"
+                    ? "Campo será excluído do JSON (campo de suporte)."
+                    : "Campo será incluído normalmente no JSON."}
+                </p>
+              </div>
+
+              <div className="space-y-2 pt-4 border-t">
               <Label>Observação (opcional)</Label>
               <Input
                 value={form.comment}
@@ -666,6 +818,7 @@ function ValidationPanel({
             </Button>
           </div>
         </div>
+      </div>
       </SheetContent>
     </Sheet>
   );

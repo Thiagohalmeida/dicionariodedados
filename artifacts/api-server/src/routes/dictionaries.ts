@@ -344,6 +344,11 @@ router.get("/dictionaries/:id/export", async (req, res): Promise<void> => {
     typeof req.query.format === "string" ? req.query.format : "json";
   const fieldsWithSummaries = await getFieldsWithSummaries(dict.id);
 
+  // Filter out fields with formula "sim" or "suporte"
+  const filteredFields = fieldsWithSummaries.filter(
+    (f) => f.formula === "nao",
+  );
+
   if (format === "csv") {
     const header = [
       "campo_origem",
@@ -358,7 +363,7 @@ router.get("/dictionaries/:id/export", async (req, res): Promise<void> => {
       "classification",
     ].join(",");
 
-    const rows = fieldsWithSummaries.map((f) =>
+    const rows = filteredFields.map((f) =>
       [
         `"${f.campoOrigem}"`,
         `"${f.descricao}"`,
@@ -388,7 +393,7 @@ router.get("/dictionaries/:id/export", async (req, res): Promise<void> => {
     tabela: dict.tabela,
     version: dict.version,
     exportedAt: new Date().toISOString(),
-    campos: fieldsWithSummaries.map((f) => ({
+    campos: filteredFields.map((f) => ({
       campo_origem: f.campoOrigem,
       descricao: f.descricao,
       origem: f.origem,

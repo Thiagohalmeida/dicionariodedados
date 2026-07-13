@@ -474,6 +474,10 @@ components:
           type: string
         chave:
           type: boolean
+        formula:
+          type: string
+          enum: [nao, sim, suporte]
+          default: nao
 
     FieldWithSummary:
       type: object
@@ -535,7 +539,7 @@ components:
 
     ValidationInput:
       type: object
-      required: [validatorName, used, required, correctName, correctOrigin, hasBusinessRule]
+      required: [validatorName, used, required, correctName, correctOrigin, hasBusinessRule, originType, originDetail]
       properties:
         validatorName:
           type: string
@@ -550,12 +554,19 @@ components:
           type: boolean
         hasBusinessRule:
           type: boolean
+        originType:
+          type: string
+          enum: [interno, externo]
+        originDetail:
+          type: ["string", "null"]
+        businessRuleRationale:
+          type: ["string", "null"]
         comment:
           type: ["string", "null"]
 
     Validation:
       type: object
-      required: [id, fieldId, validatorName, used, required, correctName, correctOrigin, hasBusinessRule, score, createdAt]
+      required: [id, fieldId, validatorName, used, required, correctName, correctOrigin, hasBusinessRule, originType, originDetail, businessRuleRationale, score, createdAt]
       properties:
         id:
           type: integer
@@ -573,6 +584,13 @@ components:
           type: boolean
         hasBusinessRule:
           type: boolean
+        originType:
+          type: string
+          enum: [interno, externo]
+        originDetail:
+          type: ["string", "null"]
+        businessRuleRationale:
+          type: ["string", "null"]
         comment:
           type: ["string", "null"]
         score:
@@ -610,6 +628,9 @@ components:
           type: string
         chave:
           type: boolean
+        formula:
+          type: string
+          enum: [nao, sim, suporte]
 
     DictionaryImport:
       type: object
@@ -648,6 +669,10 @@ components:
           type: string
         chave:
           type: boolean
+        formula:
+          type: string
+          enum: [nao, sim, suporte]
+          default: nao
 
     ExportResult:
       type: object

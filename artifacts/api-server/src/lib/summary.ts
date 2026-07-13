@@ -168,6 +168,7 @@ export async function getFieldsWithSummaries(dictionaryId: number) {
     campoTecnico: f.campoTecnico,
     tipoDado: f.tipoDado,
     chave: f.chave,
+    formula: f.formula,
     summary: summaries.get(f.id)!,
   }));
 }
