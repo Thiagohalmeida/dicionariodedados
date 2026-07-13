@@ -37,7 +37,7 @@ const allowedOriginsRaw = process.env.ALLOWED_ORIGINS;
 if (allowedOriginsRaw && allowedOriginsRaw.trim().length > 0) {
   const allowedOrigins = allowedOriginsRaw
     .split(",")
-    .map((o) => o.trim())
+    .map((o) => o.trim().replace(/\/$/, "")) // strip trailing slash
     .filter(Boolean);
   app.use(cors({ origin: allowedOrigins, credentials: true }));
 } else {
