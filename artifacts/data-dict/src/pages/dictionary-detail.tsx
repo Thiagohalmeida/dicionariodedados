@@ -483,6 +483,7 @@ function ValidationPanel({
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const submitValidation = useSubmitValidation();
+  const updateField = useUpdateField();
 
   const validatorOptions = [
     "Cleber Horta",
@@ -544,6 +545,21 @@ function ValidationPanel({
 
     // Remove formula from validation payload (not part of validation schema)
     const { formula, ...validationData } = form;
+
+    // Update the formula field separately (cast to proper enum type)
+    const formulaValue = formula as "nao" | "sim" | "suporte";
+    updateField.mutate(
+      { id: field.id, data: { formula: formulaValue } },
+      {
+        onError: () => {
+          toast({
+            title: "Erro ao atualizar campo",
+            description: "Não foi possível salvar o tipo de fórmula.",
+            variant: "destructive",
+          });
+        },
+      }
+    );
 
     submitValidation.mutate(
       { id: field.id, data: { ...validationData, validatorName: name, comment } },
