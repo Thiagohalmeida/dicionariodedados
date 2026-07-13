@@ -1,7 +1,7 @@
 {
   "buildCommand": "pnpm --filter @workspace/data-dict run build",
   "installCommand": "pnpm install --no-frozen-lockfile",
-  "outputDirectory": "artifacts/data-dict/dist",
+  "outputDirectory": "artifacts/data-dict/dist/public",
   "framework": "vite",
   "rewrites": [
     {
