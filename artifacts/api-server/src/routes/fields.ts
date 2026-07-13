@@ -119,7 +119,7 @@ router.post("/fields/:id/validate", async (req, res): Promise<void> => {
     return;
   }
 
-  const { used, required, correctName, correctOrigin, hasBusinessRule } =
+  const { used, required, correctName, correctOrigin, hasBusinessRule, originType, originDetail, businessRuleRationale } =
     parsed.data;
   const score =
     (used ? 20 : 0) +
@@ -136,6 +136,9 @@ router.post("/fields/:id/validate", async (req, res): Promise<void> => {
     correctName,
     correctOrigin,
     hasBusinessRule,
+    originType: originType ?? null,
+    originDetail: originDetail ?? null,
+    businessRuleRationale: businessRuleRationale ?? null,
     score: String(score),
     comment: parsed.data.comment ?? null,
   });

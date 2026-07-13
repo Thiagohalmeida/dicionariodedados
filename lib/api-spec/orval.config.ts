@@ -63,20 +63,22 @@ export default defineConfig({
       prettier: true,
       override: {
         zod: {
+          zodVersion: "v3",
+          looseObject: false,
           coerce: {
             query: ["boolean", "number", "string"],
             param: ["boolean", "number", "string"],
             body: ["bigint", "date"],
             response: ["bigint", "date"],
           },
+          useDates: true,
+          useBigInt: true,
         },
-        useDates: true,
-        useBigInt: true,
-      },
-      // Type overrides for Node.js environment (File/Blob not available)
-      override: {
-        schema: {
-          override: typeOverride,
+        // Type overrides for Node.js environment (File/Blob not available)
+        override: {
+          schema: {
+            override: typeOverride,
+          },
         },
       },
     },

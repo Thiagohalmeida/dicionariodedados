@@ -7,7 +7,7 @@ import {
   pgEnum,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod/v4";
+import { z } from "zod";
 
 export const dictionaryStatusEnum = pgEnum("dictionary_status", [
   "pending",
@@ -38,6 +38,6 @@ export const insertDictionarySchema = createInsertSchema(
   id: true,
   createdAt: true,
   updatedAt: true,
-});
+}) as unknown as z.ZodType<any>;
 export type InsertDictionary = z.infer<typeof insertDictionarySchema>;
 export type Dictionary = typeof dictionariesTable.$inferSelect;

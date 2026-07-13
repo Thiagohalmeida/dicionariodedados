@@ -8,7 +8,7 @@ import {
   pgEnum,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod/v4";
+import { z } from "zod";
 
 export const auditActionEnum = pgEnum("audit_action", [
   "create",
@@ -37,7 +37,7 @@ export const auditLogsTable = pgTable("audit_logs", {
 export const insertAuditLogSchema = createInsertSchema(auditLogsTable).omit({
   id: true,
   createdAt: true,
-});
+}) as unknown as z.ZodType<any>;
 export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 export type AuditLog = typeof auditLogsTable.$inferSelect;
 
@@ -60,6 +60,6 @@ export const insertStorageObjectSchema = createInsertSchema(
 ).omit({
   id: true,
   createdAt: true,
-});
+}) as unknown as z.ZodType<any>;
 export type InsertStorageObject = z.infer<typeof insertStorageObjectSchema>;
 export type StorageObject = typeof storageObjectsTable.$inferSelect;

@@ -67,8 +67,10 @@ paths:
                 properties:
                   meta:
                     type: object
+                    additionalProperties: true
                   json_gerado:
                     type: object
+                    additionalProperties: true
         "400":
           description: Invalid input
 

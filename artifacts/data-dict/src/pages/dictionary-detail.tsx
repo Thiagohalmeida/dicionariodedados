@@ -9,6 +9,7 @@ import {
 import { useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import type { ValidationInputOriginType } from "@workspace/api-client-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -492,6 +493,7 @@ function ValidationPanel({
     "Tania Ribeiro",
     "Ricardo Paulino",
     "Eduardo Lefundes",
+    "Thiago Almeida",
   ];
 
   const [form, setForm] = useState({
@@ -501,7 +503,7 @@ function ValidationPanel({
     correctName: false,
     correctOrigin: false,
     hasBusinessRule: false,
-    originType: "",
+    originType: "" as ValidationInputOriginType,
     originDetail: "",
     businessRuleRationale: "",
     formula: "nao",
@@ -663,7 +665,7 @@ function ValidationPanel({
 
               <div className="space-y-2 pt-2 border-t">
                 <Label className="text-sm font-medium">
-                  Origem do Dado Correta
+                  Origem
                 </Label>
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -677,14 +679,14 @@ function ValidationPanel({
                     htmlFor="correctOrigin"
                     className="text-sm font-medium leading-none cursor-pointer"
                   >
-                    Origem do dado correta
+                    Origem
                   </label>
                 </div>
                 <div className="ml-6 space-y-2">
-                  <Label className="text-sm">Tipo de Origem</Label>
+                  <Label className="text-sm">Fonte</Label>
                   <Select
                     value={form.originType}
-                    onValueChange={(value) =>
+                    onValueChange={(value: ValidationInputOriginType) =>
                       setForm({ ...form, originType: value, originDetail: "" })
                     }
                   >
@@ -698,7 +700,7 @@ function ValidationPanel({
                   </Select>
                   {form.originType === "interno" && (
                     <div className="space-y-2">
-                      <Label className="text-sm">Plataforma / Relatório</Label>
+                      <Label className="text-sm">Plataforma</Label>
                       <Select
                         value={form.originDetail}
                         onValueChange={(value) =>
@@ -722,7 +724,7 @@ function ValidationPanel({
                   )}
                   {form.originType === "externo" && (
                     <div className="space-y-2">
-                      <Label className="text-sm">Origem Externa</Label>
+                      <Label className="text-sm">Origem</Label>
                       <Select
                         value={form.originDetail}
                         onValueChange={(value) =>

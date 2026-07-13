@@ -6,10 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type HealthStatusStatus = typeof HealthStatusStatus[keyof typeof HealthStatusStatus];
+export type FieldFormula = typeof FieldFormula[keyof typeof FieldFormula];
 
 
-export const HealthStatusStatus = {
-  ok: 'ok',
-  degraded: 'degraded',
+export const FieldFormula = {
+  nao: 'nao',
+  sim: 'sim',
+  suporte: 'suporte',
 } as const;

@@ -39,9 +39,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <Sidebar variant="inset" collapsible="icon">
         <SidebarHeader className="border-b border-sidebar-border bg-sidebar px-4 py-4">
-          <Link href="/" className="flex items-center gap-2 font-bold text-lg text-sidebar-foreground">
+          <Link href="/" className="flex flex-col items-center gap-1.5 font-bold text-lg text-sidebar-foreground">
             <img src="/logo.png" alt="Validador de Dados" className="h-8 w-auto" />
-            <span className="group-data-[collapsible=icon]:hidden">
+            <span className="group-data-[collapsible=icon]:hidden text-center whitespace-nowrap">
               Validador de Dados
             </span>
           </Link>

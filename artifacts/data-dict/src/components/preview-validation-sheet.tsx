@@ -47,6 +47,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getApiBase } from "@/lib/utils";
+import type { ValidationInputOriginType } from "@workspace/api-client-react";
 
 interface PreviewField {
   id: number;
@@ -249,6 +250,7 @@ function ValidationPanel({
     "Tania Ribeiro",
     "Ricardo Paulino",
     "Eduardo Lefundes",
+    "Thiago Almeida",
   ];
 
   const handleSubmit = () => {
@@ -391,7 +393,7 @@ function ValidationPanel({
 
               <div className="space-y-2 pt-2 border-t">
                 <Label className="text-sm font-medium">
-                  Origem do Dado Correta
+                  Origem
                 </Label>
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -405,11 +407,11 @@ function ValidationPanel({
                     htmlFor="correctOrigin"
                     className="text-sm font-medium leading-none cursor-pointer"
                   >
-                    Origem do dado correta
+                    Origem
                   </label>
                 </div>
                 <div className="ml-6 space-y-2">
-                  <Label className="text-sm">Tipo de Origem</Label>
+                  <Label className="text-sm">Fonte</Label>
                   <Select
                     value={form.originType}
                     onValueChange={(value) =>
@@ -427,7 +429,7 @@ function ValidationPanel({
                   <div className="ml-4 space-y-2">
                     {form.originType === "interno" && (
                       <div className="space-y-2">
-                        <Label className="text-sm">Plataforma / Relatório</Label>
+                        <Label className="text-sm">Plataforma</Label>
                         <Input
                           value={form.originDetail}
                           onChange={(e) =>
@@ -439,7 +441,7 @@ function ValidationPanel({
                     )}
                     {form.originType === "externo" && (
                       <div className="space-y-2">
-                        <Label className="text-sm">Origem Externa</Label>
+                        <Label className="text-sm">Origem</Label>
                         <Input
                           value={form.originDetail}
                           onChange={(e) =>

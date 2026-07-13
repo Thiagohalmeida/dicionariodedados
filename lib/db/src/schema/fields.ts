@@ -8,7 +8,7 @@ import {
   pgEnum,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { dictionariesTable } from "./dictionaries";
 
 export const formulaTypeEnum = pgEnum("formula_type", [
@@ -38,6 +38,6 @@ export const fieldsTable = pgTable("fields", {
 export const insertFieldSchema = createInsertSchema(fieldsTable).omit({
   id: true,
   createdAt: true,
-});
+}) as unknown as z.ZodType<any>;
 export type InsertField = z.infer<typeof insertFieldSchema>;
 export type Field = typeof fieldsTable.$inferSelect;

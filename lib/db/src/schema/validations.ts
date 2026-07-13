@@ -9,7 +9,7 @@ import {
   pgEnum,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { fieldsTable } from "./fields";
 
 export const originTypeEnum = pgEnum("origin_type", [
@@ -50,6 +50,6 @@ export const insertValidationSchema = createInsertSchema(validationsTable).omit(
     id: true,
     createdAt: true,
   },
-);
+) as unknown as z.ZodType<any>;
 export type InsertValidation = z.infer<typeof insertValidationSchema>;
 export type Validation = typeof validationsTable.$inferSelect;
