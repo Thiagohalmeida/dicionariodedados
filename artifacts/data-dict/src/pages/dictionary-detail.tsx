@@ -542,8 +542,11 @@ function ValidationPanel({
     // Auto-fill comment when formula is "sim"
     const comment = form.formula === "sim" ? "fórmula" : form.comment;
 
+    // Remove formula from validation payload (not part of validation schema)
+    const { formula, ...validationData } = form;
+
     submitValidation.mutate(
-      { id: field.id, data: { ...form, validatorName: name, comment } },
+      { id: field.id, data: { ...validationData, validatorName: name, comment } },
       {
         onSuccess: () => {
           toast({

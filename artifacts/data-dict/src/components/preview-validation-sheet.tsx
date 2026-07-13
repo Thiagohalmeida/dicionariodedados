@@ -285,7 +285,10 @@ function ValidationPanel({
     // Auto-fill comment when formula is "sim"
     const comment = form.formula === "sim" ? "fórmula" : form.comment;
 
-    onSave({ ...form, comment });
+    // Remove formula from validation payload (not part of validation schema)
+    const { formula, ...validationData } = form;
+
+    onSave({ ...validationData, comment });
     onClose();
   };
 
