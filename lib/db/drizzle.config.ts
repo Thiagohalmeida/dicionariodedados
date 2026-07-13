@@ -46,5 +46,6 @@ export default defineConfig({
     url: databaseUrl,
     ssl: isLocalhost ? false : { rejectUnauthorized: false },
   },
+  schemaFilter: ["public"],
   out: "./migrations",
 });
