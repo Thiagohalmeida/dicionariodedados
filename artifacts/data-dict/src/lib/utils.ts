@@ -34,3 +34,34 @@ export function traduzirClassificacao(cls: string): string {
   };
   return map[cls] ?? cls;
 }
+
+export function statusBadgeVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
+  return status === "conflict" ? "destructive" : "outline";
+}
+
+export function classificationBadgeVariant(
+  classification: string,
+): "default" | "secondary" | "destructive" | "outline" {
+  switch (classification) {
+    case "reliable":
+      return "default";
+    case "attention":
+      return "secondary";
+    case "critical":
+      return "destructive";
+    default:
+      return "outline";
+  }
+}
+
+export const VALIDATOR_OPTIONS = [
+  "Cleber Horta",
+  "Fernando Rosseto",
+  "Lucas Silva",
+  "Rosangela Goncalves",
+  "Alexandra Joelma",
+  "Tania Ribeiro",
+  "Ricardo Paulino",
+  "Eduardo Lefundes",
+  "Thiago Almeida",
+] as const;
