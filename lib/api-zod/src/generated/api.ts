@@ -224,7 +224,9 @@ export const UpdateFieldBody = zod.object({
   "campoTecnico": zod.string().optional(),
   "tipoDado": zod.string().optional(),
   "chave": zod.boolean().optional(),
-  "formula": zod.enum(['nao', 'sim', 'suporte']).optional()
+  "formula": zod.enum(['nao', 'sim', 'suporte']).optional(),
+  "excluded": zod.boolean().optional(),
+  "customInternalPlatform": zod.string().optional()
 })
 
 export const updateFieldResponseFormulaDefault = `nao`;

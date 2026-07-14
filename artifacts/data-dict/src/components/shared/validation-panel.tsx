@@ -30,6 +30,8 @@ interface ValidationPanelProps {
       businessRuleRationale?: string;
       formula?: string;
       comment?: string;
+      excluded?: boolean;
+      customInternalPlatform?: string;
     };
   };
   onClose: () => void;
@@ -57,6 +59,8 @@ export function ValidationPanel({
       businessRuleRationale: validation.businessRuleRationale ?? "",
       formula: (validation.formula as "nao" | "sim" | "suporte") ?? "nao",
       comment: validation.comment ?? "",
+      excluded: validation.excluded ?? false,
+      customInternalPlatform: validation.customInternalPlatform ?? "",
     },
     onSubmit: (data) => onSave(data),
     onClose,

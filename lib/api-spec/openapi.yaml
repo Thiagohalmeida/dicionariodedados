@@ -633,6 +633,10 @@ components:
         formula:
           type: string
           enum: [nao, sim, suporte]
+        excluded:
+          type: boolean
+        customInternalPlatform:
+          type: string
 
     DictionaryImport:
       type: object

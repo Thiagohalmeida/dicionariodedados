@@ -16,6 +16,8 @@ export interface ValidationFormData {
   businessRuleRationale: string;
   formula: "nao" | "sim" | "suporte";
   comment: string;
+  excluded: boolean; // campo para excluir/desconsiderar sem validar
+  customInternalPlatform?: string; // para digitar "Outro relatório" customizado
 }
 
 export function useValidationForm({
@@ -41,6 +43,8 @@ export function useValidationForm({
     businessRuleRationale: initialData?.businessRuleRationale ?? "",
     formula: (initialData?.formula as "nao" | "sim" | "suporte") ?? "nao",
     comment: initialData?.comment ?? "",
+    excluded: initialData?.excluded ?? false,
+    customInternalPlatform: initialData?.customInternalPlatform ?? "",
   });
 
   const handleSubmit = () => {
@@ -72,13 +76,29 @@ export function useValidationForm({
       return;
     }
 
+    // If custom internal platform is selected but no custom name provided
+    if (form.originType === "interno" && form.originDetail === "__custom__" && !form.customInternalPlatform?.trim()) {
+      toast({
+        title: "Campo obrigatório",
+        description: "Digite o nome do relatório personalizado.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Auto-fill comment when formula is "sim"
     const comment = form.formula === "sim" ? "fórmula" : form.comment;
+
+    // Prepare originDetail - use custom if selected
+    const originDetail = form.originType === "interno" && form.originDetail === "__custom__"
+      ? (form.customInternalPlatform ?? "")
+      : form.originDetail;
 
     onSubmit({
       ...form,
       comment,
       validatorName: name,
+      originDetail,
     });
     onClose();
   };
@@ -107,4 +127,5 @@ export const INTERNAL_PLATFORM_OPTIONS = [
   { value: "SAP - M303M", label: "SAP - M303M" },
   { value: "SAP - Outro relatório", label: "SAP - Outro relatório" },
   { value: "Outra plataforma local", label: "Outra plataforma local" },
+  { value: "__custom__", label: "Outro relatório (digitar)" },
 ] as const;

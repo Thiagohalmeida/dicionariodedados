@@ -30,6 +30,8 @@ export const fieldsTable = pgTable("fields", {
   tipoDado: text("tipo_dado").notNull(),
   chave: boolean("chave").notNull().default(false),
   formula: formulaTypeEnum("formula").notNull().default("nao"),
+  excluded: boolean("excluded").notNull().default(false),
+  customInternalPlatform: text("custom_internal_platform"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

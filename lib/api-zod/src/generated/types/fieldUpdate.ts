@@ -16,4 +16,6 @@ export interface FieldUpdate {
   tipoDado?: string;
   chave?: boolean;
   formula?: FieldUpdateFormula;
+  excluded?: boolean;
+  customInternalPlatform?: string;
 }

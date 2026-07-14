@@ -63,6 +63,10 @@ router.patch("/fields/:id", async (req, res): Promise<void> => {
   if (parsed.data.tipoDado !== undefined)
     updates.tipoDado = parsed.data.tipoDado;
   if (parsed.data.chave !== undefined) updates.chave = parsed.data.chave;
+  if (parsed.data.excluded !== undefined)
+    updates.excluded = parsed.data.excluded;
+  if (parsed.data.customInternalPlatform !== undefined)
+    updates.customInternalPlatform = parsed.data.customInternalPlatform;
 
   if (Object.keys(updates).length === 0) {
     req.log.error({ fieldId: params.data.id }, "No fields to update");
