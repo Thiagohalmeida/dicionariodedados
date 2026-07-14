@@ -43,6 +43,7 @@ import {
   classificationBadgeVariant,
 } from "@/lib/utils";
 import { EditFieldDialog } from "@/components/shared/edit-field-dialog";
+import { FieldTableRow } from "@/components/shared/field-table-row";
 import { ValidationPanel } from "@/components/shared/validation-panel";
 import { useApiExport } from "@/hooks/use-api-action";
 
@@ -261,81 +262,12 @@ export default function DictionaryDetail() {
             </TableHeader>
             <TableBody>
               {dict.fields.map((field) => (
-                <TableRow
+                <FieldTableRow
                   key={field.id}
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => setSelectedField(field)}
-                >
-                  <TableCell className="font-medium">
-                    {field.campoOrigem}
-                  </TableCell>
-                  <TableCell className="font-mono text-sm">
-                    {field.campoTecnico}
-                  </TableCell>
-                  <TableCell
-                    className="max-w-[200px] truncate"
-                    title={field.descricao}
-                  >
-                    {field.descricao}
-                  </TableCell>
-                  <TableCell className="font-mono text-sm">
-                    {field.tipoDado}
-                  </TableCell>
-                  <TableCell>{field.periodicidade}</TableCell>
-                  <TableCell>{field.chave ? "Sim" : "Não"}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        field.summary?.statusFinal === "conflict"
-                          ? "destructive"
-                          : "outline"
-                      }
-                    >
-                      {traduzirStatus(field.summary?.statusFinal || "pending")}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        field.summary?.classification === "reliable"
-                          ? "default"
-                          : field.summary?.classification === "attention"
-                          ? "secondary"
-                          : field.summary?.classification === "critical"
-                          ? "destructive"
-                          : "outline"
-                      }
-                    >
-                      {traduzirClassificacao(
-                        field.summary?.classification || "pending",
-                      )}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{field.summary?.score ?? "-"}</TableCell>
-                  <TableCell
-                    className="text-right"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSelectedField(field)}
-                      >
-                        Validar
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                        title="Editar campo"
-                        onClick={() => setEditingField(field)}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
+                  field={field}
+                  onSelect={(f) => setSelectedField(f as FieldWithSummary)}
+                  onEdit={(f) => setEditingField(f as FieldWithSummary)}
+                />
               ))}
             </TableBody>
           </Table>

@@ -421,8 +421,8 @@ Todos os itens principais estão concluídos. O projeto está pronto para deploy
 - [x] **5. Unificar handlers de fetch+toast+loading** — migrar `generateValidatedJson`, `importDictionary` em `preview-validation-sheet.tsx` para usar `useApiAction`/`useApiExport` de `hooks/use-api-action.ts`
 
 ### Performance - Otimizações
-- [ ] **6. `React.memo` nas linhas de tabela** — extrair `PreviewFieldRow` em `components/shared/preview-field-row.tsx` com `React.memo`; usar no `map` do preview (linhas 740-813)
-- [ ] **7. `React.memo` + `useCallback` nas linhas de `dictionary-detail.tsx`** — extrair `FieldTableRow` com `React.memo`; handlers estáveis via `useCallback`
+- [x] **6. `React.memo` nas linhas de tabela** — extrair `PreviewFieldRow` em `components/shared/preview-field-row.tsx` com `React.memo`; usar no `map` do preview
+- [x] **7. `React.memo` + `useCallback` nas linhas de `dictionary-detail.tsx`** — extrair `FieldTableRow` com `React.memo`; handlers estáveis via callbacks tipados
 
 ### Checklist de Não-Regressão (validar a cada step)
 - [ ] Dictionary-detail: abrir validação (Sheet), preencher, salvar → persiste no banco

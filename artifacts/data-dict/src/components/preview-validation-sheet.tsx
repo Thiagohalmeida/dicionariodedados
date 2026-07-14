@@ -49,9 +49,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useApiAction } from "@/hooks/use-api-action";
 import { EditFieldDialog } from "@/components/shared/edit-field-dialog";
 import { ValidationPanel } from "@/components/shared/validation-panel";
+import { PreviewFieldRow } from "@/components/shared/preview-field-row";
 import type { ValidationInputOriginType } from "@workspace/api-client-react";
 
-interface PreviewField {
+export interface PreviewField {
   id: number;
   campoOrigem: string;
   campoTecnico: string;
@@ -212,77 +213,13 @@ export default function PreviewValidationSheet({
                 </TableHeader>
                 <TableBody>
                   {fields.map((field) => (
-                    <TableRow
+                    <PreviewFieldRow
                       key={field.id}
-                      className={`cursor-pointer hover:bg-muted/50 ${
-                        !field.included ? "opacity-40 bg-muted/50" : ""
-                      }`}
-                    >
-                      <TableCell style={{ width: "40px" }}>
-                        <Checkbox
-                          checked={field.included}
-                          onCheckedChange={(checked) =>
-                            toggleIncluded(field.id, checked as boolean)
-                          }
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {field.campoOrigem}
-                      </TableCell>
-                      <TableCell className="font-mono text-sm">
-                        {field.campoTecnico}
-                      </TableCell>
-                      <TableCell
-                        className="max-w-[200px] truncate"
-                        title={field.descricao}
-                      >
-                        {field.descricao}
-                      </TableCell>
-                      <TableCell className="font-mono text-sm">
-                        {field.tipoDado}
-                      </TableCell>
-                      <TableCell>{field.origem}</TableCell>
-                      <TableCell>{field.periodicidade}</TableCell>
-                      <TableCell>{field.chave ? "Sim" : "Não"}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={field.validation
-                            ? "default"
-                            : "outline"}
-                        >
-                          {field.validation ? "Aprovado" : "Pendente"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={field.validation
-                            ? "default"
-                            : "outline"}
-                        >
-                          {field.validation ? "Confiável" : "Pendente"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => setEditingField(field)}
-                            title="Editar campo"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setValidatingField(field)}
-                          >
-                            {field.validation ? "Revalidar" : "Validar"}
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                      field={field}
+                      onEdit={setEditingField}
+                      onValidate={setValidatingField}
+                      onToggleIncluded={toggleIncluded}
+                    />
                   ))}
                 </TableBody>
               </Table>
