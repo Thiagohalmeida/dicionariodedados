@@ -46,7 +46,12 @@ import {
   Loader2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getApiBase } from "@/lib/utils";
+import {
+  traduzirStatus,
+  traduzirClassificacao,
+  statusBadgeVariant,
+  classificationBadgeVariant,
+} from "@/lib/utils";
 import type { ValidationInputOriginType } from "@workspace/api-client-react";
 
 interface PreviewField {
@@ -537,43 +542,6 @@ function ValidationPanel({
   );
 }
 
-function getClassificationColor(classification: string) {
-  switch (classification) {
-    case "reliable":
-      return "default";
-    case "attention":
-      return "secondary";
-    case "critical":
-      return "destructive";
-    default:
-      return "outline";
-  }
-}
-
-function getStatusColor(status: string) {
-  return status === "conflict" ? "destructive" : "outline";
-}
-
-function translateStatus(status: string) {
-  const map: Record<string, string> = {
-    pending: "Pendente",
-    approved: "Aprovado",
-    rejected: "Rejeitado",
-    conflict: "Conflito",
-  };
-  return map[status] || status;
-}
-
-function translateClassification(classification: string) {
-  const map: Record<string, string> = {
-    pending: "Pendente",
-    reliable: "Confiável",
-    attention: "Atenção",
-    critical: "Crítico",
-  };
-  return map[classification] || classification;
-}
-
 export default function PreviewValidationSheet({
   open,
   onOpenChange,
@@ -770,22 +738,22 @@ export default function PreviewValidationSheet({
                       <TableCell>{field.chave ? "Sim" : "Não"}</TableCell>
                       <TableCell>
                         <Badge
-                          variant={getStatusColor(
+                          variant={statusBadgeVariant(
                             field.validation ? "approved" : "pending",
                           )}
                         >
-                          {translateStatus(
+                          {traduzirStatus(
                             field.validation ? "approved" : "pending",
                           )}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         <Badge
-                          variant={getClassificationColor(
+                          variant={classificationBadgeVariant(
                             field.validation ? "reliable" : "pending",
                           )}
                         >
-                          {translateClassification(
+                          {traduzirClassificacao(
                             field.validation ? "reliable" : "pending",
                           )}
                         </Badge>

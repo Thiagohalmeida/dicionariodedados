@@ -408,3 +408,30 @@ Todos os itens principais estão concluídos. O projeto está pronto para deploy
 - **Deployment configs criados** — `vercel.json` (frontend com rewrites para API Railway), `railway.json` (API server com Dockerfile builder), `artifacts/api-server/Dockerfile` (multi-stage build otimizado), `.dockerignore`
 - **Separação visual Excel vs JSON** — `new-dictionary.tsx`: badges "Passo 1/2" na aba Excel (fluxo guiado 2 passos) e "Direto" na aba JSON; badge "Novo" na aba Excel; descrição clara do fluxo "Upload → Preview → Validação → Importação"; ícones Zap/Sparkles para destacar fluxo guiado
 - **Typecheck + Build 100%** — todas as configurações de deploy válidas e compilando corretamente
+
+---
+
+## 🔄 EM ANDAMENTO - 14/07/2026 (DRY + Performance - relatório duplicacao-performance.md)
+
+### DRY - Eliminação de Duplicação
+- [x] **1. Unificar traduções/cores de status** — remover `getClassificationColor`, `getStatusColor`, `translateStatus`, `translateClassification` de `preview-validation-sheet.tsx` (linhas 540-575); usar `traduzirStatus`, `traduzirClassificacao`, `statusBadgeVariant`, `classificationBadgeVariant` de `lib/utils.ts`
+- [ ] **2. Extrair `EditFieldDialog` compartilhado** — substituir versão local de `preview-validation-sheet.tsx` (linhas 91-218) pelo componente `components/shared/edit-field-dialog.tsx` (já criado); passar `showIncludedField=true` para preview
+- [ ] **3. Unificar `ValidationPanel`** — adaptar `components/shared/validation-panel.tsx` para aceitar `variant="sheet" | "dialog"` e `onSave` compatível com preview (estado local); substituir versão local (linhas 220-538)
+- [ ] **4. Remover `validatorOptions` duplicado** — preview usa array literal local (linhas 244-254); hook `useValidationForm` já usa `VALIDATOR_OPTIONS` de `hooks/use-validation-form.ts`
+- [ ] **5. Unificar handlers de fetch+toast+loading** — migrar `generateValidatedJson`, `importDictionary` em `preview-validation-sheet.tsx` para usar `useApiAction`/`useApiExport` de `hooks/use-api-action.ts`
+
+### Performance - Otimizações
+- [ ] **6. `React.memo` nas linhas de tabela** — extrair `PreviewFieldRow` em `components/shared/preview-field-row.tsx` com `React.memo`; usar no `map` do preview (linhas 740-813)
+- [ ] **7. `React.memo` + `useCallback` nas linhas de `dictionary-detail.tsx`** — extrair `FieldTableRow` com `React.memo`; handlers estáveis via `useCallback`
+
+### Checklist de Não-Regressão (validar a cada step)
+- [ ] Dictionary-detail: abrir validação (Sheet), preencher, salvar → persiste no banco
+- [ ] Dictionary-detail: editar campo (Dialog), salvar → persiste no banco
+- [ ] Preview: abrir validação (Dialog), preencher, salvar → atualiza estado local
+- [ ] Preview: editar campo (Dialog com `Incluir no JSON`), salvar → atualiza estado local
+- [ ] Preview: toggle `Incluir no JSON` na tabela → funciona
+- [ ] Preview: `Gerar JSON Validado` → chama `onGenerateValidatedJson`
+- [ ] Preview: `Importar Dicionário` → chama `onImportDictionary`
+- [ ] Traduções de status/classificação idênticas em ambos contextos
+- [ ] `pnpm run typecheck` passa
+- [ ] `pnpm run build` passa
