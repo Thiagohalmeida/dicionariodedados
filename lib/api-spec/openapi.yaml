@@ -565,6 +565,10 @@ components:
           type: ["string", "null"]
         comment:
           type: ["string", "null"]
+        formula:
+          type: string
+          enum: [nao, sim, suporte]
+          default: "nao"
 
     Validation:
       type: object

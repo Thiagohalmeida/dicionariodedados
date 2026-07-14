@@ -41,5 +41,6 @@ export * from './previewExcelDictionaryBody';
 export * from './statusCount';
 export * from './validation';
 export * from './validationInput';
+export * from './validationInputFormula';
 export * from './validationInputOriginType';
 export * from './validationOriginType';

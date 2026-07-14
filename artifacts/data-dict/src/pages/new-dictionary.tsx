@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { useImportDictionary } from "@workspace/api-client-react";
+import { useImportDictionary, useUpdateField, useSubmitValidation, useGetDictionary } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { getApiBase } from "@/lib/utils";
@@ -29,6 +29,7 @@ import {
   Zap,
 } from "lucide-react";
 import PreviewValidationSheet from "@/components/preview-validation-sheet";
+import { useQueryClient } from "@tanstack/react-query";
 
 const EXEMPLO_JSON = `{
   "processo": "RFQ",
@@ -169,6 +170,9 @@ function ExcelImportTab() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const importMutation = useImportDictionary();
+  const updateFieldMutation = useUpdateField();
+  const submitValidationMutation = useSubmitValidation();
+  const queryClient = useQueryClient();
 
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -186,6 +190,8 @@ function ExcelImportTab() {
       chave: boolean;
       included: boolean;
       validation?: any;
+      excluded?: boolean;
+      customInternalPlatform?: string;
     }>
   >([]);
   const [resolvedMeta, setResolvedMeta] = useState<{
@@ -374,17 +380,94 @@ function ExcelImportTab() {
     });
   };
 
-  const handleImportFromSheet = (json: any) => {
+const handleImportFromSheet = (json: any) => {
     importMutation.mutate(
       { data: json },
       {
-        onSuccess: (dict) => {
+        onSuccess: async (dict) => {
           toast({
-            title: "Importação concluída",
-            description: "O dicionário foi criado com sucesso.",
+            title: "Dicionário criado",
+            description: "Salvando validações e configurações dos campos...",
           });
-          setShowValidationSheet(false);
-          setLocation(`/dictionaries/${dict.id}`);
+
+          try {
+            // Fetch the dictionary with fields to get the real field IDs
+            const response = await fetch(`${getApiBase()}/api/dictionaries/${dict.id}`);
+            if (!response.ok) throw new Error("Falha ao buscar dicionário");
+            const dictWithFields = await response.json();
+
+            // Build a map of campoTecnico -> field ID for the imported dictionary
+            const fieldMap = new Map<string, number>();
+            for (const f of dictWithFields.fields) {
+              fieldMap.set(f.campoTecnico, f.id);
+            }
+
+            // Update fields: excluded status and customInternalPlatform
+            for (const previewField of previewFields) {
+              const fieldId = fieldMap.get(previewField.campoTecnico);
+              if (!fieldId) continue;
+
+              const updates: Record<string, any> = {};
+
+              if (previewField.excluded !== undefined) {
+                updates.excluded = previewField.excluded;
+              }
+              if (previewField.customInternalPlatform !== undefined) {
+                updates.customInternalPlatform = previewField.customInternalPlatform;
+              }
+
+              if (Object.keys(updates).length > 0) {
+                await new Promise<void>((resolve, reject) => {
+                  updateFieldMutation.mutate(
+                    { id: fieldId, data: updates },
+                    { onSuccess: () => resolve(), onError: reject }
+                  );
+                });
+              }
+
+              // Save validation if exists
+              if (previewField.validation && previewField.validation.validatorName) {
+                const v = previewField.validation;
+                await new Promise<void>((resolve, reject) => {
+                  submitValidationMutation.mutate(
+                    {
+                      id: fieldId,
+                      data: {
+                        validatorName: v.validatorName,
+                        used: v.used ?? false,
+                        required: v.required ?? false,
+                        correctName: v.correctName ?? false,
+                        correctOrigin: v.correctOrigin ?? false,
+                        hasBusinessRule: v.hasBusinessRule ?? false,
+                        originType: v.originType ?? "",
+                        originDetail: v.originDetail ?? "",
+                        businessRuleRationale: v.businessRuleRationale ?? "",
+                        formula: v.formula ?? "nao",
+                        comment: v.comment ?? "",
+                      },
+                    },
+                    { onSuccess: () => resolve(), onError: reject }
+                  );
+                });
+              }
+            }
+
+            queryClient.invalidateQueries({ queryKey: ["dictionaries", dict.id] });
+
+            toast({
+              title: "Importação concluída",
+              description: "Dicionário criado com validações e configurações salvas.",
+            });
+            setShowValidationSheet(false);
+            setLocation(`/dictionaries/${dict.id}`);
+          } catch (err) {
+            toast({
+              title: "Erro ao salvar validações",
+              description: err instanceof Error ? err.message : "Erro desconhecido",
+              variant: "destructive",
+            });
+            setLocation(`/dictionaries/${dict.id}`);
+          }
         },
         onError: (err: unknown) => {
           const msg =

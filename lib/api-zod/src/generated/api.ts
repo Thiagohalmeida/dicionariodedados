@@ -253,7 +253,7 @@ export const SubmitValidationParams = zod.object({
 })
 
 
-
+export const submitValidationBodyFormulaDefault = `nao`;
 
 export const SubmitValidationBody = zod.object({
   "validatorName": zod.string().min(1),
@@ -265,7 +265,8 @@ export const SubmitValidationBody = zod.object({
   "originType": zod.enum(['interno', 'externo']),
   "originDetail": zod.string().nullable(),
   "businessRuleRationale": zod.string().nullish(),
-  "comment": zod.string().nullish()
+  "comment": zod.string().nullish(),
+  "formula": zod.enum(['nao', 'sim', 'suporte']).default(submitValidationBodyFormulaDefault)
 })
 
 export const SubmitValidationResponse = zod.object({

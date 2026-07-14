@@ -185,6 +185,15 @@ export const ValidationInputOriginType = {
   externo: 'externo',
 } as const;
 
+export type ValidationInputFormula = typeof ValidationInputFormula[keyof typeof ValidationInputFormula];
+
+
+export const ValidationInputFormula = {
+  nao: 'nao',
+  sim: 'sim',
+  suporte: 'suporte',
+} as const;
+
 export interface ValidationInput {
   /** @minLength 1 */
   validatorName: string;
@@ -200,6 +209,7 @@ export interface ValidationInput {
   businessRuleRationale?: string | null;
   /** @nullable */
   comment?: string | null;
+  formula?: ValidationInputFormula;
 }
 
 export type ValidationOriginType = typeof ValidationOriginType[keyof typeof ValidationOriginType];

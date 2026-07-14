@@ -5,6 +5,7 @@
  * API specification for Data Dictionary Validator
  * OpenAPI spec version: 0.1.0
  */
+import type { ValidationInputFormula } from './validationInputFormula';
 import type { ValidationInputOriginType } from './validationInputOriginType';
 
 export interface ValidationInput {
@@ -22,4 +23,5 @@ export interface ValidationInput {
   businessRuleRationale?: string | null;
   /** @nullable */
   comment?: string | null;
+  formula?: ValidationInputFormula;
 }
