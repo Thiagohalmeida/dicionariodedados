@@ -418,7 +418,7 @@ Todos os itens principais estão concluídos. O projeto está pronto para deploy
 - [x] **2. Extrair `EditFieldDialog` compartilhado** — substituir versão local de `preview-validation-sheet.tsx` (linhas 91-218) pelo componente `components/shared/edit-field-dialog.tsx` (já criado); passar `showIncludedField=true` para preview
 - [x] **3. Unificar `ValidationPanel`** — adaptar `components/shared/validation-panel.tsx` para aceitar `variant="sheet" | "dialog"` e `onSave` compatível com preview (estado local); substituir versão local (linhas 220-538)
 - [x] **4. Remover `validatorOptions` duplicado** — preview usa array literal local (linhas 244-254); hook `useValidationForm` já usa `VALIDATOR_OPTIONS` de `hooks/use-validation-form.ts`
-- [ ] **5. Unificar handlers de fetch+toast+loading** — migrar `generateValidatedJson`, `importDictionary` em `preview-validation-sheet.tsx` para usar `useApiAction`/`useApiExport` de `hooks/use-api-action.ts`
+- [x] **5. Unificar handlers de fetch+toast+loading** — migrar `generateValidatedJson`, `importDictionary` em `preview-validation-sheet.tsx` para usar `useApiAction`/`useApiExport` de `hooks/use-api-action.ts`
 
 ### Performance - Otimizações
 - [ ] **6. `React.memo` nas linhas de tabela** — extrair `PreviewFieldRow` em `components/shared/preview-field-row.tsx` com `React.memo`; usar no `map` do preview (linhas 740-813)

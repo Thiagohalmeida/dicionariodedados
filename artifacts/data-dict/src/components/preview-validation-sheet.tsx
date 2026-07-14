@@ -46,6 +46,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useApiAction } from "@/hooks/use-api-action";
 import { EditFieldDialog } from "@/components/shared/edit-field-dialog";
 import { ValidationPanel } from "@/components/shared/validation-panel";
 import type { ValidationInputOriginType } from "@workspace/api-client-react";
@@ -98,12 +99,12 @@ export default function PreviewValidationSheet({
   resolvedMeta,
 }: PreviewValidationSheetProps) {
   const { toast } = useToast();
+  const { isLoading: isGenerating, executeWithToast: generateValidatedJson } = useApiAction();
+  const { isLoading: isImporting, executeWithToast: importDictionary } = useApiAction();
   const [editingField, setEditingField] = useState<PreviewField | null>(null);
   const [validatingField, setValidatingField] = useState<PreviewField | null>(
     null,
   );
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isImporting, setIsImporting] = useState(false);
   const [fields, setFields] = useState<PreviewField[]>(initialFields);
 
   // Sync with initialFields when they change
@@ -157,63 +158,6 @@ export default function PreviewValidationSheet({
   const toggleAllIncluded = useCallback((included: boolean) => {
     setFields((prev) => prev.map((f) => ({ ...f, included })));
   }, []);
-
-  const generateValidatedJson = async () => {
-    setIsGenerating(true);
-    try {
-      const validatedFields = fields.map((f) => ({
-        ...f,
-        validation: f.validation,
-      }));
-      onGenerateValidatedJson(validatedFields);
-      toast({
-        title: "JSON Validado Gerado",
-        description: "Validações aplicadas ao JSON. Pronto para importar.",
-      });
-    } catch (err) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível gerar JSON validado.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const importDictionary = async () => {
-    setIsImporting(true);
-    try {
-      const includedFields = fields.filter((f) => f.included);
-      // Filter out formula fields (sim/suporte)
-      const validFields = includedFields.filter(
-        (f) => f.validation?.formula !== "sim" && f.validation?.formula !== "suporte",
-      );
-      const jsonGerado = {
-        processo: resolvedMeta?.processo || "",
-        categoria: resolvedMeta?.categoria || "",
-        tabela: resolvedMeta?.tabela || "",
-        campos: validFields.map((f) => ({
-          campo_origem: f.campoOrigem,
-          campo_tecnico: f.campoTecnico,
-          descricao: f.descricao,
-          tipo_dado: f.tipoDado,
-          origem: f.origem,
-          periodicidade: f.periodicidade,
-          chave: f.chave,
-        })),
-      };
-      onImportDictionary(jsonGerado);
-    } catch (err) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível importar.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsImporting(false);
-    }
-  };
 
   const hasValidations = fields.some((f) => f.validation);
   const allIncluded = fields.length > 0 && fields.every((f) => f.included);
@@ -346,13 +290,26 @@ export default function PreviewValidationSheet({
           </CardContent>
         </Card>
 
-        <SheetFooter className="flex justify-end gap-2 border-t pt-4">
+<SheetFooter className="flex justify-end gap-2 border-t pt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Fechar
           </Button>
           <Button
             disabled={isGenerating}
-            onClick={generateValidatedJson}
+            onClick={() =>
+              generateValidatedJson(
+                async () => {
+                  const validatedFields = fields.map((f) => ({
+                    ...f,
+                    validation: f.validation,
+                  }));
+                  onGenerateValidatedJson(validatedFields);
+                  return validatedFields;
+                },
+                "JSON Validado Gerado",
+                "Erro ao gerar JSON",
+              )
+            }
             className="gap-2"
           >
             {isGenerating ? (
@@ -366,18 +323,42 @@ export default function PreviewValidationSheet({
           </Button>
           <Button
             disabled={isImporting || !hasValidations}
-            onClick={importDictionary}
+            onClick={() =>
+              importDictionary(
+                async () => {
+                  const includedFields = fields.filter((f) => f.included);
+                  // Filter out formula fields (sim/suporte)
+                  const validFields = includedFields.filter(
+                    (f) => f.validation?.formula !== "sim" && f.validation?.formula !== "suporte",
+                  );
+                  const jsonGerado = {
+                    processo: resolvedMeta?.processo || "",
+                    categoria: resolvedMeta?.categoria || "",
+                    tabela: resolvedMeta?.tabela || "",
+                    campos: validFields.map((f) => ({
+                      campo_origem: f.campoOrigem,
+                      campo_tecnico: f.campoTecnico,
+                      descricao: f.descricao,
+                      tipo_dado: f.tipoDado,
+                      origem: f.origem,
+                      periodicidade: f.periodicidade,
+                      chave: f.chave,
+                    })),
+                  };
+                  onImportDictionary(jsonGerado);
+                  return jsonGerado;
+                },
+                "Dicionário importado",
+                "Erro ao importar",
+              )
+            }
             className="gap-2"
             variant="default"
           >
-            {isImporting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <>
-                {" "}
-                <Download className="h-4 w-4" /> Importar Dicionário
-              </>
-            )}
+            <>
+              {" "}
+              <Download className="h-4 w-4" /> Importar Dicionário
+            </>
           </Button>
         </SheetFooter>
 
