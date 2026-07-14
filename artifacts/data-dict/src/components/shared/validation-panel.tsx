@@ -1,9 +1,12 @@
 "use client";
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useValidationForm } from "@/hooks/use-validation-form";
+import { useValidationForm, type ValidationFormData } from "@/hooks/use-validation-form";
 import { ValidationFormFields } from "@/components/shared/validation-form-fields";
+
+type Variant = "sheet" | "dialog";
 
 interface ValidationPanelProps {
   field: {
@@ -30,25 +33,15 @@ interface ValidationPanelProps {
     };
   };
   onClose: () => void;
-  onSave: (validation: {
-    validatorName: string;
-    used: boolean;
-    required: boolean;
-    correctName: boolean;
-    correctOrigin: boolean;
-    hasBusinessRule: boolean;
-    originType: string;
-    originDetail: string;
-    businessRuleRationale: string;
-    formula: string;
-    comment: string;
-  }) => void;
+  onSave: (data: ValidationFormData) => void;
+  variant?: Variant;
 }
 
 export function ValidationPanel({
   field,
   onClose,
   onSave,
+  variant = "sheet",
 }: ValidationPanelProps) {
   const validation = field.validation ?? {};
   const { form, setForm, handleSubmit } = useValidationForm({
@@ -69,12 +62,19 @@ export function ValidationPanel({
     onClose,
   });
 
+  const PanelContainer = variant === "dialog" ? Dialog : Sheet;
+  const PanelContent = variant === "dialog" ? DialogContent : SheetContent;
+  const PanelHeader = variant === "dialog" ? DialogHeader : SheetHeader;
+  const PanelTitle = variant === "dialog" ? DialogTitle : SheetTitle;
+
+  const panelWidth = variant === "dialog" ? "sm:max-w-[540px]" : "w-[400px] sm:w-[540px]";
+
   return (
-    <Sheet open={true} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="w-[400px] sm:w-[540px] max-h-[90vh] overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>Validar Campo: {field.campoOrigem}</SheetTitle>
-        </SheetHeader>
+    <PanelContainer open={true} onOpenChange={(open) => !open && onClose()}>
+      <PanelContent className={`${panelWidth} max-h-[90vh] overflow-y-auto`}>
+        <PanelHeader>
+          <PanelTitle>Validar Campo: {field.campoOrigem}</PanelTitle>
+        </PanelHeader>
         <div className="mt-6 space-y-6">
           <div className="space-y-4 bg-muted/30 p-4 rounded-lg">
             <div className="grid grid-cols-2 gap-2 text-sm">
@@ -99,7 +99,7 @@ export function ValidationPanel({
             Registrar Validação
           </Button>
         </div>
-      </SheetContent>
-    </Sheet>
+      </PanelContent>
+    </PanelContainer>
   );
 }

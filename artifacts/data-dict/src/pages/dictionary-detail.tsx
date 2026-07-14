@@ -347,6 +347,7 @@ export default function DictionaryDetail() {
           field={selectedField}
           onClose={() => setSelectedField(null)}
           onSave={handleValidationSave}
+          variant="sheet"
         />
       )}
 
