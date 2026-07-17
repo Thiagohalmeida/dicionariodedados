@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Pencil } from "lucide-react";
+import { Plus, Trash2, Pencil, PlayCircle, CheckCircle2, Clock } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -41,6 +41,18 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { traduzirStatus } from "@/lib/utils";
+
+function getStatusBadgeVariant(status: string) {
+  if (status === "in_review") return "default";
+  if (status === "validated") return "secondary";
+  return "outline";
+}
+
+function getStatusIcon(status: string) {
+  if (status === "validated") return <CheckCircle2 className="h-3.5 w-3.5" />;
+  if (status === "in_review") return <PlayCircle className="h-3.5 w-3.5" />;
+  return <Clock className="h-3.5 w-3.5" />;
+}
 
 type DictItem = {
   id: number;
@@ -203,9 +215,12 @@ export default function DictionariesList() {
                   <TableCell className="font-medium">{dict.tabela}</TableCell>
                   <TableCell>{dict.processo}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">
-                      {traduzirStatus(dict.status)}
-                    </Badge>
+                    <div className="flex items-center gap-1.5">
+                      {getStatusIcon(dict.status)}
+                      <Badge variant={getStatusBadgeVariant(dict.status)} className="gap-1">
+                        {traduzirStatus(dict.status)}
+                      </Badge>
+                    </div>
                   </TableCell>
                   <TableCell className="w-[200px]">
                     <div className="flex items-center gap-2">

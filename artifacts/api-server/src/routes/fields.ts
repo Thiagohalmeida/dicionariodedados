@@ -1,13 +1,13 @@
 import { Router, type IRouter } from "express";
-import { eq, inArray, sql, desc } from "drizzle-orm";
-import { db, fieldsTable, validationsTable } from "@workspace/db";
+import { eq, inArray, sql, desc, count } from "drizzle-orm";
+import { db, fieldsTable, validationsTable, dictionariesTable } from "@workspace/db";
 import {
   computeFieldSummary,
   computeFieldSummariesBatch,
   getFieldsWithSummaries,
 } from "../lib/summary";
 import { insertValidation } from "../lib/validation";
-import { FIELD_CLASSIFICATION, SCORE_THRESHOLDS } from "../lib/constants";
+import { FIELD_CLASSIFICATION, SCORE_THRESHOLDS, DICTIONARY_STATUS } from "../lib/constants";
 import {
   SubmitValidationParams,
   SubmitValidationBody,
@@ -146,6 +146,42 @@ router.post("/fields/:id/validate", async (req, res): Promise<void> => {
     score: String(score),
     comment: parsed.data.comment ?? null,
   });
+
+  // Update dictionary status after validation
+  const [dict] = await db
+    .select()
+    .from(dictionariesTable)
+    .where(eq(dictionariesTable.id, field.dictionaryId));
+  
+  if (dict && dict.status === DICTIONARY_STATUS.PENDING) {
+    // First validation: move from pending to in_review
+    await db
+      .update(dictionariesTable)
+      .set({ status: DICTIONARY_STATUS.IN_REVIEW })
+      .where(eq(dictionariesTable.id, field.dictionaryId));
+  } else if (dict && dict.status === DICTIONARY_STATUS.IN_REVIEW) {
+    // Check if all fields now have validations
+    const allFields = await db
+      .select({ id: fieldsTable.id })
+      .from(fieldsTable)
+      .where(eq(fieldsTable.dictionaryId, field.dictionaryId));
+    
+    const fieldIds = allFields.map(f => f.id);
+    const validatedFields = await db
+      .select({ fieldId: validationsTable.fieldId })
+      .from(validationsTable)
+      .where(inArray(validationsTable.fieldId, fieldIds));
+    
+    const validatedFieldIds = new Set(validatedFields.map(v => v.fieldId));
+    const allValidated = fieldIds.every(id => validatedFieldIds.has(id));
+    
+    if (allValidated && fieldIds.length > 0) {
+      await db
+        .update(dictionariesTable)
+        .set({ status: DICTIONARY_STATUS.VALIDATED })
+        .where(eq(dictionariesTable.id, field.dictionaryId));
+    }
+  }
 
   res.status(201).json(
     SubmitValidationResponse.parse({
