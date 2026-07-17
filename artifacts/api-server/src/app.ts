@@ -31,16 +31,42 @@ app.use(
   }),
 );
 
-// CORS: when ALLOWED_ORIGINS is set (comma-separated), restrict to it;
-// otherwise (dev or not configured) keep permissive to avoid breakage.
+// CORS: support wildcard subdomains for Vercel preview deployments
+// ALLOWED_ORIGINS can contain wildcards like "https://*.vercel.app"
 const allowedOriginsRaw = process.env.ALLOWED_ORIGINS;
 if (allowedOriginsRaw && allowedOriginsRaw.trim().length > 0) {
-  const allowedOrigins = allowedOriginsRaw
+  const allowedPatterns = allowedOriginsRaw
     .split(",")
-    .map((o) => o.trim().replace(/\/$/, "")) // strip trailing slash
+    .map((o) => o.trim().replace(/\/$/, ""))
     .filter(Boolean);
-  app.use(cors({ origin: allowedOrigins, credentials: true }));
+  
+  const corsOptions: cors.CorsOptions = {
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, etc.)
+      if (!origin) return callback(null, true);
+      
+      const normalizedOrigin = origin.replace(/\/$/, "");
+      
+      for (const pattern of allowedPatterns) {
+        if (pattern === normalizedOrigin) {
+          return callback(null, true);
+        }
+        // Support wildcard subdomains like https://*.vercel.app
+        if (pattern.includes("*")) {
+          const regex = new RegExp("^" + pattern.replace(/\./g, "\\.").replace(/\*/g, ".*") + "$");
+          if (regex.test(normalizedOrigin)) {
+            return callback(null, true);
+          }
+        }
+      }
+      
+      callback(new Error(`CORS blocked: ${normalizedOrigin}`), false);
+    },
+    credentials: true,
+  };
+  app.use(cors(corsOptions));
 } else {
+  // Dev mode: permissive CORS
   app.use(cors());
 }
 app.use(express.json());
