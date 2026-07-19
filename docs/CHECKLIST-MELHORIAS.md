@@ -208,7 +208,47 @@
 
 ---
 
-## 🔴 Pendente — Prioridade Alta (Itens anteriores)
+## 🔵 Novas Implementações — Salvamento de Progresso e Retomada de Validação (18/07/2026)
+
+### 1. Auto-atualização de Status do Dicionário ao Validar (Backend)
+
+- [x] **Arquivo:** `artifacts/api-server/src/routes/fields.ts` (endpoint `POST /fields/:id/validate`)
+- **Funcionalidade:** Atualiza automaticamente o status do dicionário baseado nas validações:
+  - **Primeira validação:** `pending` → `in_review` (início da validação)
+  - **Todos os campos validados:** `in_review` → `validated` (conclusão)
+- **Arquivos modificados:** `artifacts/api-server/src/app.ts` (import de `dictionariesTable`), `artifacts/api-server/src/routes/fields.ts` (lógica de status)
+
+### 2. Dashboard com Indicadores Visuais de Progresso (Frontend)
+
+- [x] **Arquivo:** `artifacts/data-dict/src/pages/dashboard.tsx`
+- **Melhorias:**
+  - Ícones de status: ⏰ "Não iniciado" (pending, 0 validações), ▶️ "Em validação" (in_review ou pending com validações), ✅ "Validado" (validated)
+  - Badges coloridos: Cinza (não iniciado), Azul (em progresso), Verde (concluído)
+  - Labels de progresso: "Não iniciado (0%)", "Em validação (X%)", "Concluído (X%)"
+  - Barras de progresso sincronizadas com status real
+
+### 3. Lista de Dicionários com Status Visual (Frontend)
+
+- [x] **Arquivo:** `artifacts/data-dict/src/pages/dictionaries.tsx`
+- **Melhorias:**
+  - Ícones: Clock (pendente), PlayCircle (em_review), CheckCircle2 (validated)
+  - Badge variants: Outline (pending), Default (in_review), Secondary (validated)
+
+### 4. CORS com Suporte a Wildcards para Vercel Preview Deployments
+
+- [x] **Arquivo:** `artifacts/api-server/src/app.ts`
+- **Funcionalidade:** Suporte a padrões como `https://*.vercel.app` em `ALLOWED_ORIGINS`
+- **Arquivos:** `render.yaml` (atualizado `ALLOWED_ORIGINS`), `vercel.json` (headers CORS para rewrites)
+
+### 5. Migração de Banco — Novas Colunas na Tabela `fields`
+
+- [x] **Migração:** `lib/db/migrations/0003_military_nextwave.sql` (atualizada)
+- **Colunas adicionadas:** `formula` (enum formula_type), `excluded` (boolean), `custom_internal_platform` (text)
+- **Enum criado:** `formula_type` ('nao', 'sim', 'suporte')
+
+---
+
+## 🟡 Pendente — Prioridade Alta (Itens anteriores)
 
 ### 1. CORS totalmente aberto (`ALLOWED_ORIGINS` documentado, mas nunca lido)
 
@@ -435,3 +475,128 @@ Todos os itens principais estão concluídos. O projeto está pronto para deploy
 - [ ] Traduções de status/classificação idênticas em ambos contextos
 - [ ] `pnpm run typecheck` passa
 - [ ] `pnpm run build` passa
+
+---
+
+## ✅ CONCLUÍDOS - 18/07/2026 (Salvamento de Progresso e Retomada de Validação)
+
+### Implementações Principais
+
+#### Backend - Auto-atualização de Status do Dicionário
+- [x] **Arquivo:** `artifacts/api-server/src/routes/fields.ts` (endpoint `POST /fields/:id/validate`)
+- **Funcionalidade:** Atualiza automaticamente status do dicionário:
+  - **Primeira validação:** `pending` → `in_review` (início da validação)
+  - **Todos campos validados:** `in_review` → `validated` (conclusão)
+- **Lógica:** Verifica se é a primeira validação (status PENDING) ou se todos os campos do dicionário já têm validações
+
+#### Frontend - Dashboard com Indicadores Visuais
+- [x] **Arquivo:** `artifacts/data-dict/src/pages/dashboard.tsx`
+- **Melhorias:**
+  - Ícones: ⏰ "Não iniciado" (pending, 0 validações), ▶️ "Em validação" (in_review ou pending com validações), ✅ "Validado" (validated)
+  - Badges coloridos: Cinza (não iniciado), Azul (em progresso), Verde (concluído)
+  - Labels de progresso: "Não iniciado (0%)", "Em validação (X%)", "Concluído (X%)"
+
+#### Frontend - Lista de Dicionários com Status Visual
+- [x] **Arquivo:** `artifacts/data-dict/src/pages/dictionaries.tsx`
+- **Melhorias:**
+  - Ícones: Clock (pendente), PlayCircle (in_review), CheckCircle2 (validated)
+  - Badge variants: Outline (pending), Default (in_review), Secondary (validated)
+
+#### CORS - Suporte a Wildcards para Vercel Preview Deployments
+- [x] **Arquivo:** `artifacts/api-server/src/app.ts`
+- **Funcionalidade:** Suporte a padrões como `https://*.vercel.app` em `ALLOWED_ORIGINS`
+- **Arquivos relacionados:** `render.yaml` (atualizado `ALLOWED_ORIGINS`), `vercel.json` (headers CORS para rewrites)
+
+#### Banco de Dados - Migração Novas Colunas
+- [x] **Migração:** `lib/db/migrations/0003_military_nextwave.sql` (atualizada)
+- **Colunas adicionadas na tabela `fields`:** `formula` (enum formula_type), `excluded` (boolean), `custom_internal_platform` (text)
+- **Enum criado:** `formula_type` ('nao', 'sim', 'suporte')
+
+---
+
+## 🧪 O QUE PRECISA SER TESTADO (Validação Manual)
+
+### Fluxo Completo de Importação Excel → Validação → Exportação
+- [ ] **Upload Excel:** Acessar `/dictionaries/new` → aba "Ingestão de Excel" → upload arquivo .xlsx → preencher processo/categoria → "Processar e Pré-visualizar"
+- [ ] **Preview JSON:** Verificar se JSON gerado aparece editável no textarea
+- [ ] **Validação Preview:** Clicar em "Validar" → Sheet abre → validar campos (checkboxes usado, obrigatório, nome correto, origem correta, regra negócio)
+- [ ] **Importar:** Clicar "Importar Dicionário" → redireciona para `/dictionaries/:id`
+- [ ] **Status no Dashboard:** Verificar se dicionário aparece com status "Em validação" (badge azul) no dashboard
+- [ ] **Validação Campo a Campo:** Em `/dictionaries/:id` → clicar em campo → painel de validação → salvar validação
+- [ ] **Primeira Validação → Status:** Verificar se status muda de "Pendente" → "Em Revisão" no dashboard/lista
+- [ ] **Todas Validações → Status:** Validar todos os campos → verificar se status muda para "Validado" (badge verde)
+- [ ] **Retomada:** Fechar navegador → reabrir → dicionário ainda aparece com progresso salvo
+- [ ] **Exportação:** Exportar JSON/CSV/DDL/Data Contract → verificar conteúdo
+
+### CORS / Deploy Preview
+- [ ] Deploy preview no Vercel → acessar URL preview → dashboard carrega sem erro CORS
+- [ ] Importação Excel em preview → funciona sem erro CORS
+
+### Migração Banco
+- [ ] Verificar se colunas `formula`, `excluded`, `custom_internal_platform` existem na tabela `fields` (Supabase)
+- [ ] Verificar se enum `formula_type` existe
+
+### Typecheck + Build
+- [ ] `pnpm run typecheck` passa
+- [ ] `pnpm run build` passa
+
+---
+
+## 🔄 AINDA PENDENTE / PARA IMPLEMENTAR
+
+### Prioridade Alta
+1. **Testes Automatizados (E2E/Integration)**
+   - [ ] Playwright tests para fluxo completo (upload → preview → validação → exportação)
+   - [ ] Testes de regressão para status auto-update
+
+2. **Supabase Storage Integration (Upload de Arquivos Excel)**
+   - [ ] Upload do Excel para bucket `excel-uploads` antes do processamento
+   - [ ] Download do arquivo original via signed URL
+   - [ ] Atualizar `POST /api/excel/preview` para usar storage
+
+3. **Auditoria Automática (Middleware)**
+   - [ ] Middleware para gravar em `audit_logs` em POST/PUT/DELETE de dicionários/campos/validações
+   - [ ] Incluir before/after, usuário, timestamp, IP
+
+4. **Autenticação Supabase Auth**
+   - [ ] Login/Registro via email/password + magic link
+   - [ ] Proteção de rotas (middleware de auth)
+   - [ ] Página de configuração `/supabase-config` funcional
+
+### Prioridade Média
+5. **Notificações em Tempo Real (Supabase Realtime)**
+   - [ ] Dashboard atualiza automaticamente quando validação é salva
+   - [ ] Lista de dicionários reflete progresso sem reload
+
+6. **Validação DDL em Produção**
+   - [ ] Endpoint `POST /api/dictionaries/:id/validate-ddl` já implementado mas precisa testar em Supabase real
+
+7. **Seed de Dados de Teste Automatizado**
+   - [ ] Script de seed já existe (`scripts/src/seed.ts`) — integrar no CI/CD
+
+### Prioridade Baixa / Tech Debt
+8. **Documentação de API (OpenAPI/Swagger UI)**
+9. **Internacionalização (i18n) - pt/en**
+10. **Monitoramento/Observabilidade (Sentry, logs estruturados)**
+
+---
+
+## 📝 NOTAS DE DEPLOY
+
+### Render (API Server)
+- Variáveis de ambiente necessárias:
+  - `DATABASE_URL` (Supabase pooler)
+  - `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+  - `ALLOWED_ORIGINS=https://dicionariodedados-api-server.vercel.app,https://*.vercel.app`
+  - `PORT=5000`, `LOG_LEVEL=info`
+
+### Vercel (Frontend)
+- Build command: `pnpm --filter @workspace/data-dict run build`
+- Output directory: `artifacts/data-dict/dist/public`
+- Rewrites para `/api/*` → API Render
+- Variáveis: `VITE_API_URL=https://validador-api-1lwu.onrender.com`
+
+### Supabase
+- Buckets: `excel-uploads` (private), `exports` (private)
+- Tabelas: `dictionaries`, `fields`, `validations`, `audit_logs`, `storage_objects`
+- RLS policies para isolamento por usuário (futuro)
