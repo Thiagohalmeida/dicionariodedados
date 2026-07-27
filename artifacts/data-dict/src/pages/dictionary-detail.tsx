@@ -46,6 +46,7 @@ import { EditFieldDialog } from "@/components/shared/edit-field-dialog";
 import { FieldTableRow } from "@/components/shared/field-table-row";
 import { ValidationPanel } from "@/components/shared/validation-panel";
 import { useApiExport } from "@/hooks/use-api-action";
+import { useValidationForm, type ValidationFormData } from "@/hooks/use-validation-form";
 
 interface FieldSummary {
   fieldId: number;
@@ -110,25 +111,12 @@ export default function DictionaryDetail() {
     await exportExtra(path, title, "Erro ao exportar");
   };
 
-  const handleValidationSave = (validation: {
-    validatorName: string;
-    used: boolean;
-    required: boolean;
-    correctName: boolean;
-    correctOrigin: boolean;
-    hasBusinessRule: boolean;
-    originType: "interno" | "externo";
-    originDetail: string;
-    businessRuleRationale: string;
-    formula: string;
-    comment: string;
-    excluded: boolean;
-  }) => {
-    const { formula, ...validationData } = validation;
+  const handleValidationSave = (validation: ValidationFormData) => {
+    const { formula, excluded, ...validationData } = validation;
     const formulaValue = formula as "nao" | "sim" | "suporte";
 
     updateField.mutate(
-      { id: selectedField!.id, data: { formula: formulaValue, excluded: validation.excluded } },
+      { id: selectedField!.id, data: { formula: formulaValue, excluded: validation.excluded ?? false } },
       {
         onError: () => {
           toast({

@@ -16,7 +16,7 @@ export interface ValidationFormData {
   businessRuleRationale: string;
   formula: "nao" | "sim" | "suporte";
   comment: string;
-  excluded: boolean; // campo para excluir/desconsiderar sem validar
+  excluded?: boolean; // campo para excluir/desconsiderar sem validar (não vai para API de validação)
   customInternalPlatform?: string; // para digitar "Outro relatório" customizado
 }
 
@@ -59,23 +59,22 @@ export function useValidationForm({
     }
 
     // Se excluído, só precisa do nome + comentário opcional
+    // Enviar valores válidos para campos obrigatórios da API
     if (form.excluded) {
       const comment = form.formula === "sim" ? "fórmula" : form.comment;
 
       onSubmit({
-        ...form,
-        comment,
         validatorName: name,
-        // Limpar campos não relevantes quando excluído
         used: false,
         required: false,
         correctName: false,
         correctOrigin: false,
         hasBusinessRule: false,
-        originType: "" as ValidationInputOriginType,
+        originType: "interno" as ValidationInputOriginType,
         originDetail: "",
         businessRuleRationale: "",
-        customInternalPlatform: "",
+        formula: form.formula,
+        comment,
       });
       onClose();
       return;
@@ -118,10 +117,17 @@ export function useValidationForm({
       : form.originDetail;
 
     onSubmit({
-      ...form,
-      comment,
       validatorName: name,
+      used: form.used,
+      required: form.required,
+      correctName: form.correctName,
+      correctOrigin: form.correctOrigin,
+      hasBusinessRule: form.hasBusinessRule,
+      originType: form.originType,
       originDetail,
+      businessRuleRationale: form.businessRuleRationale,
+      formula: form.formula,
+      comment,
     });
     onClose();
   };

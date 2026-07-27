@@ -257,7 +257,6 @@ export function ValidationFormFields({ form, setForm }: ValidationFormFieldsProp
           value={form.comment}
           onChange={(e) => setForm({ ...form, comment: e.target.value })}
           placeholder="Comentários adicionais sobre o campo..."
-          disabled={isExcluded}
         />
       </div>
     </div>
