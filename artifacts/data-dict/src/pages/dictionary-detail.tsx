@@ -112,8 +112,8 @@ export default function DictionaryDetail() {
   };
 
   const handleValidationSave = (validation: ValidationFormData) => {
-    const { formula, excluded, ...validationData } = validation;
-    const formulaValue = formula as "nao" | "sim" | "suporte";
+    const { excluded, ...validationData } = validation;
+    const formulaValue = validation.formula as "nao" | "sim" | "suporte";
 
     updateField.mutate(
       { id: selectedField!.id, data: { formula: formulaValue, excluded: validation.excluded ?? false } },
@@ -129,7 +129,7 @@ export default function DictionaryDetail() {
     );
 
     submitValidation.mutate(
-      { id: selectedField!.id, data: { ...validationData, validatorName: validation.validatorName, comment: validation.comment } },
+      { id: selectedField!.id, data: { ...validationData, formula: formulaValue, validatorName: validation.validatorName, comment: validation.comment } },
       {
         onSuccess: () => {
           toast({
