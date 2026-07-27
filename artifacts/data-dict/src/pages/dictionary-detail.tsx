@@ -122,12 +122,13 @@ export default function DictionaryDetail() {
     businessRuleRationale: string;
     formula: string;
     comment: string;
+    excluded: boolean;
   }) => {
     const { formula, ...validationData } = validation;
     const formulaValue = formula as "nao" | "sim" | "suporte";
 
     updateField.mutate(
-      { id: selectedField!.id, data: { formula: formulaValue } },
+      { id: selectedField!.id, data: { formula: formulaValue, excluded: validation.excluded } },
       {
         onError: () => {
           toast({

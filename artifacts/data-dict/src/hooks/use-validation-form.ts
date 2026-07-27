@@ -58,6 +58,29 @@ export function useValidationForm({
       return;
     }
 
+    // Se excluído, só precisa do nome + comentário opcional
+    if (form.excluded) {
+      const comment = form.formula === "sim" ? "fórmula" : form.comment;
+
+      onSubmit({
+        ...form,
+        comment,
+        validatorName: name,
+        // Limpar campos não relevantes quando excluído
+        used: false,
+        required: false,
+        correctName: false,
+        correctOrigin: false,
+        hasBusinessRule: false,
+        originType: "" as ValidationInputOriginType,
+        originDetail: "",
+        businessRuleRationale: "",
+        customInternalPlatform: "",
+      });
+      onClose();
+      return;
+    }
+
     if (!form.originType) {
       toast({
         title: "Campo obrigatório",
