@@ -17,13 +17,6 @@ export const originTypeEnum = pgEnum("origin_type", [
   "externo",
 ]);
 
-export const originDetailEnum = pgEnum("origin_detail", [
-  "sap",
-  "m303m",
-  "outro_interno",
-  "fornecedor",
-]);
-
 export const validationsTable = pgTable("validations", {
   id: serial("id").primaryKey(),
   fieldId: integer("field_id")
@@ -35,7 +28,7 @@ export const validationsTable = pgTable("validations", {
   correctName: boolean("correct_name").notNull(),
   correctOrigin: boolean("correct_origin").notNull(),
   originType: originTypeEnum("origin_type"),
-  originDetail: originDetailEnum("origin_detail"),
+  originDetail: text("origin_detail"),
   hasBusinessRule: boolean("has_business_rule").notNull(),
   businessRuleRationale: text("business_rule_rationale"),
   score: numeric("score", { precision: 5, scale: 2 }).notNull(),

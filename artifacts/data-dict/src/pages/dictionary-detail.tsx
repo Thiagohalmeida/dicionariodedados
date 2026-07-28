@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   useGetDictionary,
   useSubmitValidation,
@@ -92,6 +92,15 @@ export default function DictionaryDetail() {
   );
   const [editingField, setEditingField] = useState<FieldWithSummary | null>(
     null,
+  );
+
+  const handleSelect = useCallback(
+    (f: Field) => setSelectedField(f as FieldWithSummary),
+    []
+  );
+  const handleEdit = useCallback(
+    (f: Field) => setEditingField(f as FieldWithSummary),
+    []
   );
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -254,8 +263,8 @@ export default function DictionaryDetail() {
                 <FieldTableRow
                   key={field.id}
                   field={field}
-                  onSelect={(f) => setSelectedField(f as FieldWithSummary)}
-                  onEdit={(f) => setEditingField(f as FieldWithSummary)}
+                  onSelect={handleSelect}
+                  onEdit={handleEdit}
                 />
               ))}
             </TableBody>
