@@ -18,4 +18,11 @@ export interface Field {
   tipoDado: string;
   chave: boolean;
   formula?: FieldFormula;
+  excluded?: boolean;
+  /** @nullable */
+  customInternalPlatform?: string | null;
+  /** @nullable */
+  businessRuleExpression?: string | null;
+  /** @nullable */
+  businessRuleSql?: string | null;
 }

@@ -32,6 +32,8 @@ export const fieldsTable = pgTable("fields", {
   formula: formulaTypeEnum("formula").notNull().default("nao"),
   excluded: boolean("excluded").notNull().default(false),
   customInternalPlatform: text("custom_internal_platform"),
+  businessRuleExpression: text("business_rule_expression"),
+  businessRuleSql: text("business_rule_sql"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

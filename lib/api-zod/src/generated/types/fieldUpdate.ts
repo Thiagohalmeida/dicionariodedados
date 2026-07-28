@@ -18,4 +18,8 @@ export interface FieldUpdate {
   formula?: FieldUpdateFormula;
   excluded?: boolean;
   customInternalPlatform?: string;
+  /** @nullable */
+  businessRuleExpression?: string | null;
+  /** @nullable */
+  businessRuleSql?: string | null;
 }

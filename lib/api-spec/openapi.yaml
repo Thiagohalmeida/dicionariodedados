@@ -480,6 +480,15 @@ components:
           type: string
           enum: [nao, sim, suporte]
           default: nao
+        excluded:
+          type: boolean
+          default: false
+        customInternalPlatform:
+          type: ["string", "null"]
+        businessRuleExpression:
+          type: ["string", "null"]
+        businessRuleSql:
+          type: ["string", "null"]
 
     FieldWithSummary:
       type: object
@@ -641,6 +650,10 @@ components:
           type: boolean
         customInternalPlatform:
           type: string
+        businessRuleExpression:
+          type: ["string", "null"]
+        businessRuleSql:
+          type: ["string", "null"]
 
     DictionaryImport:
       type: object
@@ -743,3 +756,26 @@ components:
           type: string
         count:
           type: integer
+
+    BusinessRule:
+      type: object
+      required: [id, name, fieldIds, ruleType, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        fieldIds:
+          type: array
+          items:
+            type: integer
+        expression:
+          type: ["string", "null"]
+        sql:
+          type: ["string", "null"]
+        ruleType:
+          type: string
+          enum: [constraint, generated_column, check, lookup]
+        createdAt:
+          type: string
+          format: date-time
