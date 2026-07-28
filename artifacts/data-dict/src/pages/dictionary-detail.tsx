@@ -112,7 +112,7 @@ export default function DictionaryDetail() {
   };
 
   const handleValidationSave = (validation: ValidationFormData) => {
-    const { excluded, ...validationData } = validation;
+    const { excluded, customInternalPlatform, ...validationData } = validation;
     const formulaValue = validation.formula as "nao" | "sim" | "suporte";
 
     updateField.mutate(
