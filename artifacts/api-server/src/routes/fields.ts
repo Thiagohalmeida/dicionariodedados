@@ -63,6 +63,8 @@ router.patch("/fields/:id", async (req, res): Promise<void> => {
   if (parsed.data.tipoDado !== undefined)
     updates.tipoDado = parsed.data.tipoDado;
   if (parsed.data.chave !== undefined) updates.chave = parsed.data.chave;
+  if (parsed.data.formula !== undefined)
+    updates.formula = parsed.data.formula;
   if (parsed.data.excluded !== undefined)
     updates.excluded = parsed.data.excluded;
   if (parsed.data.customInternalPlatform !== undefined)
@@ -91,6 +93,7 @@ router.patch("/fields/:id", async (req, res): Promise<void> => {
       campoTecnico: updated.campoTecnico,
       tipoDado: updated.tipoDado,
       chave: updated.chave,
+      formula: updated.formula,
     }),
   );
 });
@@ -193,6 +196,9 @@ router.post("/fields/:id/validate", async (req, res): Promise<void> => {
       correctName: validation.correctName,
       correctOrigin: validation.correctOrigin,
       hasBusinessRule: validation.hasBusinessRule,
+      originType: validation.originType,
+      originDetail: validation.originDetail,
+      businessRuleRationale: validation.businessRuleRationale,
       score: Number(validation.score),
       comment: validation.comment ?? null,
       createdAt: validation.createdAt.toISOString(),
