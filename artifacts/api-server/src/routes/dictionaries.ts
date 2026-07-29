@@ -170,6 +170,11 @@ router.post("/dictionaries", async (req, res): Promise<void> => {
       campoTecnico: c.campo_tecnico,
       tipoDado: c.tipo_dado,
       chave: c.chave,
+      formula: "nao" as const,
+      excluded: false,
+      customInternalPlatform: null,
+      businessRuleExpression: null,
+      businessRuleSql: null,
     })),
   );
 

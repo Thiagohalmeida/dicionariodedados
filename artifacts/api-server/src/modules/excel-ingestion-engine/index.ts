@@ -15,6 +15,10 @@ export interface DictionaryField {
   campo_tecnico: string;
   tipo_dado: string;
   chave: boolean;
+  formula?: "nao" | "sim" | "suporte";
+  businessRuleExpression?: string | null;
+  businessRuleSql?: string | null;
+  customInternalPlatform?: string | null;
 }
 
 export interface ParsedDictionary {
@@ -257,8 +261,10 @@ export async function parseExcelToDataDictionary(
   });
 
   const columnValues: Record<number, unknown[]> = {};
+  const columnFormulas: Record<number, string[]> = {};
   validIndices.forEach((i) => {
     columnValues[i] = [];
+    columnFormulas[i] = [];
   });
 
   sheet.eachRow((row, rowNum) => {
@@ -266,6 +272,11 @@ export async function parseExcelToDataDictionary(
     validIndices.forEach((colIdx) => {
       const cell = row.getCell(colIdx);
       columnValues[colIdx].push(cell.value);
+      // Store formula if present
+      if (cell.formula) {
+        if (!columnFormulas[colIdx]) columnFormulas[colIdx] = [];
+        columnFormulas[colIdx].push(cell.formula);
+      }
     });
   });
 
@@ -319,15 +330,24 @@ export async function parseExcelToDataDictionary(
         campoTecnico.includes("id") ||
         campoTecnico.includes("cod"));
 
+    // Check if column has formulas
+    const formulas = columnFormulas[colIdx] ?? [];
+    const hasFormula = formulas.length > 0;
+    const formulaValue: "nao" | "sim" | "suporte" = hasFormula ? "sim" : "nao";
+    const businessRuleExpression = hasFormula
+      ? formulas.join(" | ")
+      : null;
+
     return {
       campo_origem: headerRaw,
-      // leave descricao empty to force specialist to provide meaningful business description
       descricao: "",
       origem: inferredOrigem ?? `${filename} | ${sheet.name}`,
       periodicidade: defaultPeriodicidade,
       campo_tecnico: campoTecnico,
       tipo_dado: tipo,
       chave: isFirstNumericKey,
+      formula: formulaValue,
+      business_rule_expression: businessRuleExpression,
     };
   });
 
