@@ -148,6 +148,7 @@ export default function DictionaryDetail() {
           queryClient.invalidateQueries({
             queryKey: getGetDictionaryQueryKey(id),
           });
+          queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
         },
         onError: () => {
           toast({
@@ -181,6 +182,7 @@ export default function DictionaryDetail() {
           queryClient.invalidateQueries({
             queryKey: getGetDictionaryQueryKey(id),
           });
+          queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
         },
         onError: () => {
           toast({

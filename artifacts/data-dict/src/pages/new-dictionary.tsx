@@ -336,6 +336,7 @@ function ExcelImportTab() {
               description: "O dicionário foi criado com sucesso.",
             });
             queryClient.invalidateQueries({ queryKey: ["/api/dictionaries"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
             setLocation(`/dictionaries/${dict.id}`);
           },
           onError: (err: unknown) => {
@@ -463,6 +464,7 @@ const handleImportFromSheet = (json: any) => {
 
             queryClient.invalidateQueries({ queryKey: ["dictionaries", dict.id] });
             queryClient.invalidateQueries({ queryKey: ["/api/dictionaries"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
 
             toast({
               title: "Importação concluída",
