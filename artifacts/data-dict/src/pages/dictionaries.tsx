@@ -3,6 +3,7 @@ import {
   useListDictionaries,
   useDeleteDictionary,
   useUpdateDictionary,
+  useGetDictionaryValidationStatus,
   getListDictionariesQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -13,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Pencil, PlayCircle, CheckCircle2, Clock } from "lucide-react";
+import { Plus, Trash2, Pencil, PlayCircle, CheckCircle2, Clock, Circle, X } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -63,6 +64,9 @@ type DictItem = {
   totalFields: number;
   approvedFields: number;
   avgScore: number | null;
+  fieldsValidatedBy1?: number;
+  fieldsValidatedBy2?: number;
+  allFieldsDoubleValidated?: boolean;
 };
 
 export default function DictionariesList() {
@@ -199,6 +203,7 @@ export default function DictionariesList() {
               <TableHead>Tabela</TableHead>
               <TableHead>Processo</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Validações</TableHead>
               <TableHead>Progresso</TableHead>
               <TableHead>Pontuação Média</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -206,10 +211,12 @@ export default function DictionariesList() {
           </TableHeader>
           <TableBody>
             {dictionaries.map((dict) => {
-              const progress =
+const progress =
                 dict.totalFields > 0
                   ? (dict.approvedFields / dict.totalFields) * 100
                   : 0;
+              const validatedBy1 = dict.fieldsValidatedBy1 ?? 0;
+              const validatedBy2 = dict.fieldsValidatedBy2 ?? 0;
               return (
                 <TableRow key={dict.id}>
                   <TableCell className="font-medium">{dict.tabela}</TableCell>
@@ -220,6 +227,31 @@ export default function DictionariesList() {
                       <Badge variant={getStatusBadgeVariant(dict.status)} className="gap-1">
                         {traduzirStatus(dict.status)}
                       </Badge>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {validatedBy2 > 0 && (
+                        <Badge variant="default" className="gap-1" title={`${validatedBy2} campos com 2 validações`}>
+                          <CheckCircle2 className="h-3 w-3" />
+                          {validatedBy2}
+                        </Badge>
+                      )}
+                      {validatedBy1 > validatedBy2 && (
+                        <Badge variant="secondary" className="gap-1" title={`${validatedBy1 - validatedBy2} campos com 1 validação`}>
+                          <Circle className="h-3 w-3" />
+                          {validatedBy1 - validatedBy2}
+                        </Badge>
+                      )}
+                      {validatedBy1 === 0 && dict.totalFields > 0 && (
+                        <Badge variant="outline" className="gap-1" title="Nenhuma validação">
+                          <X className="h-3 w-3" />
+                          0
+                        </Badge>
+                      )}
+                      {dict.totalFields === 0 && (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell className="w-[200px]">
