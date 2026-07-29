@@ -223,6 +223,27 @@ paths:
         "404":
           description: Not found
 
+  /dictionaries/{id}/validation-status:
+    get:
+      operationId: getDictionaryValidationStatus
+      tags: [dictionaries]
+      summary: Get validation status for a dictionary (counts of validations per field)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Validation status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DictionaryValidationStatus"
+        "404":
+          description: Not found
+
   /fields/{id}:
     patch:
       operationId: updateField
@@ -427,6 +448,15 @@ components:
           type: integer
         avgScore:
           type: ["number", "null"]
+        fieldsValidatedBy1:
+          type: integer
+          description: Number of fields with at least 1 validation
+        fieldsValidatedBy2:
+          type: integer
+          description: Number of fields with at least 2 validations
+        allFieldsDoubleValidated:
+          type: boolean
+          description: Whether all fields have at least 2 validations
 
     DictionaryDetail:
       type: object
@@ -779,3 +809,32 @@ components:
         createdAt:
           type: string
           format: date-time
+
+    DictionaryValidationStatus:
+      type: object
+      required: [fieldsTotal, fieldsValidatedBy1, fieldsValidatedBy2, canGenerateDDL]
+      properties:
+        fieldsTotal:
+          type: integer
+        fieldsValidatedBy1:
+          type: integer
+        fieldsValidatedBy2:
+          type: integer
+        canGenerateDDL:
+          type: boolean
+        fields:
+          type: array
+          items:
+            type: object
+            required: [fieldId, campoTecnico, totalValidations, validators]
+            properties:
+              fieldId:
+                type: integer
+              campoTecnico:
+                type: string
+              totalValidations:
+                type: integer
+              validators:
+                type: array
+                items:
+                  type: string

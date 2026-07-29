@@ -96,6 +96,8 @@ router.get("/dictionaries", async (req, res): Promise<void> => {
     let pendingFields = 0;
     let totalScore = 0;
     let scoredFields = 0;
+    let fieldsValidatedBy1 = 0;
+    let fieldsValidatedBy2 = 0;
 
     for (const f of fields) {
       const summary = allSummaries.get(f.id)!;
@@ -106,7 +108,12 @@ router.get("/dictionaries", async (req, res): Promise<void> => {
         totalScore += summary.score;
         scoredFields++;
       }
+      // Count validations per field
+      if (summary.totalValidations >= 1) fieldsValidatedBy1++;
+      if (summary.totalValidations >= 2) fieldsValidatedBy2++;
     }
+
+    const allFieldsDoubleValidated = fields.length > 0 && fields.length === fieldsValidatedBy2;
 
     return {
       id: d.id,
@@ -125,6 +132,9 @@ router.get("/dictionaries", async (req, res): Promise<void> => {
         scoredFields > 0
           ? Math.round((totalScore / scoredFields) * 100) / 100
           : null,
+      fieldsValidatedBy1,
+      fieldsValidatedBy2,
+      allFieldsDoubleValidated,
     };
   });
 
@@ -228,6 +238,59 @@ router.get("/dictionaries/:id", async (req, res): Promise<void> => {
       fields: fieldsWithSummaries,
     }),
   );
+});
+
+router.get("/dictionaries/:id/validation-status", async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) {
+    req.log.error({ id: req.params.id }, "Invalid dictionary ID");
+    res.status(400).json({ error: "ID inválido" });
+    return;
+  }
+
+  const [dict] = await db
+    .select()
+    .from(dictionariesTable)
+    .where(eq(dictionariesTable.id, id));
+
+  if (!dict) {
+    req.log.error({ dictionaryId: id }, "Dictionary not found");
+    res.status(404).json({ error: "Dicionário não encontrado" });
+    return;
+  }
+
+  const fieldsWithSummaries = await getFieldsWithSummaries(dict.id);
+
+  let fieldsValidatedBy1 = 0;
+  let fieldsValidatedBy2 = 0;
+  const fieldsData = [];
+
+  for (const field of fieldsWithSummaries) {
+    const totalValidations = field.summary.totalValidations;
+    const validators = field.summary.totalValidations > 0
+      ? Array.from({ length: field.summary.totalValidations }, (_, i) => `Validator ${i + 1}`)
+      : [];
+
+    if (totalValidations >= 1) fieldsValidatedBy1++;
+    if (totalValidations >= 2) fieldsValidatedBy2++;
+
+    fieldsData.push({
+      fieldId: field.id,
+      campoTecnico: field.campoTecnico,
+      totalValidations,
+      validators,
+    });
+  }
+
+  const canGenerateDDL = fieldsWithSummaries.length > 0 && fieldsValidatedBy2 === fieldsWithSummaries.length;
+
+  res.json({
+    fieldsTotal: fieldsWithSummaries.length,
+    fieldsValidatedBy1,
+    fieldsValidatedBy2,
+    canGenerateDDL,
+    fields: fieldsData,
+  });
 });
 
 router.patch("/dictionaries/:id", async (req, res): Promise<void> => {
@@ -423,6 +486,76 @@ router.get("/dictionaries/:id/export", async (req, res): Promise<void> => {
       content: JSON.stringify(exportData, null, 2),
     }),
   );
+});
+
+// Validation status endpoint - returns counts of validations per field for double-validation badge
+router.get("/dictionaries/:id/validation-status", async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) {
+    req.log.error({ id: req.params.id }, "Invalid dictionary ID");
+    res.status(400).json({ error: "ID inválido" });
+    return;
+  }
+
+  const [dict] = await db
+    .select()
+    .from(dictionariesTable)
+    .where(eq(dictionariesTable.id, id));
+  if (!dict) {
+    req.log.error({ dictionaryId: id }, "Dictionary not found for validation status");
+    res.status(404).json({ error: "Dicionário não encontrado" });
+    return;
+  }
+
+  const fields = await db
+    .select()
+    .from(fieldsTable)
+    .where(eq(fieldsTable.dictionaryId, id));
+
+  if (fields.length === 0) {
+    res.json({
+      totalFields: 0,
+      fieldsValidatedBy1: 0,
+      fieldsValidatedBy2: 0,
+      allFieldsDoubleValidated: false,
+      canGenerateDDL: true,
+      fieldDetails: [],
+    });
+    return;
+  }
+
+  const fieldIds = fields.map((f) => f.id);
+  const allSummaries = await computeFieldSummariesBatch(fieldIds);
+
+  let fieldsValidatedBy1 = 0;
+  let fieldsValidatedBy2 = 0;
+
+  const fieldDetails = fields.map((f) => {
+    const summary = allSummaries.get(f.id);
+    const totalValidations = summary?.totalValidations ?? 0;
+    
+    if (totalValidations >= 1) fieldsValidatedBy1++;
+    if (totalValidations >= 2) fieldsValidatedBy2++;
+
+    return {
+      fieldId: f.id,
+      campoTecnico: f.campoTecnico,
+      totalValidations,
+      statusFinal: summary?.statusFinal ?? "pending",
+      classification: summary?.classification ?? "pending",
+    };
+  });
+
+  const allFieldsDoubleValidated = fieldsValidatedBy2 === fields.length && fields.length > 0;
+
+  res.json({
+    totalFields: fields.length,
+    fieldsValidatedBy1,
+    fieldsValidatedBy2,
+    allFieldsDoubleValidated,
+    canGenerateDDL: true, // Always true, but UI can suggest waiting for 2 validations
+    fieldDetails,
+  });
 });
 
 export default router;
