@@ -22,6 +22,13 @@
       "when": 1783955597928,
       "tag": "0002_stiff_kingpin",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1784421842859,
+      "tag": "0003_military_nextwave",
+      "breakpoints": true
     }
   ]
 }

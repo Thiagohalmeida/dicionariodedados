@@ -259,6 +259,11 @@ router.post(
         campoTecnico: c.campo_tecnico,
         tipoDado: c.tipo_dado,
         chave: c.chave,
+        formula: c.formula ?? "nao",
+        excluded: false,
+        customInternalPlatform: c.customInternalPlatform ?? null,
+        businessRuleExpression: c.businessRuleExpression ?? null,
+        businessRuleSql: c.businessRuleSql ?? null,
       })),
     );
 

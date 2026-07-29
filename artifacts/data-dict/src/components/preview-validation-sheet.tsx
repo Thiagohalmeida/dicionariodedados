@@ -62,6 +62,10 @@ export interface PreviewField {
   periodicidade: string;
   chave: boolean;
   included: boolean; // whether to include in final JSON
+  excluded?: boolean;
+  customInternalPlatform?: string;
+  businessRuleExpression?: string | null;
+  businessRuleSql?: string | null;
   validation?: {
     validatorName?: string;
     used?: boolean;

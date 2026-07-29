@@ -25,6 +25,7 @@ import type {
   DictionaryDetail,
   DictionaryImport,
   DictionaryUpdate,
+  DictionaryValidationStatus,
   ExportResult,
   Field,
   FieldSummary,
@@ -666,6 +667,83 @@ export function useExportDictionary<TData = Awaited<ReturnType<typeof exportDict
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getExportDictionaryQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetDictionaryValidationStatusUrl = (id: number,) => {
+
+
+
+
+  return `/api/dictionaries/${id}/validation-status`
+}
+
+/**
+ * @summary Get validation status for a dictionary (counts of validations per field)
+ */
+export const getDictionaryValidationStatus = async (id: number, options?: RequestInit): Promise<DictionaryValidationStatus> => {
+
+  return customFetch<DictionaryValidationStatus>(getGetDictionaryValidationStatusUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetDictionaryValidationStatusQueryKey = (id: number,) => {
+    return [
+    `/api/dictionaries/${id}/validation-status`
+    ] as const;
+    }
+
+
+export const getGetDictionaryValidationStatusQueryOptions = <TData = Awaited<ReturnType<typeof getDictionaryValidationStatus>>, TError = ErrorType<void>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDictionaryValidationStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDictionaryValidationStatusQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDictionaryValidationStatus>>> = ({ signal }) => getDictionaryValidationStatus(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDictionaryValidationStatus>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetDictionaryValidationStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getDictionaryValidationStatus>>>
+export type GetDictionaryValidationStatusQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get validation status for a dictionary (counts of validations per field)
+ */
+
+export function useGetDictionaryValidationStatus<TData = Awaited<ReturnType<typeof getDictionaryValidationStatus>>, TError = ErrorType<void>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDictionaryValidationStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetDictionaryValidationStatusQueryOptions(id,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

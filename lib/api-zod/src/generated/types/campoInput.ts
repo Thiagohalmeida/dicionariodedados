@@ -16,4 +16,11 @@ export interface CampoInput {
   tipo_dado: string;
   chave: boolean;
   formula?: CampoInputFormula;
+  excluded?: boolean;
+  /** @nullable */
+  customInternalPlatform?: string | null;
+  /** @nullable */
+  businessRuleExpression?: string | null;
+  /** @nullable */
+  businessRuleSql?: string | null;
 }

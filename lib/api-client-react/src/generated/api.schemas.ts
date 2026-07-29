@@ -76,6 +76,12 @@ export interface DictionaryWithMetrics {
   pendingFields: number;
   /** @nullable */
   avgScore: number | null;
+  /** Number of fields with at least 1 validation */
+  fieldsValidatedBy1?: number;
+  /** Number of fields with at least 2 validations */
+  fieldsValidatedBy2?: number;
+  /** Whether all fields have at least 2 validations */
+  allFieldsDoubleValidated?: boolean;
 }
 
 export type DictionaryDetailStatus = typeof DictionaryDetailStatus[keyof typeof DictionaryDetailStatus];
@@ -175,6 +181,13 @@ export interface Field {
   tipoDado: string;
   chave: boolean;
   formula?: FieldFormula;
+  excluded?: boolean;
+  /** @nullable */
+  customInternalPlatform?: string | null;
+  /** @nullable */
+  businessRuleExpression?: string | null;
+  /** @nullable */
+  businessRuleSql?: string | null;
 }
 
 export type ValidationInputOriginType = typeof ValidationInputOriginType[keyof typeof ValidationInputOriginType];
@@ -269,6 +282,10 @@ export interface FieldUpdate {
   formula?: FieldUpdateFormula;
   excluded?: boolean;
   customInternalPlatform?: string;
+  /** @nullable */
+  businessRuleExpression?: string | null;
+  /** @nullable */
+  businessRuleSql?: string | null;
 }
 
 export type CampoInputFormula = typeof CampoInputFormula[keyof typeof CampoInputFormula];
@@ -289,6 +306,13 @@ export interface CampoInput {
   tipo_dado: string;
   chave: boolean;
   formula?: CampoInputFormula;
+  excluded?: boolean;
+  /** @nullable */
+  customInternalPlatform?: string | null;
+  /** @nullable */
+  businessRuleExpression?: string | null;
+  /** @nullable */
+  businessRuleSql?: string | null;
 }
 
 export interface DictionaryImport {
@@ -330,6 +354,43 @@ export interface DashboardMetrics {
   dictionariesByStatus: StatusCount[];
   fieldsByClassification: ClassificationCount[];
   recentDictionaries: DictionaryWithMetrics[];
+}
+
+export type BusinessRuleRuleType = typeof BusinessRuleRuleType[keyof typeof BusinessRuleRuleType];
+
+
+export const BusinessRuleRuleType = {
+  constraint: 'constraint',
+  generated_column: 'generated_column',
+  check: 'check',
+  lookup: 'lookup',
+} as const;
+
+export interface BusinessRule {
+  id: number;
+  name: string;
+  fieldIds: number[];
+  /** @nullable */
+  expression?: string | null;
+  /** @nullable */
+  sql?: string | null;
+  ruleType: BusinessRuleRuleType;
+  createdAt: string;
+}
+
+export type DictionaryValidationStatusFieldsItem = {
+  fieldId: number;
+  campoTecnico: string;
+  totalValidations: number;
+  validators: string[];
+};
+
+export interface DictionaryValidationStatus {
+  fieldsTotal: number;
+  fieldsValidatedBy1: number;
+  fieldsValidatedBy2: number;
+  canGenerateDDL: boolean;
+  fields?: DictionaryValidationStatusFieldsItem[];
 }
 
 export type PreviewExcelDictionaryBody = {

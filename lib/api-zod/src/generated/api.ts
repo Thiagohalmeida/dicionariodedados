@@ -64,7 +64,10 @@ export const ListDictionariesResponse = zod.object({
   "approvedFields": zod.number(),
   "rejectedFields": zod.number(),
   "pendingFields": zod.number(),
-  "avgScore": zod.number().nullable()
+  "avgScore": zod.number().nullable(),
+  "fieldsValidatedBy1": zod.number().optional().describe('Number of fields with at least 1 validation'),
+  "fieldsValidatedBy2": zod.number().optional().describe('Number of fields with at least 2 validations'),
+  "allFieldsDoubleValidated": zod.boolean().optional().describe('Whether all fields have at least 2 validations')
 })),
   "total": zod.number(),
   "page": zod.number(),
@@ -80,6 +83,7 @@ export const ListDictionariesResponse = zod.object({
 
 
 export const importDictionaryBodyCamposItemFormulaDefault = `nao`;
+export const importDictionaryBodyCamposItemExcludedDefault = false;
 
 
 export const ImportDictionaryBody = zod.object({
@@ -94,7 +98,11 @@ export const ImportDictionaryBody = zod.object({
   "campo_tecnico": zod.string(),
   "tipo_dado": zod.string(),
   "chave": zod.boolean(),
-  "formula": zod.enum(['nao', 'sim', 'suporte']).default(importDictionaryBodyCamposItemFormulaDefault)
+  "formula": zod.enum(['nao', 'sim', 'suporte']).default(importDictionaryBodyCamposItemFormulaDefault),
+  "excluded": zod.boolean().default(importDictionaryBodyCamposItemExcludedDefault),
+  "customInternalPlatform": zod.string().nullish(),
+  "businessRuleExpression": zod.string().nullish(),
+  "businessRuleSql": zod.string().nullish()
 })).min(1)
 })
 
@@ -210,6 +218,27 @@ export const ExportDictionaryResponse = zod.object({
 
 
 /**
+ * @summary Get validation status for a dictionary (counts of validations per field)
+ */
+export const GetDictionaryValidationStatusParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetDictionaryValidationStatusResponse = zod.object({
+  "fieldsTotal": zod.number(),
+  "fieldsValidatedBy1": zod.number(),
+  "fieldsValidatedBy2": zod.number(),
+  "canGenerateDDL": zod.boolean(),
+  "fields": zod.array(zod.object({
+  "fieldId": zod.number(),
+  "campoTecnico": zod.string(),
+  "totalValidations": zod.number(),
+  "validators": zod.array(zod.string())
+})).optional()
+})
+
+
+/**
  * @summary Update field metadata
  */
 export const UpdateFieldParams = zod.object({
@@ -226,10 +255,13 @@ export const UpdateFieldBody = zod.object({
   "chave": zod.boolean().optional(),
   "formula": zod.enum(['nao', 'sim', 'suporte']).optional(),
   "excluded": zod.boolean().optional(),
-  "customInternalPlatform": zod.string().optional()
+  "customInternalPlatform": zod.string().optional(),
+  "businessRuleExpression": zod.string().nullish(),
+  "businessRuleSql": zod.string().nullish()
 })
 
 export const updateFieldResponseFormulaDefault = `nao`;
+export const updateFieldResponseExcludedDefault = false;
 
 export const UpdateFieldResponse = zod.object({
   "id": zod.number(),
@@ -241,7 +273,11 @@ export const UpdateFieldResponse = zod.object({
   "campoTecnico": zod.string(),
   "tipoDado": zod.string(),
   "chave": zod.boolean(),
-  "formula": zod.enum(['nao', 'sim', 'suporte']).default(updateFieldResponseFormulaDefault)
+  "formula": zod.enum(['nao', 'sim', 'suporte']).default(updateFieldResponseFormulaDefault),
+  "excluded": zod.boolean().default(updateFieldResponseExcludedDefault),
+  "customInternalPlatform": zod.string().nullish(),
+  "businessRuleExpression": zod.string().nullish(),
+  "businessRuleSql": zod.string().nullish()
 })
 
 
@@ -392,7 +428,10 @@ export const GetDashboardResponse = zod.object({
   "approvedFields": zod.number(),
   "rejectedFields": zod.number(),
   "pendingFields": zod.number(),
-  "avgScore": zod.number().nullable()
+  "avgScore": zod.number().nullable(),
+  "fieldsValidatedBy1": zod.number().optional().describe('Number of fields with at least 1 validation'),
+  "fieldsValidatedBy2": zod.number().optional().describe('Number of fields with at least 2 validations'),
+  "allFieldsDoubleValidated": zod.boolean().optional().describe('Whether all fields have at least 2 validations')
 }))
 })
 

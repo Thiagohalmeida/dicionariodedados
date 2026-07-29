@@ -23,4 +23,10 @@ export interface DictionaryWithMetrics {
   pendingFields: number;
   /** @nullable */
   avgScore: number | null;
+  /** Number of fields with at least 1 validation */
+  fieldsValidatedBy1?: number;
+  /** Number of fields with at least 2 validations */
+  fieldsValidatedBy2?: number;
+  /** Whether all fields have at least 2 validations */
+  allFieldsDoubleValidated?: boolean;
 }

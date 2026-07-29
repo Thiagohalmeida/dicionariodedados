@@ -6,6 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './businessRule';
+export * from './businessRuleRuleType';
 export * from './campoInput';
 export * from './campoInputFormula';
 export * from './classificationCount';
@@ -16,6 +18,8 @@ export * from './dictionaryDetailStatus';
 export * from './dictionaryImport';
 export * from './dictionaryStatus';
 export * from './dictionaryUpdate';
+export * from './dictionaryValidationStatus';
+export * from './dictionaryValidationStatusFieldsItem';
 export * from './dictionaryWithMetrics';
 export * from './dictionaryWithMetricsStatus';
 export * from './exportResult';

@@ -192,6 +192,9 @@ function ExcelImportTab() {
       validation?: any;
       excluded?: boolean;
       customInternalPlatform?: string;
+      businessRuleExpression?: string | null;
+      businessRuleSql?: string | null;
+      formula?: "nao" | "sim" | "suporte";
     }>
   >([]);
   const [resolvedMeta, setResolvedMeta] = useState<{
@@ -373,6 +376,11 @@ function ExcelImportTab() {
         origem: f.origem,
         periodicidade: f.periodicidade,
         chave: f.chave,
+        formula: f.validation?.formula ?? "nao",
+        excluded: f.excluded ?? false,
+        customInternalPlatform: f.customInternalPlatform ?? null,
+        businessRuleExpression: f.businessRuleExpression ?? null,
+        businessRuleSql: f.businessRuleSql ?? null,
       }));
     setPreviewJson(JSON.stringify(parsed, null, 2));
     toast({

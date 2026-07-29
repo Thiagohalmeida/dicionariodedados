@@ -2,7 +2,7 @@
 
 ## Resumo Executivo
 
-O sistema atual possui uma base sólida para importação, validação e exportação de dicionários de dados. Porém, existem **gaps críticos** para atender ao objetivo de migração completa (regras de negócio, fórmulas, dupla validação, geração DDL para Databricks).
+O sistema atual possui uma base sólida para importação, validação e exportação de dicionários de dados. Foram resolvidos gaps críticos de fundação. Restam gaps para migração completa (regras de negócio, fórmulas, dupla validação, geração DDL para Databricks).
 
 ---
 
@@ -15,87 +15,111 @@ O sistema atual possui uma base sólida para importação, validação e exporta
 | **Badge de validação** | ❌ Não existe | Necessário badge visual (1ª/2ª validação) |
 | **Gating "dupla validação → DDL"** | ❌ Não existe | Lógica de bloqueio/liberação ausente |
 | **Export DDL** | ✅ Parcial (`/export/ddl`) | Gera PostgreSQL genérico, **não Databricks** (Unity Catalog, Delta Lake, partições, Z-Order) |
-| **Regras de negócio/fórmulas** | ❌ Schema existe, mas não povoado | Excel não lê fórmulas; UI não edita; export não inclui |
+| **Regras de negócio/fórmulas** | ⚠️ Schema pronto, ingestão pendente | Excel não lê fórmulas; UI não edita; export não inclui |
 
 ---
 
-## 2. Gaps Técnicos Identificados
+## 2. ✅ CONCLUÍDO - Fundação (P0)
 
-### 2.1 Extração de Fórmulas do Excel (CRÍTICO)
+### 2.1 Migrações de Banco Aplicadas ✅
+
+| Migration | Status | Descrição |
+|-----------|--------|-----------|
+| `0004_change_origin_detail_to_text.sql` | ✅ Aplicada | Fix erro 500 - `origin_detail` enum → text |
+| `0005_add_excluded_custom_platform_business_rules.sql` | ✅ Aplicada | Colunas `excluded`, `custom_internal_platform`, `business_rule_expression`, `business_rule_sql` |
+| `0006_create_business_rules.sql` | ✅ Aplicada | Tabela `business_rules` + enum `business_rule_type` |
+
+### 2.2 Schema & OpenAPI Atualizados ✅
+
+| Arquivo | Status |
+|---------|--------|
+| `lib/db/src/schema/fields.ts` | ✅ 4 novas colunas |
+| `lib/db/src/schema/business-rules.ts` | ✅ Nova tabela |
+| `lib/db/src/schema/index.ts` | ✅ Export |
+| `lib/api-spec/openapi.yaml` | ✅ Schemas atualizados + `BusinessRule` |
+| `lib/api-zod` (regenerado via orval) | ✅ Types sincronizados |
+| `UpdateFieldResponse` Zod | ✅ Inclui novos campos |
+
+### 2.3 Bug Fixes Críticos ✅
+
+| Commit | Fix |
+|--------|-----|
+| `c834f06` | Botão delete no dashboard "Dicionários Recentes" |
+| `ca7cd76` | Fix "Excluir/Desconsiderar" - permite validador + observação |
+| `709de5c` | Campo observação habilitado quando excluído |
+| `7c4d7a3` | Inclui `formula` no submit de validação |
+| `526aa59` | `useCallback` para `React.memo` funcionar |
+| `03929ac` | `formula` no PATCH + response validation completo |
+| `044fede` | Schema business rules + migrations |
+| `a220f3d` | Migrations idempotentes |
+
+---
+
+## 3. Gaps Técnicos Restantes
+
+### 3.1 Extração de Fórmulas do Excel (PRÓXIMO - P1.1)
 
 **Arquivo:** `artifacts/api-server/src/modules/excel-ingestion-engine/index.ts`
 
-- **Problema:** `parseExcelToDataDictionary()` lê apenas `cell.value` (resultado calculado). Não acessa `cell.formula`.
+- **Problema:** `parseExcelToDataDictionary()` lê apenas `cell.value`. Não acessa `cell.formula`.
 - **Impacto:** Toda inteligência de negócio (fórmulas, validações condicionais, lookups) se perde na importação.
-- **Solução:** Usar `cell.formula` do ExcelJS e mapear para coluna `formula` (enum: `nao` | `sim` | `suporte`) + armazenar fórmula original em novo campo `business_rule_expression` (text).
+- **Solução:** Usar `cell.formula` do ExcelJS → popular `business_rule_expression` + classificar `formula` enum (`nao`/`sim`/`suporte`).
 
-### 2.2 Migrações Faltantes no Banco
+### 3.2 Migrações - Status Atualizado ✅
 
 | Coluna (schema) | Migration | Status |
 |-----------------|-----------|--------|
 | `fields.formula` | `0002` ✅ | OK |
-| `fields.excluded` | ❌ | **FALTANDO** |
-| `fields.custom_internal_platform` | ❌ | **FALTANDO** |
-| `validations.origin_detail` enum→text | `0004` ✅ | OK (precisa deploy) |
+| `fields.excluded` | `0005` ✅ | **APLICADA** |
+| `fields.custom_internal_platform` | `0005` ✅ | **APLICADA** |
+| `fields.business_rule_expression` | `0005` ✅ | **APLICADA** |
+| `fields.business_rule_sql` | `0005` ✅ | **APLICADA** |
+| `validations.origin_detail` enum→text | `0004` ✅ | **APLICADA** |
+| `business_rules` table | `0006` ✅ | **APLICADA** |
 
-**Ação:** Gerar migration `0005_add_excluded_custom_platform.sql`:
-```sql
-ALTER TABLE "fields" ADD COLUMN "excluded" boolean DEFAULT false NOT NULL;
-ALTER TABLE "fields" ADD COLUMN "custom_internal_platform" text;
-```
+### 3.3 PATCH `/fields/:id` - ✅ Resolvido
 
-### 2.3 PATCH `/fields/:id` - Campos não retornados
+| Commit | Fix |
+|--------|-----|
+| `03929ac` | `formula` no response |
+| `044fede` | `excluded`, `customInternalPlatform`, `businessRuleExpression`, `businessRuleSql` no response |
 
-**Arquivo:** `artifacts/api-server/src/routes/fields.ts` (linha 85-97)
+### 3.4 Validação Response - ✅ Resolvido
 
-- **Corrigido no commit `03929ac`**: Adicionado `formula` ao response
-- **Ainda faltando:** `excluded` e `customInternalPlatform` no response do `UpdateFieldResponse` (Zod schema precisa ser atualizado em `lib/api-zod`)
-
-### 2.4 Validação Response - Campos Obrigatórios
-
-**Corrigido no commit `03929ac`**: Adicionados `originType`, `originDetail`, `businessRuleRationale` ao response da validação para satisfazer `SubmitValidationResponse` (Zod).
+| Commit | Fix |
+|--------|-----|
+| `03929ac` | `originType`, `originDetail`, `businessRuleRationale` no response |
 
 ---
 
-## 3. Fluxo de Dupla Validação (NOVO)
+## 4. Fluxo de Dupla Validação (P1.2 - PRÓXIMO)
 
 ### Requisitos
-1. **Badge visual** por tabela: `Validado por 1` / `Validado por 2` / `Pronto para DDL`
-2. **Gating**: Só libera geração DDL quando `totalValidations >= 2` E `statusFinal === APPROVED` para todos os campos
-3. **Rastreabilidade**: Guardar `validatorName` de cada validação (já existe no backend)
+1. **Badge visual** por tabela: `✓ 1 validação` / `✓✓ 2 validações` / `✅ Pronto p/ DDL`
+2. **Gating opcional**: DDL sempre liberado, mas UI sugere aguardar 2ª validação
+3. **Rastreabilidade**: `validatorName` já salvo por validação
 
 ### Implementação Necessária
 
 #### Backend
-```typescript
-// Novo endpoint ou extend GET /dictionaries/:id
-{
-  validationStatus: {
-    fieldsValidatedBy1: number,
-    fieldsValidatedBy2: number,
-    allFieldsDoubleValidated: boolean,
-    canGenerateDDL: boolean
-  }
-}
-```
+- Endpoint `GET /dictionaries/:id/validation-status` → contadores por campo + `canGenerateDDL`
 
 #### Frontend
-- `dictionaries.tsx`: Adicionar coluna "Validações" com badge
-- `dictionary-detail.tsx`: Mostrar contador de validações por campo
-- Botão "Gerar DDL" só habilitado quando `canGenerateDDL === true`
+- `dictionaries.tsx`: Coluna "Validações" com badge (1️⃣/2️⃣/✅)
+- `dictionary-detail.tsx`: Contador validações por campo
+- Botão "Gerar DDL" sempre habilitado, tooltip sugere aguardar 2ª validação
 
 ---
 
-## 4. Geração DDL para Databricks (Unity Catalog)
+## 5. Geração DDL para Databricks (P2)
 
 ### Atual (`/export/ddl`) - PostgreSQL Genérico
 ```sql
 CREATE TABLE tabela (coluna VARCHAR(255), ...);
 ```
 
-### Necessário para Databricks
+### Necessário para Databricks (Unity Catalog + Delta Lake)
 ```sql
--- Unity Catalog 3-level namespace
 CREATE TABLE IF NOT EXISTS catalog.schema.tabela (
   coluna STRING COMMENT 'descrição do negócio',
   ...
@@ -105,8 +129,8 @@ TBLPROPERTIES (
   'delta.autoOptimize.optimizeWrite' = 'true',
   'delta.autoOptimize.autoCompact' = 'true'
 )
-PARTITIONED BY (data_particao)  -- se houver coluna de data
-CLUSTER BY (chave_primaria);     -- Z-Order para performance
+PARTITIONED BY (data_particao)
+CLUSTER BY (chave_primaria);
 ```
 
 ### Mapeamento de Tipos
@@ -117,66 +141,75 @@ CLUSTER BY (chave_primaria);     -- Z-Order para performance
 | `decimal` | `DECIMAL(38,18)` |
 | `date` | `DATE` |
 
-### Metadados Necessários no Export
-- `catalog` / `schema` (configurável por ambiente)
-- `partition_column` (detectar coluna de data)
+### Metadados no Export
+- `catalog` / `schema` (configurável por env var + override por dicionário)
+- `partition_column` (detectar coluna de data automaticamente)
 - `zorder_columns` (PK + FKs frequentes)
 - `table_properties` (Delta Lake otimizações)
 - `column_comments` (descrição + regra de negócio)
 
 ---
 
-## 5. Regras de Negócio / Fórmulas
+## 6. Regras de Negócio / Fórmulas (P1.1 + P2)
 
 ### Estratégia de Migração
 
 | Tipo de Regra | Abordagem |
 |---------------|-----------|
-| **Fórmulas Excel** (`=SE(A1>0, "OK", "ERRO")`) | Extrair fórmula original → armazenar em `fields.business_rule_expression` (text) → converter para SQL/Delta Lake Generated Columns ou View |
-| **Validações condicionais** | Mapear para `CHECK constraints` ou Quality Checks (Great Expectations / Delta Live Tables expectations) |
+| **Fórmulas Excel** (`=SE(A1>0, "OK", "ERRO")`) | Extrair fórmula original → `business_rule_expression` → converter para SQL/Generated Columns |
+| **Validações condicionais** | Mapear para `CHECK constraints` ou Quality Checks (DLT expectations) |
 | **Lookups/VLOOKUP** | Documentar como `JOIN` com tabela de referência (catálogo) |
 | **Macros/VBA** | Fora de escopo - documentar manualmente |
 
-### Novo Campo no Schema
-```typescript
-// fields.ts
-businessRuleExpression: text("business_rule_expression"),  // Fórmula original
-businessRuleSql: text("business_rule_sql"),                // Conversão para SQL
-```
-
-### Pipeline Sugerido
-1. **Import** → Extrai fórmula → salva em `business_rule_expression`
-2. **Validação** → Especialista revisa/converte para SQL → salva em `business_rule_sql`
-3. **Export DDL** → Inclui `GENERATED ALWAYS AS (business_rule_sql) STORED` ou cria View materializada
+### Pipeline
+1. **Import** → Extrai fórmula → `business_rule_expression` + classifica `formula` enum
+2. **Validação** → Especialista revisa/converte → `business_rule_sql`
+3. **Export DDL Databricks** → `GENERATED ALWAYS AS (business_rule_sql) STORED` ou View materializada
 
 ---
 
-## 6. Plano de Ação Priorizado
+## 7. Plano de Ação Atualizado
 
-| Prioridade | Item | Esforço | Arquivos Afetados |
-|------------|------|---------|-------------------|
-| **P0** | Migration `excluded` + `custom_internal_platform` | 30 min | `lib/db/migrations/`, `lib/db/schema/fields.ts` |
-| **P0** | Fix `UpdateFieldResponse` Zod (excluded, customInternalPlatform) | 30 min | `lib/api-zod/`, `artifacts/api-server/src/routes/fields.ts` |
-| **P1** | Extração de fórmulas no Excel ingestion | 2-4h | `excel-ingestion-engine/index.ts`, schema fields |
-| **P1** | Endpoint status dupla validação + badge UI | 3-4h | `dictionaries.ts`, `dictionary-detail.tsx`, `dictionaries.tsx` |
-| **P2** | DDL Generator Databricks (Unity Catalog, Delta, Partition, Z-Order) | 4-6h | Novo módulo `ddl-generator/`, `dictionaries.ts` export |
-| **P2** | Campo `business_rule_expression` + `business_rule_sql` | 2h | Schema, ingestion, validation UI, export |
-| **P3** | Automação deploy Render (migration auto) | 1h | `render.yaml` |
-
----
-
-## 7. Decisões de Arquitetura Pendentes
-
-1. **Databricks Catalog/Schema**: Hardcoded, variável de ambiente, ou configurável por dicionário?
-2. **Particionamento**: Detectar automaticamente coluna de data ou exigir configuração?
-3. **Quality Checks**: Usar Delta Live Tables `expectations` ou Great Expectations standalone?
-4. **Versionamento DDL**: Gerar `CREATE OR REPLACE` vs `ALTER TABLE` para evolução de schema?
-5. **Fórmulas complexas**: Converter para SQL nativo ou manter como expressão documentada + View?
+| Prioridade | Item | Esforço | Status |
+|------------|------|---------|--------|
+| **P0** | Migrations aplicadas | 30 min | ✅ **CONCLUÍDO** |
+| **P0** | Fix `UpdateFieldResponse` Zod | 30 min | ✅ **CONCLUÍDO** |
+| **P1.1** | **Extrair fórmulas no Excel ingestion** | 2-4h | 🔄 **PRÓXIMO** |
+| **P1.2** | Endpoint status dupla validação + badge UI | 3-4h | ⏳ PENDENTE |
+| **P2.1** | DDL Generator Databricks (Unity Catalog, Delta, Partition, Z-Order) | 4-6h | ⏳ PENDENTE |
+| **P2.2** | Export DDL Databricks endpoint | 2h | ⏳ PENDENTE |
+| **P3** | Automação deploy Render (migration auto) | 1h | ⏳ PENDENTE |
 
 ---
 
-## 8. Conclusão
+## 8. Próximo Passo Imediato
 
-O sistema **já suporta múltiplas validações por campo** no backend (summary calcula média, conflitos, etc). O gap principal é **expor isso na UI** (badges, gating DDL) e **extrair a inteligência do Excel** (fórmulas).
+### 🎯 **P1.1 - Extração de Fórmulas no Excel Ingestion**
 
-**Próximo passo recomendado:** Implementar P0/P1 (migrations + extração fórmulas + status dupla validação) antes de atacar o gerador DDL Databricks.
+**Arquivo:** `artifacts/api-server/src/modules/excel-ingestion-engine/index.ts`
+
+**Tarefas:**
+1. Ler `cell.formula` do ExcelJS (além de `cell.value`)
+2. Se célula tem fórmula → `business_rule_expression = cell.formula`
+3. Classificar `formula` enum:
+   - Se tem fórmula → `"sim"` (campo calculado, não vai no JSON final)
+   - Se não tem → `"nao"`
+4. Para fórmulas multi-célula complexas → criar entrada em `business_rules` table
+
+**Impacto:** Resgata a inteligência de negócio que hoje se perde na importação.
+
+---
+
+## 9. Decisões de Arquitetura Confirmadas
+
+| # | Decisão | Escolha |
+|---|---------|---------|
+| 1 | Dupla validação obrigatória? | **Não** - Badge informativo apenas |
+| 2 | Onde salvar fórmula | **Híbrida**: `fields.business_rule_expression/sql` + `business_rules` table |
+| 3 | Estratégia Databricks | **Schema First** para todas |
+| 4 | Particionamento | **Detecção automática** de coluna de data |
+| 5 | Unity Catalog/Schema | **Híbrida**: Default env var + override opcional |
+
+---
+
+**Iniciar P1.1 - Extração de Fórmulas?**
