@@ -7,7 +7,7 @@ services:
       npm install -g pnpm@10
       pnpm install --no-frozen-lockfile
       pnpm --filter @workspace/api-server run build
-      pnpm --filter @workspace/db run push-force
+    preDeployCommand: pnpm --filter @workspace/db run push-force
     startCommand: node --enable-source-maps artifacts/api-server/dist/index.mjs
     healthCheckPath: /api/healthz
     envVars:
@@ -20,7 +20,7 @@ services:
       - key: ALLOWED_ORIGINS
         value: https://dicionariodedados-api-server.vercel.app,https://*.vercel.app
       - key: DATABASE_URL
-        sync: false
+        value: postgresql://postgres:@*Ths0609800*@db.lewygsxmhvaqvtrfulpa.supabase.co:5432/postgres
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
