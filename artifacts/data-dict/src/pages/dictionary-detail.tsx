@@ -114,6 +114,9 @@ export default function DictionaryDetail() {
     await exportJsonCsv(path, "Exportado com sucesso", "Erro ao exportar");
   };
 
+  const handleExportJson = () => handleExport();
+  const handleExportCsv = () => handleExport("csv");
+
   const handleExportExtra = async (type: "ddl" | "data-contract") => {
     const path = `/api/dictionaries/${id}/export/${type}`;
     const title = type === "ddl" ? "DDL exportado" : "Data Contract exportado";
@@ -211,7 +214,7 @@ export default function DictionaryDetail() {
           <Badge variant="outline" className="text-lg py-1 px-3">
             {traduzirStatus(dict.status)}
           </Badge>
-          <DropdownMenu>
+<DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
@@ -222,21 +225,76 @@ export default function DictionaryDetail() {
                 <ChevronDown className="h-3.5 w-3.5 ml-1 opacity-60" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => handleExport()}>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={handleExportJson}>
                 JSON validado
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport("csv")}>
+              <DropdownMenuItem onClick={handleExportCsv}>
                 CSV
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => handleExportExtra("ddl")}>
-                DDL (CREATE TABLE)
+                DDL (PostgreSQL)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExportExtra("data-contract")}>
+                Data Contract (JSON)
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() =>
+                  exportExtra(
+                    `/api/dictionaries/${id}/export/ddl-databricks`,
+                    "DDL Databricks exportado",
+                    "Erro ao exportar DDL Databricks"
+                  )
+                }
+              >
+                DDL Databricks (Delta Lake)
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => handleExportExtra("data-contract")}
+                onClick={() =>
+                  exportExtra(
+                    `/api/dictionaries/${id}/export/ddl-databricks-replace`,
+                    "DDL Databricks REPLACE exportado",
+                    "Erro ao exportar DDL Databricks REPLACE"
+                  )
+                }
               >
-                Data Contract (JSON)
+                DDL Databricks (CREATE OR REPLACE)
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  exportExtra(
+                    `/api/dictionaries/${id}/export/ddl-databricks-alter`,
+                    "DDL Databricks ALTER exportado",
+                    "Erro ao exportar DDL Databricks ALTER"
+                  )
+                }
+              >
+                DDL Databricks (ALTER TABLE)
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() =>
+                  exportExtra(
+                    `/api/dictionaries/${id}/export/databricks-optimize-sql`,
+                    "OPTIMIZE SQL exportado",
+                    "Erro ao exportar OPTIMIZE SQL"
+                  )
+                }
+              >
+                OPTIMIZE SQL (Z-Order)
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  exportExtra(
+                    `/api/dictionaries/${id}/export/databricks-vacuum-sql`,
+                    "VACUUM SQL exportado",
+                    "Erro ao exportar VACUUM SQL"
+                  )
+                }
+              >
+                VACUUM SQL
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
