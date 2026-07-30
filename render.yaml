@@ -20,7 +20,7 @@ services:
       - key: ALLOWED_ORIGINS
         value: https://dicionariodedados-api-server.vercel.app,https://*.vercel.app
       - key: DATABASE_URL
-        value: postgresql://postgres:@*Ths0609800*@db.lewygsxmhvaqvtrfulpa.supabase.co:5432/postgres
+        sync: false
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
