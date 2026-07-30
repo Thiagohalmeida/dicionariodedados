@@ -35,19 +35,19 @@ loadDotEnv(path.resolve(__dirname, "../../artifacts/api-server/.env"));
 const databaseUrl = process.env.DATABASE_URL;
 const isBuild = process.env.CI === "true" || process.env.RENDER === "true";
 
-const databaseUrl = databaseUrl || (isBuild ? "postgresql://dummy:dummy@localhost:5432/dummy" : "");
-
 if (!databaseUrl && !isBuild) {
   throw new Error("DATABASE_URL not set. Ensure the database is provisioned and DATABASE_URL environment variable is configured.");
 }
 
-const isLocalhost = databaseUrl?.includes("localhost") || databaseUrl?.includes("127.0.0.1");
+const finalDatabaseUrl = databaseUrl || (isBuild ? "postgresql://dummy:dummy@localhost:5432/dummy" : "");
+
+const isLocalhost = finalDatabaseUrl?.includes("localhost") || finalDatabaseUrl?.includes("127.0.0.1");
 
 export default defineConfig({
   schema: "./src/schema/index.ts",
   dialect: "postgresql",
   dbCredentials: {
-    url: databaseUrl,
+    url: finalDatabaseUrl,
     ssl: isLocalhost ? false : { rejectUnauthorized: false },
   },
   schemaFilter: ["public"],
