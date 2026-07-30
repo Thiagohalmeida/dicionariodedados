@@ -169,6 +169,10 @@ export async function getFieldsWithSummaries(dictionaryId: number) {
     tipoDado: f.tipoDado,
     chave: f.chave,
     formula: f.formula,
+    excluded: f.excluded,
+    customInternalPlatform: f.customInternalPlatform,
+    businessRuleExpression: f.businessRuleExpression,
+    businessRuleSql: f.businessRuleSql,
     summary: summaries.get(f.id)!,
   }));
 }

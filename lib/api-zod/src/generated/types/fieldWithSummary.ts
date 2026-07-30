@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { FieldSummary } from './fieldSummary';
+import type { FieldWithSummaryFormula } from './fieldWithSummaryFormula';
 
 export interface FieldWithSummary {
   id: number;
@@ -17,5 +18,13 @@ export interface FieldWithSummary {
   campoTecnico: string;
   tipoDado: string;
   chave: boolean;
+  formula?: FieldWithSummaryFormula;
+  excluded?: boolean;
+  /** @nullable */
+  customInternalPlatform?: string | null;
+  /** @nullable */
+  businessRuleExpression?: string | null;
+  /** @nullable */
+  businessRuleSql?: string | null;
   summary: FieldSummary;
 }

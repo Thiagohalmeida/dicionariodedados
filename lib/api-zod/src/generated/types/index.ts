@@ -31,6 +31,7 @@ export * from './fieldSummaryStatusFinal';
 export * from './fieldUpdate';
 export * from './fieldUpdateFormula';
 export * from './fieldWithSummary';
+export * from './fieldWithSummaryFormula';
 export * from './getCriticalFields200';
 export * from './getCriticalFieldsParams';
 export * from './healthStatus';

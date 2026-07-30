@@ -542,6 +542,19 @@ components:
           type: string
         chave:
           type: boolean
+        formula:
+          type: string
+          enum: [nao, sim, suporte]
+          default: nao
+        excluded:
+          type: boolean
+          default: false
+        customInternalPlatform:
+          type: ["string", "null"]
+        businessRuleExpression:
+          type: ["string", "null"]
+        businessRuleSql:
+          type: ["string", "null"]
         summary:
           $ref: "#/components/schemas/FieldSummary"
 

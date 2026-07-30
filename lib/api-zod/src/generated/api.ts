@@ -125,6 +125,9 @@ export const GetDictionaryParams = zod.object({
   "id": zod.coerce.number()
 })
 
+export const getDictionaryResponseFieldsItemFormulaDefault = `nao`;
+export const getDictionaryResponseFieldsItemExcludedDefault = false;
+
 export const GetDictionaryResponse = zod.object({
   "id": zod.number(),
   "processo": zod.string(),
@@ -144,6 +147,11 @@ export const GetDictionaryResponse = zod.object({
   "campoTecnico": zod.string(),
   "tipoDado": zod.string(),
   "chave": zod.boolean(),
+  "formula": zod.enum(['nao', 'sim', 'suporte']).default(getDictionaryResponseFieldsItemFormulaDefault),
+  "excluded": zod.boolean().default(getDictionaryResponseFieldsItemExcludedDefault),
+  "customInternalPlatform": zod.string().nullish(),
+  "businessRuleExpression": zod.string().nullish(),
+  "businessRuleSql": zod.string().nullish(),
   "summary": zod.object({
   "fieldId": zod.number(),
   "totalValidations": zod.number(),
@@ -362,6 +370,9 @@ export const GetCriticalFieldsQueryParams = zod.object({
   "limit": zod.coerce.number().min(1).max(getCriticalFieldsQueryLimitMax).default(getCriticalFieldsQueryLimitDefault).describe('Number of items per page')
 })
 
+export const getCriticalFieldsResponseDataItemFormulaDefault = `nao`;
+export const getCriticalFieldsResponseDataItemExcludedDefault = false;
+
 export const GetCriticalFieldsResponse = zod.object({
   "data": zod.array(zod.object({
   "id": zod.number(),
@@ -373,6 +384,11 @@ export const GetCriticalFieldsResponse = zod.object({
   "campoTecnico": zod.string(),
   "tipoDado": zod.string(),
   "chave": zod.boolean(),
+  "formula": zod.enum(['nao', 'sim', 'suporte']).default(getCriticalFieldsResponseDataItemFormulaDefault),
+  "excluded": zod.boolean().default(getCriticalFieldsResponseDataItemExcludedDefault),
+  "customInternalPlatform": zod.string().nullish(),
+  "businessRuleExpression": zod.string().nullish(),
+  "businessRuleSql": zod.string().nullish(),
   "summary": zod.object({
   "fieldId": zod.number(),
   "totalValidations": zod.number(),

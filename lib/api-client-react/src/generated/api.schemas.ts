@@ -93,6 +93,15 @@ export const DictionaryDetailStatus = {
   validated: 'validated',
 } as const;
 
+export type FieldWithSummaryFormula = typeof FieldWithSummaryFormula[keyof typeof FieldWithSummaryFormula];
+
+
+export const FieldWithSummaryFormula = {
+  nao: 'nao',
+  sim: 'sim',
+  suporte: 'suporte',
+} as const;
+
 export type FieldSummaryStatusFinal = typeof FieldSummaryStatusFinal[keyof typeof FieldSummaryStatusFinal];
 
 
@@ -145,6 +154,14 @@ export interface FieldWithSummary {
   campoTecnico: string;
   tipoDado: string;
   chave: boolean;
+  formula?: FieldWithSummaryFormula;
+  excluded?: boolean;
+  /** @nullable */
+  customInternalPlatform?: string | null;
+  /** @nullable */
+  businessRuleExpression?: string | null;
+  /** @nullable */
+  businessRuleSql?: string | null;
   summary: FieldSummary;
 }
 

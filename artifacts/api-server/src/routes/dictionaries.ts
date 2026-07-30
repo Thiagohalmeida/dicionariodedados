@@ -28,6 +28,15 @@ import {
   getFieldsWithSummaries,
 } from "../lib/summary";
 import { FIELD_STATUS, DICTIONARY_STATUS } from "../lib/constants";
+import {
+  generateDatabricksDDL,
+  generateDatabricksCreateOrReplace,
+  generateDatabricksAlterAddColumns,
+  generateDatabricksLoadSQL,
+  generateOptimizeSQL,
+  generateVacuumSQL,
+  type DatabricksDDLConfig,
+} from "../modules/ddl-generator/databricks";
 
 const router: IRouter = Router();
 
@@ -478,18 +487,19 @@ router.get("/dictionaries/:id/export", async (req, res): Promise<void> => {
     })),
   };
 
-  const filename = `${dict.tabela}_v${dict.version}.json`;
-  res.json(
+res.json(
     ExportDictionaryResponse.parse({
       format: "json",
-      filename,
+      filename: `${dict.tabela}_v${dict.version}.json`,
       content: JSON.stringify(exportData, null, 2),
-    }),
+    })
   );
 });
 
 // Validation status endpoint - returns counts of validations per field for double-validation badge
-router.get("/dictionaries/:id/validation-status", async (req, res): Promise<void> => {
+
+// Databricks DDL Export - Standard
+router.get("/dictionaries/:id/export/ddl-databricks", async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) {
     req.log.error({ id: req.params.id }, "Invalid dictionary ID");
@@ -501,60 +511,232 @@ router.get("/dictionaries/:id/validation-status", async (req, res): Promise<void
     .select()
     .from(dictionariesTable)
     .where(eq(dictionariesTable.id, id));
+
   if (!dict) {
-    req.log.error({ dictionaryId: id }, "Dictionary not found for validation status");
+    req.log.error({ dictionaryId: id }, "Dictionary not found for DDL export");
     res.status(404).json({ error: "Dicionário não encontrado" });
     return;
   }
 
-  const fields = await db
-    .select()
-    .from(fieldsTable)
-    .where(eq(fieldsTable.dictionaryId, id));
+  const fields = await getFieldsWithSummaries(id);
 
-  if (fields.length === 0) {
-    res.json({
-      totalFields: 0,
-      fieldsValidatedBy1: 0,
-      fieldsValidatedBy2: 0,
-      allFieldsDoubleValidated: false,
-      canGenerateDDL: true,
-      fieldDetails: [],
-    });
+  const config: DatabricksDDLConfig = {
+    catalog: req.query.catalog as string || "main",
+    schema: req.query.schema as string || "suprimentos",
+    tableName: dict.tabela,
+    includeBusinessRules: req.query.include_business_rules === "true",
+    partitionColumn: req.query.partition_column as string,
+    zorderColumns: req.query.zorder_columns ? (req.query.zorder_columns as string).split(",") : undefined,
+  };
+
+  const ddl = generateDatabricksDDL(fields, config);
+
+  const filename = `${dict.tabela}_databricks_v${dict.version}.sql`;
+  res.json({
+    format: "ddl-databricks",
+    filename,
+    content: ddl,
+  });
+});
+
+// Databricks DDL Export - CREATE OR REPLACE (for updates)
+router.get("/dictionaries/:id/export/ddl-databricks-replace", async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) {
+    req.log.error({ id: req.params.id }, "Invalid dictionary ID");
+    res.status(400).json({ error: "ID inválido" });
     return;
   }
 
-  const fieldIds = fields.map((f) => f.id);
-  const allSummaries = await computeFieldSummariesBatch(fieldIds);
+  const [dict] = await db
+    .select()
+    .from(dictionariesTable)
+    .where(eq(dictionariesTable.id, id));
 
-  let fieldsValidatedBy1 = 0;
-  let fieldsValidatedBy2 = 0;
+  if (!dict) {
+    req.log.error({ dictionaryId: id }, "Dictionary not found for DDL export");
+    res.status(404).json({ error: "Dicionário não encontrado" });
+    return;
+  }
 
-  const fieldDetails = fields.map((f) => {
-    const summary = allSummaries.get(f.id);
-    const totalValidations = summary?.totalValidations ?? 0;
-    
-    if (totalValidations >= 1) fieldsValidatedBy1++;
-    if (totalValidations >= 2) fieldsValidatedBy2++;
+  const fields = await getFieldsWithSummaries(id);
 
-    return {
-      fieldId: f.id,
-      campoTecnico: f.campoTecnico,
-      totalValidations,
-      statusFinal: summary?.statusFinal ?? "pending",
-      classification: summary?.classification ?? "pending",
-    };
+  const config: DatabricksDDLConfig = {
+    catalog: req.query.catalog as string || "main",
+    schema: req.query.schema as string || "suprimentos",
+    tableName: dict.tabela,
+    includeBusinessRules: req.query.include_business_rules === "true",
+    partitionColumn: req.query.partition_column as string,
+    zorderColumns: req.query.zorder_columns ? (req.query.zorder_columns as string).split(",") : undefined,
+  };
+
+  const ddl = generateDatabricksCreateOrReplace(fields, config);
+
+  const filename = `${dict.tabela}_databricks_replace_v${dict.version}.sql`;
+  res.json({
+    format: "ddl-databricks-replace",
+    filename,
+    content: ddl,
+  });
+});
+
+// Databricks DDL - ALTER TABLE ADD COLUMNS (for incremental updates)
+router.get("/dictionaries/:id/export/ddl-databricks-alter", async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) {
+    req.log.error({ id: req.params.id }, "Invalid dictionary ID");
+    res.status(400).json({ error: "ID inválido" });
+    return;
+  }
+
+  const [dict] = await db
+    .select()
+    .from(dictionariesTable)
+    .where(eq(dictionariesTable.id, id));
+
+  if (!dict) {
+    req.log.error({ dictionaryId: id }, "Dictionary not found for DDL export");
+    res.status(404).json({ error: "Dicionário não encontrado" });
+    return;
+  }
+
+  const fields = await getFieldsWithSummaries(id);
+
+  const config: DatabricksDDLConfig = {
+    catalog: req.query.catalog as string || "main",
+    schema: req.query.schema as string || "suprimentos",
+    tableName: dict.tabela,
+  };
+
+  // Get existing columns from query param or assume empty
+  const existingColumns = req.query.existing_columns 
+    ? (req.query.existing_columns as string).split(",")
+    : [];
+
+  const ddl = generateDatabricksAlterAddColumns(fields, config, existingColumns);
+
+  const filename = `${dict.tabela}_databricks_alter_v${dict.version}.sql`;
+  res.json({
+    format: "ddl-databricks-alter",
+    filename,
+    content: ddl,
+  });
+});
+
+// Databricks Load SQL Generator
+router.post("/dictionaries/:id/export/databricks-load-sql", async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) {
+    req.log.error({ id: req.params.id }, "Invalid dictionary ID");
+    res.status(400).json({ error: "ID inválido" });
+    return;
+  }
+
+  const [dict] = await db
+    .select()
+    .from(dictionariesTable)
+    .where(eq(dictionariesTable.id, id));
+
+  if (!dict) {
+    req.log.error({ dictionaryId: id }, "Dictionary not found");
+    res.status(404).json({ error: "Dicionário não encontrado" });
+    return;
+  }
+
+  const { sourcePath, fileFormat, writeMode, mergeKey } = req.body;
+
+  if (!sourcePath) {
+    res.status(400).json({ error: "sourcePath é obrigatório" });
+    return;
+  }
+
+  const sql = generateDatabricksLoadSQL({
+    catalog: req.body.catalog || "main",
+    schema: req.body.schema || "suprimentos",
+    tableName: dict.tabela,
+    sourcePath,
+    fileFormat: req.body.fileFormat,
+    writeMode: req.body.writeMode,
+    mergeKey: req.body.mergeKey,
   });
 
-  const allFieldsDoubleValidated = fieldsValidatedBy2 === fields.length && fields.length > 0;
+  res.json({
+    format: "databricks-load-sql",
+    content: sql,
+  });
+});
+
+// Databricks OPTIMIZE SQL Generator
+router.get("/dictionaries/:id/export/databricks-optimize-sql", async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) {
+    req.log.error({ id: req.params.id }, "Invalid dictionary ID");
+    res.status(400).json({ error: "ID inválido" });
+    return;
+  }
+
+  const [dict] = await db
+    .select()
+    .from(dictionariesTable)
+    .where(eq(dictionariesTable.id, id));
+
+  if (!dict) {
+    req.log.error({ dictionaryId: id }, "Dictionary not found");
+    res.status(404).json({ error: "Dicionário não encontrado" });
+    return;
+  }
+
+  const fields = await getFieldsWithSummaries(id);
+
+  const config: DatabricksDDLConfig = {
+    catalog: req.query.catalog as string || "main",
+    schema: req.query.schema as string || "suprimentos",
+    tableName: dict.tabela,
+  };
+
+  const sql = generateOptimizeSQL(config);
 
   res.json({
-    totalFields: fields.length,
-    fieldsValidatedBy1,
-    fieldsValidatedBy2,
-    allFieldsDoubleValidated,
-    canGenerateDDL: true, // Always true, but UI can suggest waiting for 2 validations
-    fieldDetails,
+    format: "databricks-optimize-sql",
+    content: sql,
+  });
+});
+
+// Databricks VACUUM SQL Generator
+router.get("/dictionaries/:id/export/databricks-vacuum-sql", async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) {
+    req.log.error({ id: req.params.id }, "Invalid dictionary ID");
+    res.status(400).json({ error: "ID inválido" });
+    return;
+  }
+
+  const [dict] = await db
+    .select()
+    .from(dictionariesTable)
+    .where(eq(dictionariesTable.id, id));
+
+  if (!dict) {
+    req.log.error({ dictionaryId: id }, "Dictionary not found");
+    res.status(404).json({ error: "Dicionário não encontrado" });
+    return;
+  }
+
+  const config: DatabricksDDLConfig = {
+    catalog: req.query.catalog as string || "main",
+    schema: req.query.schema as string || "suprimentos",
+    tableName: dict.tabela,
+  };
+
+  const retentionHours = req.query.retention_hours 
+    ? parseInt(req.query.retention_hours as string, 10) 
+    : 168;
+
+  const sql = generateVacuumSQL(config, retentionHours);
+
+  res.json({
+    format: "databricks-vacuum-sql",
+    content: sql,
   });
 });
 
