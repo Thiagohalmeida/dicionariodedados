@@ -20,7 +20,9 @@ services:
       - key: ALLOWED_ORIGINS
         value: https://dicionariodedados-api-server.vercel.app,https://*.vercel.app
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: validador-db
+          property: connectionString
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
@@ -30,3 +32,11 @@ services:
       - key: SUPABASE_BUCKET_EXPORTS
         value: exports
     autoDeploy: true
+
+databases:
+  - name: validador-db
+    databaseName: validador
+    user: validador
+    plan: free
+    region: oregon
+    version: "16"
