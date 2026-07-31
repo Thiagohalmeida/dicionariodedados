@@ -182,6 +182,8 @@ Se o mesmo campo tiver validações com score ≥ 60 (aprovado) e score < 60 (re
 
 Nenhuma lacuna crítica nesta etapa. Funcional conforme o esperado.
 
+**Correção Aplicada (31/07/2026):** O botão "Importar Dicionário" no sheet de validação do preview estava incorretamente desabilitado pela verificação `!hasValidations` (exigia pelo menos uma validação). Removido o bloqueio — o fluxo já suporta importar sem validações (status `pending`), salvando validações apenas quando existirem. Arquivo: `artifacts/data-dict/src/components/preview-validation-sheet.tsx:266`.
+
 ---
 
 ## ETAPA 3 — Exportação
@@ -297,6 +299,8 @@ TBLPROPERTIES (
 PARTITIONED BY (data_entrega)
 CLUSTER BY (codigo_do_item);
 ```
+
+**Correção Aplicada (31/07/2026):** Todos os endpoints de exportação Databricks (e PostgreSQL DDL + Data Contract) foram corrigidos para retornar arquivo RAW com headers HTTP `Content-Disposition` e `Content-Type`, em vez de JSON wrapper `{format, filename, content}`. O frontend (`apiRequestBlob`) já esperava download direto. Também corrigido bug no `generateOptimizeSQL` que passava array vazio para `detectZOrderColumns()` — agora passa `fields` para Z-ORDER funcionar. Arquivos: `artifacts/api-server/src/routes/dictionaries.ts`, `artifacts/api-server/src/routes/excel.ts`, `artifacts/api-server/src/modules/ddl-generator/databricks.ts`.
 
 ---
 

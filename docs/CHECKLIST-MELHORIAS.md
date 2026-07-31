@@ -600,3 +600,48 @@ Todos os itens principais estão concluídos. O projeto está pronto para deploy
 - Buckets: `excel-uploads` (private), `exports` (private)
 - Tabelas: `dictionaries`, `fields`, `validations`, `audit_logs`, `storage_objects`
 - RLS policies para isolamento por usuário (futuro)
+
+---
+
+## ✅ CONCLUÍDOS - 31/07/2026 (Correções de Importação e Exportação)
+
+### 1. Botão "Importar Dicionário" habilitado sem validações obrigatórias
+- **Problema:** Botão no `PreviewValidationSheet` estava desabilitado com `disabled={isImporting || !hasValidations}` — exigia pelo menos uma validação para importar.
+- **Causa:** Verificação incorreta `hasValidations = fields.some(f => f.validation)` — fluxo já suporta importar sem validações (status `pending`).
+- **Correção:** Removido `|| !hasValidations` do botão "Importar Dicionário". Arquivo: `artifacts/data-dict/src/components/preview-validation-sheet.tsx:266`.
+- **Commit:** `2fa1977`
+
+### 2. Exportações Databricks/PostgreSQL/Data Contract — Download direto corrigido
+- **Problema:** Endpoints retornavam JSON `{format, filename, content}` mas frontend (`apiRequestBlob`) esperava download HTTP com header `Content-Disposition`. Resultado: arquivo "download" com JSON como conteúdo.
+- **Correção:** Todos endpoints alterados para `res.setHeader("Content-Disposition", ...) + res.setHeader("Content-Type", ...) + res.send(rawContent)`.
+- **Endpoints corrigidos (8):**
+  - `GET /dictionaries/:id/export/ddl-databricks`
+  - `GET /dictionaries/:id/export/ddl-databricks-replace`
+  - `GET /dictionaries/:id/export/ddl-databricks-alter`
+  - `POST /dictionaries/:id/export/databricks-load-sql` (+ filename)
+  - `GET /dictionaries/:id/export/databricks-optimize-sql` (+ filename + fix ZORDER)
+  - `GET /dictionaries/:id/export/databricks-vacuum-sql` (+ filename)
+  - `GET /dictionaries/:id/export/ddl` (PostgreSQL, em `excel.ts`)
+  - `GET /dictionaries/:id/export/data-contract` (em `excel.ts`)
+- **Bug adicional corrigido:** `generateOptimizeSQL` passava `[]` para `detectZOrderColumns()` — agora passa `fields` para Z-ORDER BY funcionar (PKs + FKs-like).
+- **Arquivos:** `artifacts/api-server/src/routes/dictionaries.ts`, `artifacts/api-server/src/routes/excel.ts`, `artifacts/api-server/src/modules/ddl-generator/databricks.ts`
+- **Commit:** `fc998eb`
+
+### 3. Render deploy — Removido `db push-force` do build command
+- **Problema:** Build falhava (Exit status 1) pois `pnpm --filter @workspace/db run push-force` tentava conectar no Supabase durante o build.
+- **Causa:** Build não deve depender de serviços externos; Supabase é banco externo.
+- **Correção:** Removida linha do `render.yaml`. Migrations rodam separadamente via CLI/CI.
+- **Commit:** `7da7ba0`
+
+---
+
+## 📝 NOTAS DE DEPLOY ATUALIZADAS
+
+### Render (API Server) - Atualizado 31/07/2026
+- `buildCommand` **não roda mais migrations** — apenas `pnpm install` + `pnpm --filter @workspace/api-server run build`
+- Migrations no Supabase: rodar localmente `pnpm --filter @workspace/db run push` ou via CI/CD
+- Variáveis de ambiente necessárias (inalteradas):
+  - `DATABASE_URL` (Supabase pooler)
+  - `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+  - `ALLOWED_ORIGINS=https://dicionariodedados-api-server.vercel.app,https://*.vercel.app`
+  - `PORT=5000`, `LOG_LEVEL=info`

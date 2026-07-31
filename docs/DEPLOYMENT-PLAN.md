@@ -344,6 +344,44 @@ CMD ["pnpm", "run", "start"]
 }
 ```
 
+### 8.4 `render.yaml` (API Server no Render)
+
+```yaml
+services:
+  - type: web
+    name: validador-api
+    runtime: node
+    plan: free
+    buildCommand: |
+      npm install -g pnpm@10
+      pnpm install --no-frozen-lockfile
+      pnpm --filter @workspace/api-server run build
+    startCommand: node --enable-source-maps artifacts/api-server/dist/index.mjs
+    healthCheckPath: /api/healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "5000"
+      - key: LOG_LEVEL
+        value: info
+      - key: ALLOWED_ORIGINS
+        value: https://dicionariodedados-api-server.vercel.app,https://*.vercel.app
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_BUCKET_EXCEL_UPLOADS
+        value: excel-uploads
+      - key: SUPABASE_BUCKET_EXPORTS
+        value: exports
+    autoDeploy: true
+```
+
+**Importante (31/07/2026):** `buildCommand` **não roda migrations** (`pnpm --filter @workspace/db run push`). Supabase é banco externo — migrations rodam separadamente via CLI local (`pnpm --filter @workspace/db run push`) ou CI/CD. O build anterior falhava (Exit status 1) tentando conectar no DB durante o build.
+
 ---
 
 ## 9. DRIZZLE ORM CONFIG
