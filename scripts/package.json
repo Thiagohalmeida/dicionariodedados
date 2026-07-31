@@ -6,11 +6,17 @@
   "scripts": {
     "hello": "tsx ./src/hello.ts",
     "seed": "tsx --env-file=../artifacts/api-server/.env ./src/seed.ts",
+    "pdf-extractor": "tsx ./src/pdf-extractor.ts",
+    "pdf-parser": "tsx ./src/pdf-parser.ts",
+    "import-catalog": "tsx --env-file=../artifacts/api-server/.env ./src/import-catalog.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@workspace/db": "workspace:*",
-    "drizzle-orm": "catalog:"
+    "drizzle-orm": "catalog:",
+    "drizzle-zod": "catalog:",
+    "pdf-parse": "1.1.1",
+    "pdfjs-dist": "^6.2.108"
   },
   "devDependencies": {
     "@types/node": "catalog:",

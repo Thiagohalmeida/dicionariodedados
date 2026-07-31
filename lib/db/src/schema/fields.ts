@@ -10,6 +10,7 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { dictionariesTable } from "./dictionaries";
+import { catalogColumns } from "./catalog";
 
 export const formulaTypeEnum = pgEnum("formula_type", [
   "nao",
@@ -22,6 +23,9 @@ export const fieldsTable = pgTable("fields", {
   dictionaryId: integer("dictionary_id")
     .notNull()
     .references(() => dictionariesTable.id, { onDelete: "cascade" }),
+  catalogColumnId: integer("catalog_column_id").references(() => catalogColumns.id, {
+    onDelete: "set null",
+  }),
   campoOrigem: text("campo_origem").notNull(),
   descricao: text("descricao").notNull(),
   origem: text("origem").notNull(),
