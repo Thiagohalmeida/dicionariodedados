@@ -263,7 +263,7 @@ export default function PreviewValidationSheet({
             )}
           </Button>
           <Button
-            disabled={isImporting || !hasValidations}
+            disabled={isImporting}
             onClick={() =>
               importDictionary(
                 async () => {

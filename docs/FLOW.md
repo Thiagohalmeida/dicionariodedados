@@ -18,11 +18,11 @@ O fluxo é dividido em **três etapas principais**:
 │                      snake_case,                                            │
 │                      inferência de tipo)                                    │
 └─────────────────────────────────────────────────────────────────────────────┘
-                                                │
-                                         Arquivo JSON
-                                        (revisado/editado)
-                                                │
-                                                ▼
+                                                 │
+                                          Arquivo JSON
+                                         (revisado/editado)
+                                                 │
+                                                 ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │  ETAPA 2 — IMPORTAÇÃO E VALIDAÇÃO                                           │
 │                                                                             │
@@ -30,10 +30,10 @@ O fluxo é dividido em **três etapas principais**:
 │           (POST /api/   criado no banco,          (5 critérios binários,    │
 │            dictionaries) status "Pendente"         score 0-100 por campo)   │
 └─────────────────────────────────────────────────────────────────────────────┘
-                                                │
-                                     Dicionário validado
-                                                │
-                                                ▼
+                                                 │
+                                      Dicionário validado
+                                                 │
+                                                 ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │  ETAPA 3 — EXPORTAÇÃO                                                       │
 │                                                                             │
@@ -268,8 +268,35 @@ Endpoint `/export/ddl` busca `getFieldsWithSummaries(id)` e anota `status` quand
 ```
 Calculado como média das validações (`avg >= 0.5`), `null` se sem validações.
 
-**Pendentes futuros (baixa prioridade):**
-- Mapeamento DDL expandido: `boolean`, `timestamp`, `text` (campos longos)
+**Novos Endpoints Databricks (v2.0):**
+- `GET /api/dictionaries/:id/export/ddl-databricks` — CREATE TABLE nativo Delta Lake
+- `GET /api/dictionaries/:id/export/ddl-databricks-replace` — CREATE OR REPLACE
+- `GET /api/dictionaries/:id/export/ddl-databricks-alter` — ALTER TABLE ADD COLUMNS
+- `POST /api/dictionaries/:id/export/databricks-load-sql` — COPY INTO / MERGE
+- `GET /api/dictionaries/:id/export/databricks-optimize-sql` — OPTIMIZE + Z-ORDER
+- `GET /api/dictionaries/:id/export/databricks-vacuum-sql` — VACUUM
+
+**DDL Databricks (exemplo):**
+```sql
+-- DDL Databricks gerado automaticamente
+-- Tabela: rfq_medicamentos | Processo: rfq | Categoria: medicamentos
+-- Gerado em: 2026-07-30T...
+
+CREATE TABLE IF NOT EXISTS main.suprimentos.rfq_medicamentos (
+  codigo_do_item BIGINT PRIMARY KEY,
+  descricao_material STRING COMMENT 'Identificador único do item no SAP | Score: 100 (Confiável)',
+  quantidade DECIMAL(38,18),
+  data_entrega DATE
+)
+USING DELTA
+TBLPROPERTIES (
+  'delta.enableChangeDataFeed' = 'true',
+  'delta.autoOptimize.optimizeWrite' = 'true',
+  'delta.autoOptimize.autoCompact' = 'true'
+)
+PARTITIONED BY (data_entrega)
+CLUSTER BY (codigo_do_item);
+```
 
 ---
 
@@ -282,13 +309,27 @@ Calculado como média das validações (`avg >= 0.5`), `null` se sem validaçõe
 | L3  | DDL não sinaliza campos com status Crítico ou Pendente                                          | Baixo                                                                        | ✅ **Concluída** |
 | L4  | Data Contract não inclui regras de negócio das validações                                       | Baixo                                                                        | ✅ **Concluída** |
 
-### Próximos Passos (Pós-L1/L2/L3/L4)
+### Novas Implementações v2.0 (30/07/2026)
+
+| Feature                                   | Status   | Detalhes |
+|-------------------------------------------|----------|----------|
+| Databricks DDL Generator (Unity Catalog) | ✅       | 6 novos endpoints |
+| Unity Catalog 3-level namespace           | ✅       | `catalog.schema.table` |
+| Delta Lake format + TBLPROPERTIES         | ✅       | CDF, auto-optimize, auto-compact |
+| Auto partition detection (date columns)   | ✅       | Detecta colunas de data |
+| Auto Z-Order (PK + FK-like columns)       | ✅       | Até 4 colunas |
+| Generated columns (business_rule_sql)     | ✅       | `GENERATED ALWAYS AS (...) STORED` |
+| Databricks LOAD SQL (COPY INTO / MERGE)   | ✅       | Para carga de dados |
+| OPTIMIZE + Z-ORDER SQL                    | ✅       | Manutenção de performance |
+| VACUUM SQL                                | ✅       | Retenção configurável |
+| UI dropdown com 8 opções de export Databricks | ✅ | `dictionary-detail.tsx` |
+
+### Próximos Passos (Pós-v2.0)
 
 - [ ] Mapeamento DDL expandido: `boolean → BOOLEAN`, `timestamp → TIMESTAMP`, `text → TEXT`
-- [ ] Autenticação/autorização por perfil (Supabase Auth)
 - [ ] Versionamento de dicionários (diff entre versões)
 - [ ] Notificações (e-mail/Slack) para validações pendentes
-- [ ] Integração com catálogo de dados corporativo (DataHub, Amundsen)
+- [ ] Integração com catálogo corporativo (DataHub, Amundsen)
 
 ---
 
@@ -302,13 +343,21 @@ Calculado como média das validações (`avg >= 0.5`), `null` se sem validaçõe
 | `PATCH`  | `/api/dictionaries/:id`                      | Atualiza metadados do dicionário       | ✅                  |
 | `DELETE` | `/api/dictionaries/:id`                      | Remove dicionário                      | ✅                  |
 | `GET`    | `/api/dictionaries/:id/export`               | Exporta JSON ou CSV                    | ✅                  |
-| `GET`    | `/api/dictionaries/:id/export/ddl`           | Exporta DDL SQL                        | ✅                  |
+| `GET`    | `/api/dictionaries/:id/export/ddl`           | Exporta DDL SQL (PostgreSQL)           | ✅                  |
+| `GET`    | `/api/dictionaries/:id/export/ddl-databricks`| Exporta DDL Databricks (Delta Lake)    | ✅ **Novo v2.0**    |
+| `GET`    | `/api/dictionaries/:id/export/ddl-databricks-replace`| CREATE OR REPLACE TABLE     | ✅ **Novo v2.0**    |
+| `GET`    | `/api/dictionaries/:id/export/ddl-databricks-alter`| ALTER TABLE ADD COLUMNS         | ✅ **Novo v2.0**    |
+| `POST`   | `/api/dictionaries/:id/export/databricks-load-sql`| COPY INTO / MERGE SQL           | ✅ **Novo v2.0**    |
+| `GET`    | `/api/dictionaries/:id/export/databricks-optimize-sql`| OPTIMIZE + Z-ORDER            | ✅ **Novo v2.0**    |
+| `GET`    | `/api/dictionaries/:id/export/databricks-vacuum-sql`| VACUUM SQL                   | ✅ **Novo v2.0**    |
 | `GET`    | `/api/dictionaries/:id/export/data-contract` | Exporta Data Contract JSON             | ✅                  |
 | `POST`   | `/api/dictionaries/from-excel`               | Ingestão direta de Excel (compat)      | ✅                  |
-| `POST`   | `/api/excel/preview`                         | Preview do JSON a partir do Excel      | ✅ **Implementado** |
+| `POST`   | `/api/excel/preview`                         | Preview do JSON a partir do Excel      | ✅                  |
 | `POST`   | `/api/fields/:id/validate`                   | Submete validação de um campo          | ✅                  |
 | `GET`    | `/api/fields/critical`                       | Lista campos com score < 60            | ✅                  |
 | `GET`    | `/api/dashboard`                             | Métricas globais de governança         | ✅                  |
+| `GET`    | `/api/dictionaries/:id/validation-status`    | Status de validação por campo          | ✅                  |
+| `GET`    | `/api/healthz`                               | Health check com DB check              | ✅                  |
 
 ---
 
@@ -322,7 +371,7 @@ dictionaries
   tabela      TEXT
   version     INTEGER    ← preparado para versionamento futuro
   parentId    INTEGER    ← FK para dicionário pai (versionamento)
-  status      TEXT       ← pending | approved | rejected | conflict
+  status      TEXT       ← pending | in_review | validated
   createdAt   TIMESTAMP
 
 fields
@@ -335,6 +384,12 @@ fields
   periodicidade  TEXT
   tipoDado       TEXT    ← string | int | decimal | date
   chave          BOOLEAN
+  formula        TEXT    ← enum: 'nao' | 'sim' | 'suporte'
+  excluded       BOOLEAN
+  customInternalPlatform TEXT
+  businessRuleExpression TEXT
+  businessRuleSql TEXT
+  createdAt      TIMESTAMP
 
 validations
   id               SERIAL PK
@@ -347,8 +402,43 @@ validations
   hasBusinessRule  BOOLEAN
   score            INTEGER    ← calculado: soma dos critérios × 20
   createdAt        TIMESTAMP
+
+business_rules
+  id             SERIAL PK
+  name           TEXT
+  fieldIds       INTEGER[]  ← array de field IDs
+  expression     TEXT       ← fórmula original Excel
+  sql            TEXT       ← conversão para SQL
+  ruleType       TEXT       ← constraint | generated_column | check | lookup
+  createdAt      TIMESTAMP
 ```
 
 ---
 
-_Gerado em: 14/07/2026 — Versão 1.1 (L1-L4 implementadas)_
+## Deploy Checklist
+
+### Render (API Server)
+```env
+DATABASE_URL=postgresql://... (Supabase pooler)
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+ALLOWED_ORIGINS=https://dicionariodedados-api-server.vercel.app,https://*.vercel.app
+PORT=5000
+LOG_LEVEL=info
+```
+
+### Vercel (Frontend)
+- Build: `pnpm --filter @workspace/data-dict run build`
+- Output: `artifacts/data-dict/dist/public`
+- Rewrites: `/api/*` → `https://validador-api.onrender.com`
+- Env: `VITE_API_URL=https://validador-api.onrender.com`
+
+### Supabase
+- Buckets: `excel-uploads` (private), `exports` (private)
+- Tabelas: `dictionaries`, `fields`, `validations`, `audit_logs`, `storage_objects`, `business_rules`
+- RLS policies para isolamento por usuário (futuro)
+
+---
+
+_Gerado em: 30/07/2026 — Versão 2.0 (Databricks nativo, dupla validação, auto-status)_
