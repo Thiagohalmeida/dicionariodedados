@@ -532,11 +532,9 @@ router.get("/dictionaries/:id/export/ddl-databricks", async (req, res): Promise<
   const ddl = generateDatabricksDDL(fields, config);
 
   const filename = `${dict.tabela}_databricks_v${dict.version}.sql`;
-  res.json({
-    format: "ddl-databricks",
-    filename,
-    content: ddl,
-  });
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  res.setHeader("Content-Type", "text/sql; charset=utf-8");
+  res.send(ddl);
 });
 
 // Databricks DDL Export - CREATE OR REPLACE (for updates)
@@ -573,11 +571,9 @@ router.get("/dictionaries/:id/export/ddl-databricks-replace", async (req, res): 
   const ddl = generateDatabricksCreateOrReplace(fields, config);
 
   const filename = `${dict.tabela}_databricks_replace_v${dict.version}.sql`;
-  res.json({
-    format: "ddl-databricks-replace",
-    filename,
-    content: ddl,
-  });
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  res.setHeader("Content-Type", "text/sql; charset=utf-8");
+  res.send(ddl);
 });
 
 // Databricks DDL - ALTER TABLE ADD COLUMNS (for incremental updates)
@@ -609,18 +605,16 @@ router.get("/dictionaries/:id/export/ddl-databricks-alter", async (req, res): Pr
   };
 
   // Get existing columns from query param or assume empty
-  const existingColumns = req.query.existing_columns 
+  const existingColumns = req.query.existing_columns
     ? (req.query.existing_columns as string).split(",")
     : [];
 
   const ddl = generateDatabricksAlterAddColumns(fields, config, existingColumns);
 
   const filename = `${dict.tabela}_databricks_alter_v${dict.version}.sql`;
-  res.json({
-    format: "ddl-databricks-alter",
-    filename,
-    content: ddl,
-  });
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  res.setHeader("Content-Type", "text/sql; charset=utf-8");
+  res.send(ddl);
 });
 
 // Databricks Load SQL Generator
@@ -660,10 +654,10 @@ router.post("/dictionaries/:id/export/databricks-load-sql", async (req, res): Pr
     mergeKey: req.body.mergeKey,
   });
 
-  res.json({
-    format: "databricks-load-sql",
-    content: sql,
-  });
+  const filename = `${dict.tabela}_databricks_load_v${dict.version}.sql`;
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  res.setHeader("Content-Type", "text/sql; charset=utf-8");
+  res.send(sql);
 });
 
 // Databricks OPTIMIZE SQL Generator
@@ -694,12 +688,12 @@ router.get("/dictionaries/:id/export/databricks-optimize-sql", async (req, res):
     tableName: dict.tabela,
   };
 
-  const sql = generateOptimizeSQL(config);
+  const sql = generateOptimizeSQL(config, fields);
 
-  res.json({
-    format: "databricks-optimize-sql",
-    content: sql,
-  });
+  const filename = `${dict.tabela}_databricks_optimize_v${dict.version}.sql`;
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  res.setHeader("Content-Type", "text/sql; charset=utf-8");
+  res.send(sql);
 });
 
 // Databricks VACUUM SQL Generator
@@ -728,16 +722,16 @@ router.get("/dictionaries/:id/export/databricks-vacuum-sql", async (req, res): P
     tableName: dict.tabela,
   };
 
-  const retentionHours = req.query.retention_hours 
-    ? parseInt(req.query.retention_hours as string, 10) 
+  const retentionHours = req.query.retention_hours
+    ? parseInt(req.query.retention_hours as string, 10)
     : 168;
 
   const sql = generateVacuumSQL(config, retentionHours);
 
-  res.json({
-    format: "databricks-vacuum-sql",
-    content: sql,
-  });
+  const filename = `${dict.tabela}_databricks_vacuum_v${dict.version}.sql`;
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  res.setHeader("Content-Type", "text/sql; charset=utf-8");
+  res.send(sql);
 });
 
 export default router;

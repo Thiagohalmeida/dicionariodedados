@@ -325,7 +325,9 @@ router.get("/dictionaries/:id/export/ddl", async (req, res): Promise<void> => {
   const ddl = `-- DDL gerado pelo Validador DD\n-- Tabela: ${dict.tabela} | Processo: ${dict.processo} | Categoria: ${dict.categoria}\n\nCREATE TABLE ${dict.tabela} (\n${cols.join(",\n")}\n);`;
 
   const filename = `${dict.tabela}_v${dict.version}.sql`;
-  res.json({ format: "ddl", filename, content: ddl });
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  res.setHeader("Content-Type", "text/sql; charset=utf-8");
+  res.send(ddl);
 });
 
 router.get(
@@ -398,11 +400,9 @@ router.get(
     };
 
     const filename = `${dict.tabela}_data_contract_v${dict.version}.json`;
-    res.json({
-      format: "data-contract",
-      filename,
-      content: JSON.stringify(contract, null, 2),
-    });
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    res.send(JSON.stringify(contract, null, 2));
   },
 );
 

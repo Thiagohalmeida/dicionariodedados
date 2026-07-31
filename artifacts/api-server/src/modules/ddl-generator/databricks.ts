@@ -211,16 +211,16 @@ FILEFORMAT = ${format.toUpperCase()}
 FORMAT_OPTIONS ('mergeSchema' = 'true');`;
 }
 
-export function generateOptimizeSQL(config: DatabricksDDLConfig): string {
+export function generateOptimizeSQL(config: DatabricksDDLConfig, fields: FieldWithSummary[] = []): string {
   const tableName = `${config.catalog}.${config.schema}.${config.tableName}`;
-  const zorderColumns = detectZOrderColumns([]);
-  
+  const zorderColumns = detectZOrderColumns(fields);
+
   let sql = `OPTIMIZE ${tableName}`;
-  
+
   if (zorderColumns.length > 0) {
     sql += ` ZORDER BY (${zorderColumns.join(", ")})`;
   }
-  
+
   return sql + ";";
 }
 
