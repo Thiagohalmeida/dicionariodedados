@@ -13,6 +13,7 @@ import DictionaryDetail from "./pages/dictionary-detail";
 import CriticalFields from "./pages/critical-fields";
 import About from "./pages/about";
 import SupabaseConfig from "./pages/supabase-config";
+import Catalog from "./pages/catalog";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ function Router() {
         <Route path="/dictionaries/:id" component={DictionaryDetail} />
         <Route path="/fields/critical" component={CriticalFields} />
         <Route path="/supabase-config" component={SupabaseConfig} />
+        <Route path="/catalog" component={Catalog} />
         <Route component={NotFound} />
       </Switch>
     </AppLayout>

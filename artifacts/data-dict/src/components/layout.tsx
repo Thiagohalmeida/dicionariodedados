@@ -7,6 +7,7 @@ import {
   Info,
   HelpCircle,
   Settings,
+  Database,
 } from "lucide-react";
 import {
   Sidebar,
@@ -29,6 +30,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   const navigation = [
     { title: "Painel", href: "/", icon: LayoutDashboard },
+    { title: "Catálogo de Dados", href: "/catalog", icon: Database },
     { title: "Dicionários", href: "/dictionaries", icon: BookOpen },
     { title: "Campos Críticos", href: "/fields/critical", icon: AlertTriangle },
     { title: "Config. Supabase", href: "/supabase-config", icon: Settings },
