@@ -7,8 +7,6 @@ import {
   catalogRequirements,
   catalogEtlPackages,
   catalogTableEtl,
-  catalogConfidentialityEnum,
-  catalogLgpdEnum,
 } from "@workspace/db/schema";
 import { eq, and } from "drizzle-orm";
 import * as fs from "fs";
@@ -16,6 +14,35 @@ import * as path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Normalize confidencialidade values to match enum
+function normalizeConfidencialidade(value: string): "publica" | "interna" | "restrita" | "confidencial" {
+  const normalized = value.toLowerCase().trim();
+  const map: Record<string, "publica" | "interna" | "restrita" | "confidencial"> = {
+    "publica": "publica",
+    "pública": "publica",
+    "interna": "interna",
+    "restrita": "restrita",
+    "confidencial": "confidencial",
+  };
+  return map[normalized] || "interna";
+}
+
+// Normalize LGPD classification values to match enum
+function normalizeLgpd(value: string): "pessoal" | "sensivel" | "nao_pessoal" | "anonimizado" {
+  const normalized = value.toLowerCase().trim()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // remove accents
+  const map: Record<string, "pessoal" | "sensivel" | "nao_pessoal" | "anonimizado"> = {
+    "pessoal": "pessoal",
+    "sensivel": "sensivel",
+    "sensível": "sensivel",
+    "nao_pessoal": "nao_pessoal",
+    "não pessoal": "nao_pessoal",
+    "nao pessoal": "nao_pessoal",
+    "anonimizado": "anonimizado",
+  };
+  return map[normalized] || "nao_pessoal";
+}
 
 interface CatalogJSON {
   domain: {
@@ -151,6 +178,9 @@ async function importCatalog() {
       continue;
     }
     
+    const confidencialidade = normalizeConfidencialidade(c.confidencialidade);
+    const classificacaoLgpd = normalizeLgpd(c.classificacaoLgpd);
+    
     await db.insert(catalogColumns)
       .values({
         tableId,
@@ -159,8 +189,8 @@ async function importCatalog() {
         descricao: c.descricao,
         pk: c.pk,
         obrigatorio: c.obrigatorio,
-        confidencialidade: c.confidencialidade as "publica" | "interna" | "restrita" | "confidencial",
-        classificacaoLgpd: c.classificacaoLgpd as "pessoal" | "sensivel" | "nao_pessoal" | "anonimizado",
+        confidencialidade,
+        classificacaoLgpd,
         identificavel: c.identificavel,
       })
       .onConflictDoUpdate({
@@ -170,8 +200,8 @@ async function importCatalog() {
           descricao: c.descricao,
           pk: c.pk,
           obrigatorio: c.obrigatorio,
-          confidencialidade: c.confidencialidade as "publica" | "interna" | "restrita" | "confidencial",
-          classificacaoLgpd: c.classificacaoLgpd as "pessoal" | "sensivel" | "nao_pessoal" | "anonimizado",
+          confidencialidade,
+          classificacaoLgpd,
           identificavel: c.identificavel,
           updatedAt: new Date(),
         },
@@ -211,6 +241,10 @@ async function importCatalog() {
   console.log("\n5. Inserindo requisitos...");
   let reqCount = 0;
   for (const r of json.requirements) {
+    const dataLevantamento = r.dataLevantamento ? new Date(r.dataLevantamento) : null;
+    // Check if date is valid
+    const validDataLevantamento = dataLevantamento && !isNaN(dataLevantamento.getTime()) ? dataLevantamento : null;
+    
     await db.insert(catalogRequirements)
       .values({
         domainId: domain.id,
@@ -218,7 +252,7 @@ async function importCatalog() {
         descricao: r.descricao,
         regrasNegocio: r.regrasNegocio,
         status: r.status,
-        dataLevantamento: r.dataLevantamento ? new Date(r.dataLevantamento) : null,
+        dataLevantamento: validDataLevantamento,
       })
       .onConflictDoUpdate({
         target: [catalogRequirements.domainId, catalogRequirements.assunto],
@@ -226,7 +260,7 @@ async function importCatalog() {
           descricao: r.descricao,
           regrasNegocio: r.regrasNegocio,
           status: r.status,
-          dataLevantamento: r.dataLevantamento ? new Date(r.dataLevantamento) : null,
+          dataLevantamento: validDataLevantamento,
           updatedAt: new Date(),
         },
       });

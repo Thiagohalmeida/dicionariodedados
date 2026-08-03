@@ -27,7 +27,7 @@ export const catalogLgpdEnum = pgEnum("catalog_lgpd_classification", [
 
 export const catalogDomains = pgTable("catalog_domains", {
   id: serial("id").primaryKey(),
-  assunto: text("assunto").notNull(),
+  assunto: text("assunto").notNull().unique(),
   owner: text("owner"),
   areaNegocio: text("area_negocio"),
   palavrasChave: text("palavras_chave").array(),
