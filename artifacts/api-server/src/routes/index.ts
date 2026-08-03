@@ -5,6 +5,7 @@ import fieldsRouter from "./fields";
 import dashboardRouter from "./dashboard";
 import excelRouter from "./excel";
 import supabaseRouter from "./supabase";
+import catalogRouter from "./catalog";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use(dictionariesRouter);
 router.use(fieldsRouter);
 router.use(dashboardRouter);
 router.use(supabaseRouter);
+router.use(catalogRouter);
 
 export default router;
