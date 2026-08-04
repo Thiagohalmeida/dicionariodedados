@@ -155,6 +155,7 @@ export const EXTERNAL_ORIGIN_OPTIONS = [
 export const INTERNAL_PLATFORM_OPTIONS = [
   { value: "SAP - M303M", label: "SAP - M303M" },
   { value: "SAP - Outro relatório", label: "SAP - Outro relatório" },
+  { value: "Criado pela área", label: "Criado pela área (fórmula)" },
   { value: "Outra plataforma local", label: "Outra plataforma local" },
   { value: "__custom__", label: "Outro relatório (digitar)" },
 ] as const;

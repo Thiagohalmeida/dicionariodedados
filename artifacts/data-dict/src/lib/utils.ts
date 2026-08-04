@@ -36,7 +36,9 @@ export function traduzirClassificacao(cls: string): string {
 }
 
 export function statusBadgeVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
-  return status === "conflict" ? "destructive" : "outline";
+  if (status === "conflict") return "destructive";
+  if (status === "pending") return "secondary"; // Cor distinta para Pendente
+  return "outline";
 }
 
 export function classificationBadgeVariant(
@@ -49,6 +51,8 @@ export function classificationBadgeVariant(
       return "secondary";
     case "critical":
       return "destructive";
+    case "pending":
+      return "secondary"; // Cor distinta para Pendente
     default:
       return "outline";
   }
