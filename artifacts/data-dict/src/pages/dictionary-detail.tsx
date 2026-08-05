@@ -48,6 +48,22 @@ import { ValidationPanel } from "@/components/shared/validation-panel";
 import { useApiExport } from "@/hooks/use-api-action";
 import { useValidationForm, type ValidationFormData } from "@/hooks/use-validation-form";
 
+interface ValidationData {
+  id: number;
+  fieldId: number;
+  validatorName: string;
+  used: boolean;
+  required: boolean;
+  correctName: boolean;
+  correctOrigin: boolean;
+  hasBusinessRule: boolean;
+  originType: string | null;
+  originDetail: string | null;
+  businessRuleRationale: string | null;
+  comment: string | null;
+  createdAt: string;
+}
+
 interface FieldSummary {
   fieldId: number;
   totalValidations: number;
@@ -75,6 +91,7 @@ interface Field {
   tipoDado: string;
   chave: boolean;
   summary?: FieldSummary;
+  validation?: ValidationData | null;
 }
 
 interface FieldWithSummary extends Field {

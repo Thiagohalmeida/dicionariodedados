@@ -1,4 +1,4 @@
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, desc } from "drizzle-orm";
 import { db, fieldsTable, validationsTable } from "@workspace/db";
 import {
   FIELD_STATUS,
@@ -158,6 +158,35 @@ export async function getFieldsWithSummaries(dictionaryId: number) {
   const fieldIds = fields.map((f) => f.id);
   const summaries = await computeFieldSummariesBatch(fieldIds);
 
+  // Fetch latest validation for each field
+  const latestValidations = await db
+    .select({
+      fieldId: validationsTable.fieldId,
+      id: validationsTable.id,
+      validatorName: validationsTable.validatorName,
+      used: validationsTable.used,
+      required: validationsTable.required,
+      correctName: validationsTable.correctName,
+      correctOrigin: validationsTable.correctOrigin,
+      hasBusinessRule: validationsTable.hasBusinessRule,
+      originType: validationsTable.originType,
+      originDetail: validationsTable.originDetail,
+      businessRuleRationale: validationsTable.businessRuleRationale,
+      comment: validationsTable.comment,
+      createdAt: validationsTable.createdAt,
+    })
+    .from(validationsTable)
+    .where(inArray(validationsTable.fieldId, fieldIds))
+    .orderBy(desc(validationsTable.createdAt));
+
+  // Get latest validation per field
+  const latestValidationByField = new Map<number, typeof latestValidations[0]>();
+  for (const v of latestValidations) {
+    if (!latestValidationByField.has(v.fieldId)) {
+      latestValidationByField.set(v.fieldId, v);
+    }
+  }
+
   return fields.map((f) => ({
     id: f.id,
     dictionaryId: f.dictionaryId,
@@ -174,5 +203,6 @@ export async function getFieldsWithSummaries(dictionaryId: number) {
     businessRuleExpression: f.businessRuleExpression,
     businessRuleSql: f.businessRuleSql,
     summary: summaries.get(f.id)!,
+    validation: latestValidationByField.get(f.id) ?? null,
   }));
 }

@@ -36,21 +36,14 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Pencil,
-  CheckCircle2,
-  XCircle,
-  ChevronDown,
-  Download,
-  Save,
-  Loader2,
-} from "lucide-react";
+import { Pencil, CheckCircle2, XCircle, ChevronDown, Download, Save, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useApiAction } from "@/hooks/use-api-action";
 import { EditFieldDialog } from "@/components/shared/edit-field-dialog";
 import { ValidationPanel } from "@/components/shared/validation-panel";
 import { PreviewFieldRow } from "@/components/shared/preview-field-row";
 import type { ValidationInputOriginType } from "@workspace/api-client-react";
+import { ValidationData } from "@/types/validation";
 
 export interface PreviewField {
   id: number;
@@ -66,19 +59,7 @@ export interface PreviewField {
   customInternalPlatform?: string;
   businessRuleExpression?: string | null;
   businessRuleSql?: string | null;
-  validation?: {
-    validatorName?: string;
-    used?: boolean;
-    required?: boolean;
-    correctName?: boolean;
-    correctOrigin?: boolean;
-    hasBusinessRule?: boolean;
-    originType?: string;
-    originDetail?: string;
-    businessRuleRationale?: string;
-    formula?: string;
-    comment?: string;
-  };
+  validation?: ValidationData | null;
 }
 
 interface PreviewValidationSheetProps {

@@ -35,9 +35,11 @@ export function traduzirClassificacao(cls: string): string {
   return map[cls] ?? cls;
 }
 
-export function statusBadgeVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
+export function statusBadgeVariant(status: string): "default" | "secondary" | "destructive" | "outline" | "warning" {
   if (status === "conflict") return "destructive";
-  if (status === "pending") return "secondary"; // Cor distinta para Pendente
+  if (status === "pending") return "secondary";
+  if (status === "rejected") return "warning"; // laranja para reprovado
+  if (status === "approved") return "default"; // verde para aprovado
   return "outline";
 }
 

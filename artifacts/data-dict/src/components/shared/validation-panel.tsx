@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { useValidationForm, type ValidationFormData } from "@/hooks/use-validation-form";
 import { ValidationFormFields } from "@/components/shared/validation-form-fields";
+import { ValidationData } from "@/types/validation";
 
 type Variant = "sheet" | "dialog";
 
@@ -18,21 +19,7 @@ interface ValidationPanelProps {
     origem: string;
     periodicidade: string;
     chave: boolean;
-    validation?: {
-      validatorName?: string;
-      used?: boolean;
-      required?: boolean;
-      correctName?: boolean;
-      correctOrigin?: boolean;
-      hasBusinessRule?: boolean;
-      originType?: string;
-      originDetail?: string;
-      businessRuleRationale?: string;
-      formula?: string;
-      comment?: string;
-      excluded?: boolean;
-      customInternalPlatform?: string;
-    };
+    validation?: ValidationData | null;
   };
   onClose: () => void;
   onSave: (data: ValidationFormData) => void;
@@ -57,7 +44,7 @@ export function ValidationPanel({
       originType: (validation.originType as "interno" | "externo") ?? "",
       originDetail: validation.originDetail ?? "",
       businessRuleRationale: validation.businessRuleRationale ?? "",
-      formula: (validation.formula as "nao" | "sim" | "suporte") ?? "nao",
+      formula: "nao", // formula is now on the field, not validation
       comment: validation.comment ?? "",
       excluded: validation.excluded ?? false,
       customInternalPlatform: validation.customInternalPlatform ?? "",
